@@ -510,4 +510,4 @@ Ouvrez une *issue* pour signaler un bug ou proposer une fonctionnalité. Les *pu
 MIT — voir [LICENSE](LICENSE)
 
 *Développé par et pour les équipes de sécurité des SI hospitaliers français.*  
-Herve PELLARIN: hpellarin @ ch-annecygenevois.fr
+
