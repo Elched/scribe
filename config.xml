@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+╔══════════════════════════════════════════════════════════════════════╗
+║          SCRIBE — CONFIGURATION DE L'ÉTABLISSEMENT                   ║
+║          Outil open-source de main courante de crise hospitalière    ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  COMMENT UTILISER CE FICHIER :                                       ║
+║                                                                      ║
+║  1. Remplissez toutes les sections ci-dessous                        ║
+║  2. Sauvegardez en UTF-8 (sans BOM)                                  ║
+║  3. Lancez :  python setup.py                                        ║
+║  4. Démarrez : python main.py  →  http://localhost:8000              ║
+║  5. Connectez-vous et CHANGEZ le mot de passe admin                  ║
+║                                                                      ║
+║  Pour importer vos UF depuis un fichier Excel FICOM :               ║
+║      python import_uf2.py   (remplace la section <unites_fonct.>)   ║
+╚══════════════════════════════════════════════════════════════════════╝
+-->
+
+<scribe>
+
+  <!-- ════════════════════════════════════════════════════════
+       1. IDENTITÉ DE L'ÉTABLISSEMENT
+       ════════════════════════════════════════════════════════ -->
+  <etablissement>
+    <nom>Centre Hospitalier de Mon Établissement</nom>
+    <!-- Sigle affiché dans l'interface -->
+    <sigle>CHME</sigle>
+    <ville>Ma Ville</ville>
+    <!-- Code FINESS principal (9 chiffres) -->
+    <finess>000000000</finess>
+  </etablissement>
+
+
+  <!-- ════════════════════════════════════════════════════════
+       2. COMPTE ADMINISTRATEUR
+       Login générique — À CHANGER après la première connexion
+       via le panneau admin (icône utilisateur en haut à droite)
+       ════════════════════════════════════════════════════════ -->
+  <admin>
+    <login>dircrise</login>
+    <password>Scribe2026!</password>
+    <nom_affiche>Directeur de Crise</nom_affiche>
+  </admin>
+
+
+  <!-- ════════════════════════════════════════════════════════
+       3. SITES GÉOGRAPHIQUES
+       Coordonnées GPS : maps.google.fr → clic droit sur le lieu
+       ════════════════════════════════════════════════════════ -->
+  <sites>
+
+    <site>
+      <nom>Site Principal</nom>
+      <adresse>1 avenue de l'Hôpital, 00000 Ma Ville</adresse>
+      <latitude>48.8566</latitude>
+      <longitude>2.3522</longitude>
+      <!-- Téléphone de garde (optionnel) -->
+      <telephone_garde></telephone_garde>
+    </site>
+
+    <site>
+      <nom>Site Annexe</nom>
+      <adresse>2 rue de la Clinique, 00000 Ma Ville</adresse>
+      <latitude>48.8600</latitude>
+      <longitude>2.3580</longitude>
+      <telephone_garde></telephone_garde>
+    </site>
+
+    <!-- Copiez un bloc <site>…</site> pour chaque site supplémentaire -->
+
+  </sites>
+
+
+  <!-- ════════════════════════════════════════════════════════
+       4. DIRECTEURS DE CRISE
+       Apparaissent dans la liste déroulante "Directeur de crise"
+       lors de la déclaration d'un incident.
+       ════════════════════════════════════════════════════════ -->
+  <directeurs>
+
+    <directeur>
+      <nom>M. Prénom NOM</nom>
+      <fonction>Directeur Général</fonction>
+      <!-- Abréviation affichée sur les badges incidents -->
+      <abreviation>DG</abreviation>
+    </directeur>
+
+    <directeur>
+      <nom>Mme Prénom NOM</nom>
+      <fonction>Directrice Générale Adjointe</fonction>
+      <abreviation>DGA</abreviation>
+    </directeur>
+
+    <directeur>
+      <nom>M. Prénom NOM</nom>
+      <fonction>Directeur des Soins</fonction>
+      <abreviation>DS</abreviation>
+    </directeur>
+
+    <directeur>
+      <nom>M. Prénom NOM</nom>
+      <fonction>Directeur des Systèmes d'Information</fonction>
+      <abreviation>DSI</abreviation>
+    </directeur>
+
+    <directeur>
+      <nom>M. Prénom NOM</nom>
+      <fonction>Responsable Sécurité des SI</fonction>
+      <abreviation>RSSI</abreviation>
+    </directeur>
+
+    <directeur>
+      <nom>Mme Prénom NOM</nom>
+      <fonction>Directrice des Ressources Humaines</fonction>
+      <abreviation>DRH</abreviation>
+    </directeur>
+
+    <directeur>
+      <nom>M. Prénom NOM</nom>
+      <fonction>Directeur des Affaires Financières</fonction>
+      <abreviation>DAF</abreviation>
+    </directeur>
+
+    <!-- Copiez un bloc <directeur>…</directeur> pour chaque personne -->
+
+  </directeurs>
+
+
+  <!-- ════════════════════════════════════════════════════════
+       5. UNITÉS FONCTIONNELLES
+       Si vous disposez d'un export Excel FICOM, utilisez plutôt
+       python import_uf2.py  (plus complet, ignore cette section).
+       Sinon, remplissez ici vos UF manuellement.
+       Format : <uf code="CODE" pole="POLE">Libellé</uf>
+       Le POLE sert à regrouper les UF dans l'onglet SOINS.
+       ════════════════════════════════════════════════════════ -->
+  <unites_fonctionnelles site="Site Principal">
+
+    <uf code="1001" pole="URGENCES">Urgences adultes</uf>
+    <uf code="1002" pole="URGENCES">SMUR</uf>
+    <uf code="1003" pole="URGENCES">UHCD</uf>
+
+    <uf code="2001" pole="CHIRURGIE">Bloc opératoire central</uf>
+    <uf code="2002" pole="CHIRURGIE">Chirurgie viscérale</uf>
+    <uf code="2003" pole="CHIRURGIE">Chirurgie orthopédique</uf>
+    <uf code="2004" pole="CHIRURGIE">Chirurgie ambulatoire</uf>
+
+    <uf code="3001" pole="MEDECINE">Médecine interne</uf>
+    <uf code="3002" pole="MEDECINE">Cardiologie</uf>
+    <uf code="3003" pole="MEDECINE">Pneumologie</uf>
+    <uf code="3004" pole="MEDECINE">Neurologie</uf>
+    <uf code="3005" pole="MEDECINE">Infectiologie</uf>
+
+    <uf code="4001" pole="SOINS CRITIQUES">Réanimation</uf>
+    <uf code="4002" pole="SOINS CRITIQUES">USC</uf>
+    <uf code="4003" pole="SOINS CRITIQUES">USIC</uf>
+
+    <uf code="5001" pole="MATERNITE PEDIATRIE">Maternité / Gynécologie</uf>
+    <uf code="5002" pole="MATERNITE PEDIATRIE">Néonatologie</uf>
+    <uf code="5003" pole="MATERNITE PEDIATRIE">Pédiatrie</uf>
+
+    <uf code="6001" pole="GERIATRIE">Court séjour gériatrique</uf>
+    <uf code="6002" pole="GERIATRIE">SSR Gériatrique</uf>
+    <uf code="6003" pole="GERIATRIE">USLD</uf>
+
+    <uf code="7001" pole="IMAGERIE BIOLOGIE">Radiologie / Scanner</uf>
+    <uf code="7002" pole="IMAGERIE BIOLOGIE">IRM</uf>
+    <uf code="7003" pole="IMAGERIE BIOLOGIE">Laboratoire</uf>
+
+    <uf code="8001" pole="PHARMACIE">Pharmacie</uf>
+    <uf code="8002" pole="PHARMACIE">Stérilisation</uf>
+
+    <uf code="9001" pole="DIRECTION SUPPORT">Direction Générale</uf>
+    <uf code="9002" pole="DIRECTION SUPPORT">DSI Informatique</uf>
+    <uf code="9003" pole="DIRECTION SUPPORT">Sécurité / Gardiennage</uf>
+    <uf code="9004" pole="DIRECTION SUPPORT">Services Techniques</uf>
+
+    <!-- Ajoutez vos UF ici : <uf code="XXXX" pole="POLE">Libellé</uf> -->
+
+  </unites_fonctionnelles>
+
+
+  <!-- ════════════════════════════════════════════════════════
+       6. ANNUAIRE TÉLÉPHONIQUE NOMINAL
+       Numéros utilisés en fonctionnement normal (IP/VoIP/DECT)
+       ════════════════════════════════════════════════════════ -->
+  <annuaire_normal>
+
+    <!--
+    Format :
+    <contact service="NOM DU SERVICE" local="LOCALISATION" tel="NUMÉRO"/>
+    -->
+
+    <contact service="STANDARD" local="Accueil principal" tel="0"/>
+    <contact service="URGENCES — IOA" local="Accueil urgences" tel=""/>
+    <contact service="SMUR" local="Salle SMUR" tel=""/>
+    <contact service="REANIMATION" local="Salle de soins" tel=""/>
+    <contact service="BLOC OPERATOIRE" local="Salle de régulation" tel=""/>
+    <contact service="MATERNITE" local="Salle de soins" tel=""/>
+    <contact service="PEDIATRIE" local="Salle de soins" tel=""/>
+    <contact service="NEONATOLOGIE" local="Salle de soins" tel=""/>
+    <contact service="CARDIOLOGIE" local="Salle de soins" tel=""/>
+    <contact service="NEUROLOGIE" local="Salle de soins" tel=""/>
+    <contact service="CADRE DE NUIT" local="Bureau cadre nuit" tel=""/>
+    <contact service="PHARMACIE" local="Secrétariat" tel=""/>
+    <contact service="IMAGERIE — SCANNER" local="" tel=""/>
+    <contact service="LABORATOIRE" local="" tel=""/>
+    <contact service="DIRECTION GENERALE" local="Secrétariat DG" tel=""/>
+    <contact service="DSI INFORMATIQUE" local="Support DSI" tel=""/>
+    <contact service="SECURITE" local="Loge sécurité" tel=""/>
+    <contact service="SERVICES TECHNIQUES" local="Atelier" tel=""/>
+
+    <!-- Ajoutez vos contacts -->
+
+  </annuaire_normal>
+
+
+  <!-- ════════════════════════════════════════════════════════
+       7. ANNUAIRE DE SECOURS
+       Numéros utilisables en cas de panne du système téléphonique
+       (GSM personnels, fixes cuivre, astreintes)
+       ════════════════════════════════════════════════════════ -->
+  <annuaire_secours>
+
+    <!--
+    Format :
+    <contact service="NOM" local="SITE OU INFO" tel="NUMÉRO" note="REMARQUE"/>
+    -->
+
+    <contact service="URGENCES — SECOURS" local="GSM de garde" tel="06 00 00 00 00" note="Disponible 24h/24"/>
+    <contact service="REANIMATION — SECOURS" local="GSM de garde" tel="06 00 00 00 01" note=""/>
+    <contact service="MATERNITE — SECOURS" local="GSM sage-femme" tel="06 00 00 00 02" note=""/>
+    <contact service="BLOC — SECOURS" local="GSM IADE" tel="06 00 00 00 03" note=""/>
+    <contact service="CADRE DE NUIT — SECOURS" local="GSM cadre" tel="06 00 00 00 04" note=""/>
+    <contact service="DIRECTION — SECOURS" local="GSM DG/DGA" tel="06 00 00 00 05" note="Astreinte direction"/>
+    <contact service="DSI — SECOURS" local="GSM DSI" tel="06 00 00 00 06" note="Astreinte informatique"/>
+    <contact service="SAMU 15" local="Régulation médicale" tel="15" note="Urgences médicales"/>
+    <contact service="POMPIERS 18" local="" tel="18" note=""/>
+    <contact service="POLICE / GENDARMERIE 17" local="" tel="17" note=""/>
+    <contact service="CERT SANTE" local="Signalement cyber" tel="cert-sante@esante.gouv.fr" note="Incidents cyber obligatoires"/>
+    <contact service="ANSSI" local="Signalement national" tel="www.cybermalveillance.gouv.fr" note="Incidents critiques SI"/>
+
+    <!-- Ajoutez vos numéros de secours -->
+
+  </annuaire_secours>
+
+  <!-- ════════════════════════════════════════════════════════
+       8. CONFIGURATION IA (Intelligence Artificielle)
+       Choisissez un fournisseur parmi :
+         albert       → Albert AI (DINUM/gouvernement FR) — recommandé, souverain
+         openai       → ChatGPT (GPT-4o, GPT-4o-mini...)
+         anthropic    → Claude (claude-haiku-4-5-20251001, claude-sonnet-4-6...)
+         gemini       → Google Gemini (gemini-2.0-flash, gemini-1.5-pro...)
+         mistral      → Mistral AI (mistral-small-latest, mistral-large-latest...)
+         ollama       → Modèle local Ollama (llama3, mistral, phi3... zéro donnée externe)
+         openai_compat→ Tout serveur compatible OpenAI (LM Studio, vLLM, Jan...)
+
+       Clé API : laissez vide si ollama ou openai_compat local sans authentification.
+       URL base : laissez vide pour utiliser l'URL officielle du fournisseur choisi.
+       ════════════════════════════════════════════════════════ -->
+  <ia>
+    <!-- Fournisseur actif — modifiez cette ligne pour changer de source IA -->
+    <fournisseur>albert</fournisseur>
+
+    <!-- Clé API du fournisseur (laissez vide pour Ollama local) -->
+    <cle_api></cle_api>
+
+    <!-- Modèle à utiliser (laissez vide pour le modèle par défaut du fournisseur)
+         Exemples :
+           albert     → mistralai/Ministral-3-8B-Instruct-2512
+           openai     → gpt-4o-mini
+           anthropic  → claude-haiku-4-5-20251001
+           gemini     → gemini-2.0-flash
+           mistral    → mistral-small-latest
+           ollama     → llama3
+    -->
+    <modele></modele>
+
+    <!-- URL de base (optionnel — uniquement pour ollama ou serveur local)
+         Exemple Ollama : http://localhost:11434/v1/chat/completions
+         Exemple LM Studio : http://localhost:1234/v1/chat/completions
+    -->
+    <url_base></url_base>
+  </ia>
+
+</scribe>
