@@ -233,6 +233,138 @@ Changement de fournisseur : une seule ligne dans `config.xml`, puis `python setu
 
 ---
 
+
+## Déploiement Docker
+
+Docker est la méthode recommandée pour une mise en production rapide et reproductible, notamment sur un serveur dédié en réseau isolé.
+
+### Prérequis
+
+- Docker ≥ 24.0 (`docker --version`)
+- Docker Compose ≥ 2.0 (`docker compose version`)
+
+### Démarrage en une commande
+
+```bash
+# Cloner ou décompresser l'archive
+git clone https://github.com/nocomp/scribe && cd scribe
+# ou : unzip scribe_open.zip && cd scribe_open
+
+# (Optionnel) Personnaliser le port ou les variables IA
+cp .env.example .env && nano .env
+
+# Construire et démarrer
+docker compose up -d
+```
+
+Ouvrez **http://[IP-DU-SERVEUR]:8000** — Login : `dircrise` / `Scribe2026!`
+
+Au premier démarrage, l'entrypoint initialise automatiquement la base, lance `setup.py` et `seed.py`.
+
+### Commandes utiles
+
+```bash
+docker compose logs -f          # Logs en temps réel
+docker compose restart scribe   # Redémarrer le service
+docker compose down             # Arrêter
+docker compose down -v          # Arrêter ET supprimer les données (⚠ irréversible)
+```
+
+### Données persistantes
+
+Toutes les données (base SQLite, pièces jointes) sont stockées dans un volume Docker nommé `scribe_data`, monté sur `/data` dans le conteneur. La base survit aux redémarrages et aux mises à jour de l'image.
+
+```bash
+# Localiser le volume sur l'hôte
+docker volume inspect scribe_data
+
+# Sauvegarde manuelle de la base
+docker cp scribe:/data/db/scribe.db ./backup_$(date +%Y%m%d).db
+```
+
+### Personnaliser la configuration
+
+Montez votre `config.xml` comme volume en lecture seule :
+
+```yaml
+# Dans docker-compose.yml, section volumes du service :
+volumes:
+  - scribe_data:/data
+  - ./config.xml:/data/config.xml:ro   # ← décommenter cette ligne
+```
+
+Puis reconstruire : `docker compose up -d --build`
+
+### Fournisseur IA via variable d'environnement
+
+```bash
+# Fichier .env
+SCRIBE_IA_PROVIDER=openai
+SCRIBE_IA_KEY=sk-proj-xxxxx
+SCRIBE_IA_MODEL=gpt-4o-mini
+```
+
+Les variables d'environnement ont priorité sur `config.xml`. Utile pour injecter la clé API sans la stocker dans l'image.
+
+### Ollama sur le même serveur (IA 100% locale)
+
+```yaml
+# Ajouter dans docker-compose.yml
+services:
+  scribe:
+    environment:
+      - SCRIBE_IA_PROVIDER=ollama
+      - SCRIBE_IA_URL=http://ollama:11434
+    depends_on:
+      - ollama
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    # Pour GPU Nvidia : décommenter les lignes suivantes
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]
+
+volumes:
+  scribe_data:
+  ollama_data:
+```
+
+```bash
+# Télécharger le modèle une fois le stack démarré
+docker exec ollama ollama pull llama3
+```
+
+### Reverse proxy Nginx (HTTPS)
+
+Pour exposer SCRIBE en HTTPS derrière un reverse proxy :
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name scribe.monhopital.fr;
+
+    ssl_certificate     /etc/ssl/certs/scribe.crt;
+    ssl_certificate_key /etc/ssl/private/scribe.key;
+
+    location / {
+        proxy_pass         http://127.0.0.1:8000;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade $http_upgrade;
+        proxy_set_header   Connection "upgrade";
+    }
+}
+```
+
+---
+
 ## Déploiement en 5 minutes
 
 ### Prérequis
@@ -510,4 +642,4 @@ Ouvrez une *issue* pour signaler un bug ou proposer une fonctionnalité. Les *pu
 MIT — voir [LICENSE](LICENSE)
 
 *Développé par et pour les équipes de sécurité des SI hospitaliers français.*  
-
+*Conforme aux exigences NIS2, CERT Santé, HDS et Plan Blanc.*

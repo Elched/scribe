@@ -84,6 +84,34 @@ def seed():
             print(f"  [~] Mis à jour : {h_data['nom']}")
 
     db.commit()
+
+    # ── UF virtuelles transverses (Sécurité physique / Logistique) ────────────
+    from app.models import UniteFonctionnelle
+    UF_TRANSVERSES = [
+        {"code_uf": "SECU-01", "libelle": "Sécurité physique",      "pole": "SECURITE PHYSIQUE"},
+        {"code_uf": "LOGI-01", "libelle": "Logistique générale",    "pole": "LOGISTIQUE"},
+        {"code_uf": "LOGI-02", "libelle": "Approvisionnement",      "pole": "LOGISTIQUE"},
+        {"code_uf": "LOGI-03", "libelle": "Transport / Brancardage","pole": "LOGISTIQUE"},
+    ]
+    all_hospitals = db.query(Hospital).all()
+    uf_added = 0
+    for h in all_hospitals:
+        for uf_data in UF_TRANSVERSES:
+            exists = db.query(UniteFonctionnelle).filter_by(
+                code_uf=uf_data["code_uf"], hospital_id=h.id
+            ).first()
+            if not exists:
+                db.add(UniteFonctionnelle(
+                    code_uf=uf_data["code_uf"],
+                    libelle=uf_data["libelle"],
+                    pole=uf_data["pole"],
+                    hospital_id=h.id,
+                ))
+                uf_added += 1
+    db.commit()
+    if uf_added:
+        print(f"  [+] {uf_added} UF transverses ajoutées (sécurité physique / logistique)")
+
     db.close()
     print("\n[✓] Seed terminé. Lance : python main.py")
 

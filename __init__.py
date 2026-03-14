@@ -1,0 +1,3094 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCRIBE v6 | Crisis OS</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="/static/config.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+:root {
+  --bg:#0d0f14;--surface:#141720;--surface2:#1c2030;--surface3:#222840;
+  --border:#252a38;--border2:#2e3448;
+  --red:#e53e3e;--red-dim:rgba(229,62,62,.15);
+  --amber:#d97706;--amber-dim:rgba(217,119,6,.15);
+  --green:#16a34a;--green-dim:rgba(22,163,74,.15);
+  --blue:#2563eb;--blue-dim:rgba(37,99,235,.15);
+  --purple:#7c3aed;--purple-dim:rgba(124,58,237,.15);
+  --cyan:#0891b2;--cyan-dim:rgba(8,145,178,.15);
+  --text:#e2e8f0;--muted:#64748b;--muted2:#94a3b8;
+  --mono:'JetBrains Mono',monospace;--ui:'Inter',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--ui);background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* ── HEADER ── */
+header{display:flex;align-items:center;gap:10px;padding:0 14px;height:46px;min-height:46px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;z-index:200}
+.brand{font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:2px;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.brand-dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.tabs{display:flex;gap:2px;margin-left:6px;flex-wrap:nowrap}
+.tab-btn{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1px;padding:4px 10px;background:transparent;color:var(--muted);border:1px solid transparent;border-radius:4px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.tab-btn:hover{color:var(--text);border-color:var(--border2)}
+.tab-btn.active{color:var(--text);background:var(--surface2);border-color:var(--border2)}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:7px;flex-shrink:0}
+#incident-level{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;padding:3px 9px;border-radius:4px;border:1px solid;white-space:nowrap}
+#incident-level.green{color:#4ade80;border-color:#4ade80;background:rgba(74,222,128,.1)}
+#incident-level.amber{color:#fbbf24;border-color:#fbbf24;background:rgba(251,191,36,.1)}
+#incident-level.red{color:#f87171;border-color:#f87171;background:rgba(248,113,113,.1)}
+#incident-level.black{color:#c084fc;border-color:#c084fc;background:rgba(192,132,252,.1)}
+.clock{font-family:var(--mono);font-size:11px;color:var(--muted2);white-space:nowrap}
+.visio-btn{font-family:var(--mono);font-size:9px;padding:3px 8px;background:var(--blue-dim);color:#93c5fd;border:1px solid #3b82f6;border-radius:4px;text-decoration:none;white-space:nowrap}
+.visio-btn:hover{background:var(--blue);color:#fff}
+
+/* ── TABS ── */
+.tab-content{display:none;flex:1;overflow:hidden}
+.tab-content.active{display:flex}
+
+/* ══ VEILLE TAB ══ */
+#tab-veille{flex-direction:row}
+.entry-col{width:350px;min-width:310px;display:flex;flex-direction:column;border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0}
+.view-col{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* MAP */
+#map{height:170px;min-height:150px;flex-shrink:0;border-bottom:1px solid var(--border)}
+
+/* KPI */
+.kpi-bar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.kpi{flex:1;padding:7px 10px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:1px}
+.kpi:last-child{border-right:none}
+.kpi-val{font-family:var(--mono);font-size:18px;font-weight:700}
+.kpi-label{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.kpi.red .kpi-val{color:var(--red)}.kpi.amber .kpi-val{color:#fbbf24}
+.kpi.green .kpi-val{color:#4ade80}.kpi.blue .kpi-val{color:#60a5fa}.kpi.purple .kpi-val{color:#c084fc}
+
+/* Global Albert bar */
+#global-albert-bar{padding:6px 12px;background:var(--surface3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;flex-shrink:0}
+.btn-global-albert{font-family:var(--mono);font-size:10px;font-weight:700;padding:4px 10px;background:var(--purple-dim);color:#c084fc;border:1px solid var(--purple);border-radius:4px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.btn-global-albert:hover,.btn-global-albert.loading{background:var(--purple);color:#fff}
+.btn-export{font-family:var(--mono);font-size:10px;padding:4px 9px;background:var(--green-dim);color:#4ade80;border:1px solid var(--green);border-radius:4px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn-export:hover{background:var(--green);color:#fff}
+#global-status-txt{font-family:var(--mono);font-size:10px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#btn-toggle-global{font-family:var(--mono);font-size:10px;padding:4px 8px;background:var(--surface2);color:var(--muted2);border:1px solid var(--border2);border-radius:4px;cursor:pointer;display:none}
+
+/* Global Albert panel */
+#global-albert-panel{display:none;background:var(--surface3);border-bottom:2px solid var(--purple);flex-shrink:0;max-height:220px;overflow:hidden;flex-direction:column}
+#global-albert-panel.show{display:flex}
+.gap-header{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface3)}
+.gap-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:#c084fc;text-transform:uppercase;flex:1}
+.gap-level{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 9px;border-radius:3px}
+.gap-close{color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0 4px;border-radius:3px;transition:color .15s}
+.gap-close:hover{color:#f87171}
+.gap-body{font-family:var(--mono);font-size:11px;color:var(--muted2);white-space:pre-line;line-height:1.7;overflow-y:auto;padding:10px 14px;flex:1}
+
+/* Filters */
+.filter-bar{display:flex;gap:4px;padding:5px 8px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;background:var(--surface)}
+.filter-bar select{font-family:var(--mono);font-size:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;flex:1;min-width:60px}
+.filter-bar select:focus{outline:none;border-color:var(--blue)}
+.btn-filter{font-family:var(--mono);font-size:10px;padding:3px 7px;background:var(--surface2);color:var(--muted2);border:1px solid var(--border2);border-radius:4px;cursor:pointer;white-space:nowrap}
+.btn-filter:hover{color:var(--text);border-color:var(--muted2)}
+
+/* Timeline */
+#timeline{flex:1;overflow-y:auto;padding:2px 0}
+.incident-item{padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;position:relative}
+.incident-item:hover,.incident-item.expanded{background:var(--surface)}
+.incident-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.urgency-1::before{background:#4ade80}.urgency-2::before{background:#fbbf24}
+.urgency-3::before{background:var(--red)}.urgency-4::before{background:#c084fc}
+.inc-header{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.inc-urg{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;flex-shrink:0}
+.urg-1{background:var(--green-dim);color:#4ade80}.urg-2{background:var(--amber-dim);color:#fbbf24}
+.urg-3{background:var(--red-dim);color:#f87171}.urg-4{background:var(--purple-dim);color:#c084fc}
+.inc-type{font-family:var(--mono);font-size:9px;padding:2px 5px;border-radius:3px;flex-shrink:0}
+.type-CYBER{background:var(--blue-dim);color:#60a5fa}.type-SANITAIRE{background:var(--green-dim);color:#4ade80}.type-MIXTE{background:var(--amber-dim);color:#fbbf24}
+.inc-dir{font-family:var(--mono);font-size:9px;padding:2px 5px;border-radius:3px;background:var(--surface3);color:var(--muted2);flex-shrink:0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inc-site{font-family:var(--mono);font-size:10px;color:var(--muted2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inc-time{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.inc-fait{margin-top:4px;font-size:12px;font-weight:500;line-height:1.4}
+.inc-detail{display:none;margin-top:7px;padding-top:7px;border-top:1px solid var(--border);font-size:12px;color:var(--muted2);line-height:1.6}
+.incident-item.expanded .inc-detail{display:block}
+
+/* Jalons */
+.jalons-section{margin:7px 0;padding:7px;background:var(--surface2);border-radius:4px;border:1px solid var(--border2)}
+.jalons-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
+.progress-bar{width:100%;height:3px;background:var(--border2);border-radius:2px;margin-bottom:6px}
+.progress-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--green),#4ade80);transition:width .4s}
+.jalon-item{display:flex;align-items:center;gap:7px;padding:2px 0;border-bottom:1px solid var(--border);font-size:11px}
+.jalon-item:last-child{border-bottom:none}
+.jalon-cb{width:13px;height:13px;cursor:pointer;accent-color:var(--green)}
+.jalon-label{flex:1}.jalon-done{text-decoration:line-through;color:var(--muted)}
+.jalon-time{font-family:var(--mono);font-size:9px;color:var(--muted)}
+
+/* Albert inline */
+.albert-inline{margin-top:7px;padding:7px;background:var(--blue-dim);border:1px solid rgba(37,99,235,.4);border-radius:4px}
+.albert-inline-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:#93c5fd;margin-bottom:3px}
+.albert-inline-body{font-family:var(--mono);font-size:10px;color:var(--muted2);white-space:pre-line;line-height:1.6;max-height:100px;overflow-y:auto}
+
+/* Projection */
+.projection-section{margin-top:7px;padding:7px;background:var(--surface3);border:1px solid var(--border2);border-radius:4px}
+.proj-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:#fbbf24;margin-bottom:4px;text-transform:uppercase}
+.proj-row{display:flex;align-items:center;gap:7px;margin-bottom:3px;font-size:11px}
+.proj-label{color:var(--muted);width:130px;flex-shrink:0}
+.proj-val{color:var(--text);font-weight:600;font-family:var(--mono);font-size:11px}
+.proj-eta{font-family:var(--mono);font-size:13px;font-weight:700;color:#fbbf24;margin-top:3px}
+
+.inc-status-row{display:flex;align-items:center;gap:5px;margin-top:7px;flex-wrap:wrap}
+.inc-status-row select{font-family:var(--mono);font-size:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:3px;padding:2px 5px}
+.inc-declarant{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.resolved-badge{font-family:var(--mono);font-size:9px;color:#4ade80;background:var(--green-dim);padding:2px 7px;border-radius:3px;border:1px solid var(--green)}
+.btn-row-small{display:flex;gap:3px;margin-left:auto}
+.btn-sm{font-size:10px;font-family:var(--mono);padding:2px 7px;border-radius:3px;cursor:pointer;border:1px solid;background:transparent}
+.btn-sm.blue{color:#60a5fa;border-color:#3b82f6}.btn-sm.blue:hover{background:var(--blue-dim)}
+.btn-sm.red{color:#f87171;border-color:var(--red)}.btn-sm.red:hover{background:var(--red-dim)}
+.btn-sm.green{color:#4ade80;border-color:var(--green)}.btn-sm.green:hover{background:var(--green-dim)}
+
+/* ── FORM ── */
+.form-section{padding:10px;border-bottom:1px solid var(--border)}
+.form-section h3{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--muted2);text-transform:uppercase;margin-bottom:8px}
+.form-row{display:flex;gap:5px;margin-bottom:5px}
+input[type=text],input[type=datetime-local],input[type=file],select,textarea{width:100%;font-family:var(--mono);font-size:11px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:4px;padding:5px 8px;transition:border-color .15s;resize:vertical}
+input[type=file]{padding:3px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)}
+textarea{min-height:48px}
+.field{margin-bottom:5px}
+.field label{display:block;font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:2px;letter-spacing:1px;text-transform:uppercase}
+.selector-row{display:flex;gap:3px}
+.sel-btn{flex:1;padding:5px 2px;font-family:var(--mono);font-size:9px;font-weight:700;border:1px solid var(--border2);border-radius:4px;background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .15s;text-align:center;white-space:nowrap}
+.sel-btn[data-crise="CYBER"].sel-active{background:var(--blue-dim);color:#60a5fa;border-color:#3b82f6}
+.sel-btn[data-crise="SANITAIRE"].sel-active{background:var(--green-dim);color:#4ade80;border-color:var(--green)}
+.sel-btn[data-crise="MIXTE"].sel-active{background:var(--amber-dim);color:#fbbf24;border-color:var(--amber)}
+.sel-btn[data-val="1"].sel-active{background:var(--green-dim);color:#4ade80;border-color:var(--green)}
+.sel-btn[data-val="2"].sel-active{background:var(--amber-dim);color:#fbbf24;border-color:var(--amber)}
+.sel-btn[data-val="3"].sel-active{background:var(--red-dim);color:#f87171;border-color:var(--red)}
+.sel-btn[data-val="4"].sel-active{background:var(--purple-dim);color:#c084fc;border-color:var(--purple)}
+
+/* Jalons form */
+.jalons-form{margin-top:5px;padding:7px;background:var(--surface3);border-radius:4px;border:1px solid var(--border2)}
+.jalons-form-title{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px}
+.jalon-presets{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px}
+.jalon-preset-btn{font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:3px;background:var(--surface2);color:var(--muted2);border:1px solid var(--border2);cursor:pointer;transition:all .15s}
+.jalon-preset-btn.active{background:var(--blue-dim);color:#60a5fa;border-color:#3b82f6}
+.jalon-custom-input{display:flex;gap:4px}
+.jalon-add-btn{padding:3px 7px;font-family:var(--mono);font-size:10px;background:var(--blue-dim);color:#60a5fa;border:1px solid #3b82f6;border-radius:4px;cursor:pointer;white-space:nowrap}
+.jalon-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
+.jalon-tag{font-family:var(--mono);font-size:9px;padding:2px 6px;background:var(--blue-dim);color:#60a5fa;border:1px solid #3b82f6;border-radius:3px;display:flex;align-items:center;gap:3px}
+.jalon-tag .jtag-rm{cursor:pointer;color:var(--muted)}.jalon-tag .jtag-rm:hover{color:var(--red)}
+
+.btn-row{display:flex;gap:5px;margin-top:8px}
+.btn-primary{flex:1;padding:7px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;background:var(--red);color:#fff;border:none;border-radius:4px;cursor:pointer;transition:opacity .15s}
+.btn-primary:hover{opacity:.85}
+.btn-ai{padding:7px 10px;font-family:var(--mono);font-size:11px;font-weight:600;background:var(--blue-dim);color:#93c5fd;border:1px solid #3b82f6;border-radius:4px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-ai:hover{background:var(--blue);color:#fff}
+
+/* ══ SOINS TAB ══ */
+
+/* ══ SERVICES TRANSVERSES (Sécurité physique / Logistique) ══ */
+.transverses-section { padding: 14px 14px 0 14px; }
+.transverses-title {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
+  color: var(--muted); text-transform: uppercase;
+  padding: 0 0 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 10px;
+}
+.transverses-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px; margin-bottom: 14px;
+}
+.service-card {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 6px; padding: 10px 12px;
+}
+.service-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 7px;
+}
+.service-name {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  color: var(--text); text-transform: uppercase; letter-spacing: 1px;
+}
+.service-badge-btns {
+  display: flex; gap: 5px;
+}
+.service-badge-btns button {
+  font-family: var(--mono); font-size: 9px; font-weight: 700;
+  padding: 2px 7px; border-radius: 3px; cursor: pointer;
+  border: 1px solid transparent; transition: opacity .15s;
+}
+.service-badge-btns button.active-ok       { background:#14532d; color:#4ade80; border-color:#4ade80; }
+.service-badge-btns button.active-degrade  { background:#713f12; color:#fbbf24; border-color:#fbbf24; }
+.service-badge-btns button.active-critique { background:#450a0a; color:#f87171; border-color:#f87171; }
+.service-badge-btns button.inactive        { background:var(--surface3); color:var(--muted); border-color:var(--border2); opacity:.5; }
+.service-comment {
+  font-family: var(--mono); font-size: 10px; color: var(--muted2);
+  width: 100%; background: var(--surface3); border: 1px solid var(--border2);
+  border-radius: 3px; padding: 4px 6px; resize: none;
+  margin-top: 4px;
+}
+.service-updated {
+  font-family: var(--mono); font-size: 9px; color: var(--muted);
+  margin-top: 4px; display: block;
+}
+
+#tab-soins{flex-direction:column;overflow:hidden}
+.soins-header{padding:14px 20px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0}
+.soins-header h2{font-family:var(--mono);font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
+.btn-soins-albert{font-family:var(--mono);font-size:10px;padding:5px 12px;background:var(--purple-dim);color:#c084fc;border:1px solid var(--purple);border-radius:4px;cursor:pointer}
+.btn-soins-albert:hover{background:var(--purple);color:#fff}
+.soins-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:14px;overflow-y:auto}
+.soins-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;transition:border-color .4s,background .4s}
+.soins-card-header{padding:10px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.soins-pole-name{font-family:var(--mono);font-size:11px;font-weight:700;flex:1}
+.soins-status-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;white-space:nowrap;transition:all .4s}
+.soins-ok{background:var(--green-dim);color:#4ade80;border:1px solid var(--green)}
+.soins-degrade{background:var(--amber-dim);color:#fbbf24;border:1px solid var(--amber)}
+.soins-critique{background:var(--red-dim);color:#f87171;border:1px solid var(--red)}
+.soins-card-body{padding:10px 12px;font-size:12px;line-height:1.6}
+.soins-incident-link{color:var(--muted2);font-size:11px;padding:2px 0;border-bottom:1px solid var(--border);display:block}
+.soins-incident-link:last-child{border-bottom:none}
+.soins-incident-link span{color:#f87171}
+.soins-empty{color:var(--muted);font-size:11px;font-family:var(--mono)}
+.soins-albert-box{margin:14px;padding:12px;background:var(--surface3);border:1px solid var(--purple);border-radius:6px;display:none}
+.soins-albert-box.show{display:block}
+.soins-albert-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:#c084fc;margin-bottom:8px;text-transform:uppercase}
+.soins-albert-body{font-family:var(--mono);font-size:11px;color:var(--muted2);white-space:pre-line;line-height:1.7}
+.soins-legend{display:flex;gap:14px;padding:0 20px 8px;font-family:var(--mono);font-size:10px;flex-shrink:0}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-dot{width:8px;height:8px;border-radius:50%}
+
+/* ══ TIMELINE PROJECTION ══ */
+.soins-timeline{flex-shrink:0;background:var(--surface);border-top:2px solid var(--border);padding:14px 20px 12px;user-select:none}
+.tl-header{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.tl-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
+.tl-eta-global{font-family:var(--mono);font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;background:var(--surface2);border:1px solid var(--border2);margin-left:auto}
+.tl-eta-ok{color:#4ade80;border-color:var(--green)}
+.tl-eta-pending{color:#fbbf24;border-color:var(--amber)}
+.tl-eta-unknown{color:var(--muted);border-color:var(--border)}
+.tl-now-label{font-family:var(--mono);font-size:9px;color:var(--muted)}
+.tl-track-wrap{position:relative;height:52px;margin:0 0 4px}
+.tl-rail{position:absolute;top:24px;left:0;right:0;height:3px;background:var(--border2);border-radius:2px}
+.tl-rail-filled{position:absolute;top:0;left:0;height:3px;border-radius:2px;background:linear-gradient(90deg,#3b82f6,#8b5cf6);transition:width .1s}
+.tl-cursor{position:absolute;top:-7px;width:17px;height:17px;border-radius:50%;background:#fff;border:3px solid #8b5cf6;box-shadow:0 0 8px rgba(139,92,246,.6);cursor:grab;transform:translateX(-50%);transition:left .05s;z-index:10}
+.tl-cursor:active{cursor:grabbing;box-shadow:0 0 14px rgba(139,92,246,.9)}
+.tl-pin{position:absolute;top:-2px;transform:translateX(-50%);cursor:pointer;z-index:8}
+.tl-pin-dot{width:11px;height:11px;border-radius:50%;border:2px solid;margin:0 auto;transition:all .2s}
+.tl-pin-label{position:absolute;top:16px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:8px;white-space:nowrap;color:var(--muted);pointer-events:none}
+.tl-pin:hover .tl-pin-dot{transform:scale(1.5)}
+.tl-pin-tooltip{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);background:var(--surface3);border:1px solid var(--border2);border-radius:5px;padding:5px 9px;font-family:var(--mono);font-size:10px;color:var(--text);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:20;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.tl-pin:hover .tl-pin-tooltip{opacity:1}
+.tl-ticks{position:relative;height:16px;margin-top:2px}
+.tl-tick{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center}
+.tl-tick-line{width:1px;height:6px;background:var(--border2);margin:0 auto 2px}
+.tl-legend-row{display:flex;align-items:center;gap:16px;margin-top:8px;flex-wrap:wrap}
+.tl-legend-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--muted)}
+.tl-legend-dot{width:9px;height:9px;border-radius:50%;border:2px solid}
+
+/* ══ CELLULE TAB ══ */
+#tab-cellule{flex-direction:row}
+.cellule-col{flex:1;display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden}
+.cellule-col:last-child{border-right:none}
+.col-header{padding:8px 12px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.col-header h2{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
+.col-body{flex:1;overflow-y:auto}
+.col-footer{padding:9px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.presence-entry{padding:7px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;font-size:12px}
+.presence-time{font-family:var(--mono);font-size:9px;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.presence-info{flex:1}.presence-nom{font-weight:600}.presence-role{font-size:10px;color:var(--muted2)}
+.presence-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px}
+.presence-badge.entree{background:var(--green-dim);color:#4ade80}.presence-badge.sortie{background:var(--red-dim);color:#f87171}
+.decision-entry{padding:9px 12px;border-bottom:1px solid var(--border);font-size:12px}
+.decision-time{font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:2px}
+.decision-responsable{font-family:var(--mono);font-size:10px;color:#93c5fd;margin-bottom:2px}
+.decision-text{color:var(--text);line-height:1.5}
+.decision-base{margin-top:2px;font-family:var(--mono);font-size:9px;color:var(--muted);background:var(--surface2);padding:1px 5px;border-radius:3px;display:inline-block}
+
+/* ══ RELÈVE TAB ══ */
+#tab-releve{flex-direction:row}
+.consigne-item{padding:10px 12px;border-bottom:1px solid var(--border)}
+.consigne-header{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.consigne-pour{font-family:var(--mono);font-size:11px;font-weight:700;color:#fbbf24}
+.consigne-time{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.consigne-text{font-size:12px;color:var(--muted2);line-height:1.5;margin-bottom:5px}
+.badge-accuse{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px}
+.badge-accuse.ok{background:var(--green-dim);color:#4ade80}.badge-accuse.pending{background:var(--amber-dim);color:#fbbf24}
+.btn-accuse{font-family:var(--mono);font-size:10px;padding:3px 8px;background:var(--amber-dim);color:#fbbf24;border:1px solid var(--amber);border-radius:3px;cursor:pointer}
+.btn-accuse:hover{background:var(--amber);color:#000}
+
+/* ══ ANNUAIRE TAB ══ */
+#tab-annuaire{flex-direction:column;overflow:hidden}
+.annuaire-layout{display:flex;flex:1;overflow:hidden}
+.annuaire-sidebar{width:200px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.annuaire-sidebar-header{padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface)}
+.annuaire-sidebar-header h3{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
+.ann-mode-btn{display:block;width:100%;text-align:left;padding:10px 14px;font-family:var(--mono);font-size:11px;font-weight:600;background:transparent;color:var(--muted);border:none;border-left:3px solid transparent;cursor:pointer;transition:all .15s}
+.ann-mode-btn:hover{background:var(--surface);color:var(--text)}
+.ann-mode-btn.active{background:var(--surface2);color:var(--text);border-left-color:var(--red)}
+.annuaire-content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.ann-search-bar{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.ann-search-bar input{font-family:var(--mono);font-size:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:4px;padding:6px 10px;width:100%}
+.ann-search-bar input:focus{outline:none;border-color:var(--blue)}
+.annuaire-list{flex:1;overflow-y:auto}
+
+/* Carnet d'adresses */
+.ann-group{border-bottom:2px solid var(--border2)}
+.ann-group-header{padding:6px 14px;background:var(--surface2);font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);position:sticky;top:0;z-index:10;border-bottom:1px solid var(--border)}
+.ann-entry{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background .1s}
+.ann-entry:hover{background:var(--surface)}
+.ann-avatar{width:32px;height:32px;border-radius:50%;background:var(--surface3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted2);flex-shrink:0}
+.ann-info{flex:1;min-width:0}
+.ann-name{font-size:13px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ann-service{font-size:11px;color:var(--muted2)}
+.ann-phones{display:flex;flex-direction:column;gap:2px;align-items:flex-end;flex-shrink:0}
+.ann-phone{font-family:var(--mono);font-size:12px;font-weight:700;color:#4ade80}
+.ann-phone-label{font-family:var(--mono);font-size:9px;color:var(--muted);text-align:right}
+.ann-secours-badge{font-family:var(--mono);font-size:9px;padding:2px 6px;background:var(--red-dim);color:#f87171;border:1px solid var(--red);border-radius:3px;margin-top:3px}
+.ann-normal-badge{font-family:var(--mono);font-size:9px;padding:2px 6px;background:var(--green-dim);color:#4ade80;border:1px solid var(--green);border-radius:3px;margin-top:3px}
+
+/* Buttons shared */
+.btn-success{padding:5px 9px;font-family:var(--mono);font-size:10px;background:var(--green-dim);color:#4ade80;border:1px solid var(--green);border-radius:4px;cursor:pointer}
+.btn-danger{padding:5px 9px;font-family:var(--mono);font-size:10px;background:var(--red-dim);color:#f87171;border:1px solid var(--red);border-radius:4px;cursor:pointer}
+.empty-state{padding:28px 14px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:11px}
+
+/* TOAST */
+#toast{position:fixed;bottom:14px;right:14px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:7px 12px;font-family:var(--mono);font-size:11px;color:var(--text);opacity:0;transition:opacity .3s;z-index:9999;max-width:280px}
+#toast.show{opacity:1}#toast.ok{border-color:var(--green);color:#4ade80}#toast.err{border-color:var(--red);color:#f87171}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ══ LOGIN OVERLAY ══ */
+#login-overlay{position:fixed;inset:0;background:var(--bg);z-index:9000;display:flex;align-items:center;justify-content:center;flex-direction:column}
+#login-overlay.hidden{display:none!important}
+#login-overlay.hidden{display:none}
+.login-box{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:32px 36px;width:360px;display:flex;flex-direction:column;gap:14px}
+.login-logo{font-family:var(--mono);font-size:22px;font-weight:700;letter-spacing:3px;text-align:center;color:var(--red)}
+.login-logo span{color:var(--muted);font-weight:400}
+.login-sub{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-align:center;color:var(--muted);text-transform:uppercase}
+.login-field{display:flex;flex-direction:column;gap:4px}
+.login-field label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.login-field input{font-family:var(--mono);font-size:13px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:8px 11px}
+.login-field input:focus{outline:none;border-color:var(--red)}
+.btn-login{width:100%;padding:10px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:2px;background:var(--red);color:#fff;border:none;border-radius:5px;cursor:pointer;transition:opacity .15s}
+.btn-login:hover{opacity:.85}
+.login-err{font-family:var(--mono);font-size:11px;color:#f87171;text-align:center;display:none}
+.login-err.show{display:block}
+
+/* ══ INBOX / NOTIFICATIONS ══ */
+.notif-btn{position:relative;cursor:pointer;padding:3px 7px;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--muted2)}
+.notif-btn:hover{border-color:var(--muted)}
+.notif-badge{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;border-radius:8px;background:var(--red);color:#fff;font-family:var(--mono);font-size:9px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 3px}
+.notif-badge.show{display:flex}
+#notif-panel{position:fixed;top:46px;right:0;width:380px;height:calc(100vh - 46px);background:var(--surface);border-left:2px solid var(--border2);z-index:800;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .2s}
+#notif-panel.open{transform:translateX(0)}
+.np-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.np-title{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);flex:1}
+.np-close{cursor:pointer;font-size:18px;color:var(--muted);padding:0 4px}
+.np-close:hover{color:var(--text)}
+.np-list{flex:1;overflow-y:auto}
+.np-item{padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.np-item:hover{background:var(--surface2)}
+.np-item.unread{background:var(--surface2);border-left:3px solid var(--red)}
+.np-item-titre{font-size:12px;font-weight:600;margin-bottom:3px}
+.np-item-msg{font-size:11px;color:var(--muted2);line-height:1.4}
+.np-item-time{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px}
+.np-actions{padding:8px 14px;border-top:1px solid var(--border);display:flex;gap:7px;flex-shrink:0}
+
+/* ══ USER CHIP ══ */
+.user-chip{font-family:var(--mono);font-size:10px;padding:3px 9px;background:var(--surface2);color:var(--muted2);border:1px solid var(--border2);border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:5px}
+.user-chip:hover{border-color:var(--muted)}
+.role-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.role-dot.admin{background:var(--red)}
+
+/* ══ ADMIN PANEL ══ */
+#admin-panel{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center}
+#admin-panel.open{display:flex}
+.admin-box{background:var(--surface);border:1px solid var(--border2);border-radius:8px;width:640px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
+.admin-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.admin-title{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);flex:1}
+.admin-body{padding:16px;overflow-y:auto;flex:1}
+.admin-section{margin-bottom:20px}
+.admin-section h3{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.user-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.user-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface2);border-radius:5px;border:1px solid var(--border2)}
+.user-row-name{font-size:12px;font-weight:600;flex:1}
+.user-row-meta{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.role-admin{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;background:rgba(229,62,62,.15);color:#f87171;border:1px solid var(--red)}
+.role-directeur{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;background:var(--blue-dim);color:#60a5fa;border:1px solid #3b82f6}
+.role-observateur{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;background:var(--surface3);color:var(--muted);border:1px solid var(--border2)}
+.admin-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.admin-field{display:flex;flex-direction:column;gap:3px}
+.admin-field label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+/* ══ KANBAN ══ */
+#tab-kanban{flex-direction:column;overflow:hidden}
+.kanban-header{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;background:var(--surface)}
+.kanban-header h2{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
+.btn-new-task{font-family:var(--mono);font-size:10px;padding:4px 12px;background:var(--blue-dim);color:#60a5fa;border:1px solid #3b82f6;border-radius:4px;cursor:pointer}
+.btn-new-task:hover{background:var(--blue);color:#fff}
+.kanban-board{flex:1;display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding:12px}
+.kanban-col{width:260px;min-width:240px;flex-shrink:0;display:flex;flex-direction:column;background:var(--surface2);border-radius:7px;border:1px solid var(--border2);overflow:hidden}
+.kanban-col-header{padding:9px 13px;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--border);flex-shrink:0}
+.kanban-col-title{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;flex:1}
+.kanban-col-count{font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:10px;background:var(--surface3);color:var(--muted)}
+.kanban-cards{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:7px;min-height:80px}
+.kanban-cards.drag-over{background:rgba(37,99,235,.08);border-radius:5px}
+.kanban-card{background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--border2);border-radius:6px;padding:9px 11px;cursor:grab;transition:border-color .15s,box-shadow .15s;position:relative}
+.kanban-card:hover{border-color:var(--muted);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.kanban-card.dragging{opacity:.4;cursor:grabbing}
+.kanban-card.p4{border-left-color:#c084fc}.kanban-card.p3{border-left-color:#f87171}
+.kanban-card.p2{border-left-color:#fbbf24}.kanban-card.p1{border-left-color:#4ade80}
+.kc-title{font-size:12px;font-weight:600;margin-bottom:5px;line-height:1.3}
+.kc-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.kc-prio{font-family:var(--mono);font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px}
+.kc-p4{background:var(--purple-dim);color:#c084fc}.kc-p3{background:var(--red-dim);color:#f87171}
+.kc-p2{background:var(--amber-dim);color:#fbbf24}.kc-p1{background:var(--green-dim);color:#4ade80}
+.kc-assignee{font-family:var(--mono);font-size:9px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kc-due{font-family:var(--mono);font-size:9px;color:var(--muted)}
+.kc-inc-link{font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px;background:var(--blue-dim);color:#60a5fa;margin-top:4px;display:inline-block}
+.kc-actions{position:absolute;top:5px;right:5px;display:none;gap:3px}
+.kanban-card:hover .kc-actions{display:flex}
+.kc-btn{font-size:10px;padding:1px 5px;border-radius:3px;cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--muted)}
+.kc-btn:hover{color:var(--text)}
+.kanban-add-btn{margin:6px 8px 8px;padding:5px;font-family:var(--mono);font-size:10px;color:var(--muted);background:transparent;border:1px dashed var(--border2);border-radius:4px;cursor:pointer;width:calc(100% - 16px)}
+.kanban-add-btn:hover{border-color:var(--muted);color:var(--text)}
+#task-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1100;display:none;align-items:center;justify-content:center}
+#task-modal.open{display:flex}
+.task-modal-box{background:var(--surface);border:1px solid var(--border2);border-radius:8px;width:480px;display:flex;flex-direction:column;overflow:hidden}
+.task-modal-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.task-modal-body{padding:16px;display:flex;flex-direction:column;gap:10px}
+.task-modal-footer{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:7px;justify-content:flex-end}
+
+/* ══ REX ══ */
+#tab-rex{flex-direction:column;overflow:hidden}
+.rex-header{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;background:var(--surface)}
+.rex-header h2{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
+.rex-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px}
+.rex-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.rex-kpi{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:12px 14px;text-align:center}
+.rex-kpi-val{font-family:var(--mono);font-size:22px;font-weight:700;color:#60a5fa}
+.rex-kpi-label{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+.rex-chart-row{display:flex;gap:10px}
+.rex-chart-box{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:12px}
+.rex-chart-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.rex-bar-wrap{display:flex;flex-direction:column;gap:5px}
+.rex-bar-row{display:flex;align-items:center;gap:8px}
+.rex-bar-label{font-family:var(--mono);font-size:10px;color:var(--muted2);width:80px;flex-shrink:0;text-align:right}
+.rex-bar{flex:1;height:14px;background:var(--border2);border-radius:3px;overflow:hidden}
+.rex-bar-fill{height:100%;border-radius:3px;transition:width .6s}
+.rex-bar-val{font-family:var(--mono);font-size:10px;color:var(--muted);width:40px;flex-shrink:0}
+.rex-list{display:flex;flex-direction:column;gap:8px}
+.rex-entry-card{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:12px 14px}
+.rex-entry-header{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.rex-entry-titre{font-size:13px;font-weight:600;flex:1}
+.rex-entry-date{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.rex-entry-type{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px}
+.rex-entry-metrics{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:7px}
+.rex-metric{display:flex;flex-direction:column;gap:1px}
+.rex-metric-val{font-family:var(--mono);font-size:13px;font-weight:700;color:#60a5fa}
+.rex-metric-label{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase}
+.rex-section{margin-top:7px}
+.rex-section-title{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.rex-tag{display:inline-block;font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;margin:2px;background:var(--surface3);color:var(--muted2);border:1px solid var(--border2)}
+.rex-tag.pos{background:var(--green-dim);color:#4ade80;border-color:var(--green)}
+.rex-tag.amelio{background:var(--amber-dim);color:#fbbf24;border-color:var(--amber)}
+.rex-tag.action{background:var(--blue-dim);color:#60a5fa;border-color:#3b82f6}
+.btn-new-rex{font-family:var(--mono);font-size:10px;padding:4px 12px;background:var(--green-dim);color:#4ade80;border:1px solid var(--green);border-radius:4px;cursor:pointer}
+.btn-new-rex:hover{background:var(--green);color:#fff}
+#rex-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1200;display:none;align-items:center;justify-content:center}
+#rex-modal.open{display:flex}
+.rex-modal-box{background:var(--surface);border:1px solid var(--border2);border-radius:8px;width:580px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
+.rex-modal-body{padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+
+
+/* ══ LIGHT MODE ══ */
+body.light {
+  --bg:#f1f5f9;--surface:#ffffff;--surface2:#f8fafc;--surface3:#f0f4f8;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --red:#dc2626;--red-dim:rgba(220,38,38,.1);
+  --amber:#d97706;--amber-dim:rgba(217,119,6,.1);
+  --green:#16a34a;--green-dim:rgba(22,163,74,.1);
+  --blue:#2563eb;--blue-dim:rgba(37,99,235,.1);
+  --purple:#7c3aed;--purple-dim:rgba(124,58,237,.1);
+  --cyan:#0891b2;--cyan-dim:rgba(8,145,178,.1);
+  --text:#0f172a;--muted:#64748b;--muted2:#475569;
+}
+body.light .brand { color: #0f172a; }
+body.light header { background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+body.light .tab-btn { color: var(--muted); }
+body.light .tab-btn.active { background:#f1f5f9; color: var(--text); }
+body.light input, body.light select, body.light textarea {
+  background:#ffffff; border-color: var(--border2); color: var(--text);
+}
+body.light .incident-item { border-bottom-color: var(--border); }
+body.light .incident-item:hover, body.light .incident-item.expanded { background: #f8fafc; }
+body.light .soins-card { background: #ffffff; border-color: var(--border); }
+body.light .kanban-col { background: #f8fafc; }
+body.light .kanban-card { background: #ffffff; }
+body.light .rex-entry-card { background:#ffffff; }
+body.light #login-overlay { background: #f1f5f9; }
+body.light .login-box { background:#ffffff; box-shadow:0 4px 24px rgba(0,0,0,.1); }
+body.light #notif-panel { background:#ffffff; }
+body.light .admin-box { background:#ffffff; }
+body.light .user-row { background:#f8fafc; }
+body.light #map { filter: brightness(1.1) contrast(0.9); }
+/* Scrollbar light */
+body.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+/* Theme toggle button */
+.theme-toggle {
+  font-family:var(--mono);font-size:12px;padding:3px 9px;
+  background:var(--surface2);color:var(--muted2);
+  border:1px solid var(--border2);border-radius:4px;cursor:pointer;
+  transition:all .2s;user-select:none;
+}
+.theme-toggle:hover { border-color:var(--muted); color:var(--text); }
+
+/* ══ PIECES JOINTES dans les cards ══ */
+.pj-list { margin-top:6px; display:flex; flex-wrap:wrap; gap:5px; }
+.pj-chip {
+  display:inline-flex;align-items:center;gap:4px;
+  font-family:var(--mono);font-size:9px;
+  padding:2px 7px;border-radius:3px;
+  background:var(--surface3);color:var(--muted2);
+  border:1px solid var(--border2);
+  text-decoration:none;transition:all .15s;
+}
+.pj-chip:hover { background:var(--blue-dim);color:#60a5fa;border-color:#3b82f6; }
+.pj-ext { font-weight:700;color:#60a5fa; }
+
+/* ══ REX SIMPLIFIÉ ══ */
+.rex-wizard-step {
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:8px;padding:14px 16px;
+}
+.rex-wizard-step-title {
+  font-family:var(--mono);font-size:11px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted2);margin-bottom:12px;
+  display:flex;align-items:center;gap:7px;
+}
+.rex-wizard-step-num {
+  width:22px;height:22px;border-radius:50%;
+  background:var(--blue);color:#fff;
+  font-size:10px;font-weight:700;display:flex;
+  align-items:center;justify-content:center;flex-shrink:0;
+}
+.rex-natural-field { margin-bottom:10px; }
+.rex-natural-field label {
+  display:block;font-size:12px;color:var(--text);
+  margin-bottom:4px;line-height:1.4;
+}
+.rex-natural-field .hint {
+  font-family:var(--mono);font-size:9px;color:var(--muted);
+  margin-top:2px;display:block;
+}
+.rex-duration-row { display:flex;gap:8px;align-items:center; }
+.rex-duration-row input { width:70px;flex-shrink:0; }
+.rex-duration-row select { flex:1; }
+
+/* ══ MAP RESIZE ══ */
+#map-resize-handle{height:5px;background:var(--border);cursor:ns-resize;flex-shrink:0;transition:background .15s}
+#map-resize-handle:hover{background:var(--blue)}
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><div class="brand-dot"></div>SCRIBE <span style="color:var(--muted);font-weight:400">v6</span><span id="etab-sigle" style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:6px;letter-spacing:1px"></span></div>
+  <nav class="tabs">
+    <button class="tab-btn active" onclick="openTab('tab-veille',this)">🌐 VEILLE</button>
+    <button class="tab-btn"        onclick="openTab('tab-soins',this)">🏥 SOINS</button>
+    <button class="tab-btn"        onclick="openTab('tab-cellule',this)">🏛️ CELLULE</button>
+    <button class="tab-btn"        onclick="openTab('tab-kanban',this)">📋 KANBAN</button>
+    <button class="tab-btn"        onclick="openTab('tab-rex',this)">📊 REX</button>
+    <button class="tab-btn"        onclick="openTab('tab-releve',this)">🔄 RELÈVE</button>
+    <button class="tab-btn"        onclick="openTab('tab-annuaire',this)">📞 ANNUAIRE</button>
+  </nav>
+  <div class="header-right">
+    <div id="incident-level" class="green">VEILLE NORMALE</div>
+    <div class="clock" id="clock">--:--:--</div>
+    <a href="https://lasuite.numerique.gouv.fr/produits/visio" target="_blank" class="visio-btn">📹 VISIO</a>
+    <a href="https://lasuite.numerique.gouv.fr/produits/pad" target="_blank" class="visio-btn" style="background:rgba(74,222,128,.1);color:#4ade80;border-color:#16a34a">📝 PAD</a>
+    <button class="notif-btn" id="notif-toggle" onclick="toggleNotifPanel()">🔔 <span id="notif-count-txt">Inbox</span><span class="notif-badge" id="notif-badge">0</span></button>
+    <button class="user-chip" id="user-chip" onclick="showAdminPanel()"><span class="role-dot" id="role-dot"></span><span id="current-user-name">...</span></button>
+    <span id="ia-badge" style="display:none;font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;background:var(--surface2);color:var(--muted2);border:1px solid var(--border2);cursor:default;letter-spacing:.5px"></span>
+    <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Basculer clair/sombre">🌙</button>
+    <button style="font-family:var(--mono);font-size:10px;padding:3px 9px;background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:4px;cursor:pointer" onclick="doLogout()">⏻</button>
+  </div>
+</header>
+
+<!-- ══════════════════ TAB VEILLE ══════════════════════ -->
+<div id="tab-veille" class="tab-content active">
+  <aside class="entry-col">
+    <div class="form-section">
+      <h3>🚨 Déclaration d'incident</h3>
+
+      <div class="field">
+        <label>Type de crise</label>
+        <div class="selector-row" id="crise-selector">
+          <button class="sel-btn sel-active" data-crise="CYBER"     onclick="selectCrise(this)">🛡️ CYBER</button>
+          <button class="sel-btn"            data-crise="SANITAIRE" onclick="selectCrise(this)">🏥 SANITAIRE</button>
+          <button class="sel-btn"            data-crise="MIXTE"     onclick="selectCrise(this)">⚠️ MIXTE</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Directeur de crise</label>
+        <select id="directeur_crise"><option value="">-- Sélectionner --</option></select>
+      </div>
+
+      <div class="form-row">
+        <div class="field" style="flex:1"><label>Site</label>
+          <select id="site_id" onchange="loadUF()"><option value="">-- Site --</option></select>
+        </div>
+        <div class="field" style="flex:1;position:relative"><label>Unité Fonct.</label>
+          <input type="text" id="uf_search" placeholder="Code ou nom UF..." autocomplete="off"
+            oninput="filterUFList()" onfocus="showUFDropdown()" onkeydown="ufKeyNav(event)"
+            style="padding-right:26px">
+          <span onclick="clearUF()" style="position:absolute;right:7px;top:24px;color:var(--muted);cursor:pointer;font-size:12px">✕</span>
+          <input type="hidden" id="unite_fonctionnelle">
+          <div id="uf-dropdown" style="display:none;position:absolute;z-index:500;top:100%;left:0;right:0;max-height:180px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.4)"></div>
+        </div>
+      </div>
+
+      <div class="field"><label>Déclarant</label>
+        <input type="text" id="declarant_nom" placeholder="Nom du déclarant">
+      </div>
+
+      <div class="field">
+        <label>Niveau d'urgence</label>
+        <div class="selector-row" id="urgency-selector">
+          <button class="sel-btn sel-active" data-val="1" onclick="selectUrgency(this)">1 VEILLE</button>
+          <button class="sel-btn"            data-val="2" onclick="selectUrgency(this)">2 ALERTE</button>
+          <button class="sel-btn"            data-val="3" onclick="selectUrgency(this)">3 CRISE</button>
+          <button class="sel-btn"            data-val="4" onclick="selectUrgency(this)">4 CRITIQUE</button>
+        </div>
+      </div>
+
+      <div class="field"><label>Fait — Quoi ?</label>
+        <textarea id="fait" placeholder="Description factuelle..." rows="3"></textarea>
+      </div>
+      <div class="field"><label>Analyse — Impact ?</label>
+        <textarea id="analyse" placeholder="Systèmes/services affectés..." rows="2"></textarea>
+      </div>
+      <div class="field"><label>Moyens engagés</label>
+        <textarea id="moyens_engages" placeholder="Ressources déployées..." rows="2"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="field" style="flex:1"><label>Intervenant</label>
+          <input type="text" id="intervenant_nom" placeholder="Nom">
+        </div>
+        <div class="field" style="flex:1"><label>Contact</label>
+          <input type="text" id="intervenant_contact" placeholder="Tél">
+        </div>
+      </div>
+
+      <div class="jalons-form">
+        <div class="jalons-form-title">⏱ Jalons de résolution</div>
+        <div class="jalon-presets">
+          <button class="jalon-preset-btn" onclick="togglePreset(this)" data-label="Passé d'ordinateur">Passé d'ordi</button>
+          <button class="jalon-preset-btn" onclick="togglePreset(this)" data-label="DSI contacté">DSI contacté</button>
+          <button class="jalon-preset-btn" onclick="togglePreset(this)" data-label="RSSI alerté">RSSI alerté</button>
+          <button class="jalon-preset-btn" onclick="togglePreset(this)" data-label="Cellule activée">Cellule activée</button>
+          <button class="jalon-preset-btn" onclick="togglePreset(this)" data-label="CERT Santé notifié">CERT Santé</button>
+          <button class="jalon-preset-btn" onclick="togglePreset(this)" data-label="Isolation réseau">Isolation réseau</button>
+          <button class="jalon-preset-btn" onclick="togglePreset(this)" data-label="Sauvegarde vérifiée">Sauvegarde OK</button>
+          <button class="jalon-preset-btn" onclick="togglePreset(this)" data-label="Retour à la normale">Retour normal</button>
+        </div>
+        <div class="jalon-custom-input">
+          <input type="text" id="jalon-custom" placeholder="Jalon personnalisé...">
+          <button class="jalon-add-btn" onclick="addCustomJalon()">+ Ajouter</button>
+        </div>
+        <div class="jalon-tags" id="jalon-tags"></div>
+        <div class="field" style="margin-top:7px">
+          <label>Résolution estimée dans</label>
+          <select id="resolution-hours">
+            <option value="">-- Durée --</option>
+            <option value="0.5">30 min</option><option value="1">1 heure</option>
+            <option value="2">2 heures</option><option value="4">4 heures</option>
+            <option value="8">8 heures</option><option value="24">24 heures</option>
+            <option value="48">48 heures</option><option value="72">72 heures</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:7px">
+        <label>📎 Pièces jointes</label>
+        <input type="file" id="attachments-input" multiple>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px">Captures, logs, documents...</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" onclick="submitIncident()">📡 DIFFUSER</button>
+        <button class="btn-ai"      onclick="askAlbertForm()">🤖 ALBERT</button>
+      </div>
+    </div>
+  </aside>
+
+  <section class="view-col">
+    <div id="map"></div>
+    <div id="map-resize-handle"></div>
+    <div class="kpi-bar">
+      <div class="kpi blue"><div class="kpi-val" id="kpi-total">0</div><div class="kpi-label">Total</div></div>
+      <div class="kpi red"><div class="kpi-val" id="kpi-critical">0</div><div class="kpi-label">Critiques</div></div>
+      <div class="kpi amber"><div class="kpi-val" id="kpi-open">0</div><div class="kpi-label">Ouverts</div></div>
+      <div class="kpi green"><div class="kpi-val" id="kpi-cyber">0</div><div class="kpi-label">Cyber</div></div>
+      <div class="kpi purple"><div class="kpi-val" id="kpi-sani">0</div><div class="kpi-label">Sanitaire</div></div>
+    </div>
+    <div id="global-albert-bar">
+      <button class="btn-global-albert" id="btn-global-albert" onclick="askAlbertGlobal()">🧠 ANALYSE GLOBALE</button>
+      <a class="btn-export" href="/api/v1/sitrep/export-csv" download>📥 EXPORT CSV</a>
+      <span id="global-status-txt">Analyse de situation — tous les incidents ouverts + décisions</span>
+      <button id="btn-toggle-global" onclick="toggleGlobalPanel()">▲ Réduire</button>
+    </div>
+    <div id="global-albert-panel">
+      <div class="gap-header">
+        <span class="gap-title">🧠 Analyse Globale — Albert AI</span>
+        <span class="gap-level" id="gap-level"></span>
+        <span class="gap-close" onclick="closeGlobalPanel()">✕</span>
+      </div>
+      <div class="gap-body" id="gap-body"></div>
+    </div>
+    <div class="filter-bar">
+      <select id="f-site" onchange="applyFilters()"><option value="">Tous sites</option></select>
+      <select id="f-directeur" onchange="applyFilters()"><option value="">Tous directeurs</option></select>
+      <select id="f-urgency" onchange="applyFilters()">
+        <option value="">Toutes urgences</option>
+        <option value="1">1 Veille</option><option value="2">2 Alerte</option>
+        <option value="3">3 Crise</option><option value="4">4 Critique</option>
+      </select>
+      <select id="f-status" onchange="applyFilters()">
+        <option value="">Tous statuts</option>
+        <option value="SIGNALÉ">Signalé</option><option value="ANALYSE">Analyse</option>
+        <option value="RÉSOLUTION">Résolution</option><option value="RÉSOLU">Résolu</option>
+      </select>
+      <select id="f-type" onchange="applyFilters()">
+        <option value="">Tous types</option>
+        <option value="CYBER">Cyber</option><option value="SANITAIRE">Sanitaire</option><option value="MIXTE">Mixte</option>
+      </select>
+      <button class="btn-filter" onclick="resetFilters()">✕</button>
+    </div>
+    <div id="timeline"></div>
+  </section>
+</div>
+
+<!-- ══════════════════ TAB SOINS ═══════════════════════ -->
+<div id="tab-soins" class="tab-content">
+  <div class="soins-header">
+    <h2>🏥 Cartographie de Situation — Soins</h2>
+    <button class="btn-soins-albert" onclick="askAlbertSoins()">🧠 Analyse capacitaire Albert</button>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:8px" id="soins-last-update"></span>
+  </div>
+  <div class="soins-legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#4ade80"></div><span style="font-family:var(--mono);font-size:10px;color:var(--muted2)">Opérationnel</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div><span style="font-family:var(--mono);font-size:10px;color:var(--muted2)">Mode dégradé</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><span style="font-family:var(--mono);font-size:10px;color:var(--muted2)">Impact critique</span></div>
+  </div>
+  <div id="soins-content" style="flex:1;display:flex;overflow:hidden;min-height:0">
+    <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;">
+      <div class="transverses-section" id="transverses-section"></div>
+      <div class="soins-grid" id="soins-grid" style="padding:0 14px 14px 14px"></div>
+    </div>
+    <!-- Panel Albert latéral escamotable -->
+    <div id="soins-albert-panel" style="display:none;width:380px;min-width:340px;border-left:2px solid var(--purple);background:var(--surface2);flex-direction:column;flex-shrink:0">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span style="font-family:var(--mono);font-size:10px;letter-spacing:2px;color:#c084fc;text-transform:uppercase;flex:1">🧠 Analyse Albert</span>
+        <span id="soins-albert-level" style="font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 9px;border-radius:3px"></span>
+        <button onclick="closeSoinsAlbert()" style="font-family:var(--mono);font-size:11px;padding:3px 8px;background:var(--surface3);color:var(--muted2);border:1px solid var(--border2);border-radius:4px;cursor:pointer">✕ Fermer</button>
+      </div>
+      <div id="soins-albert-body" style="flex:1;overflow-y:auto;padding:12px;font-family:var(--mono);font-size:11px;color:var(--muted2);white-space:pre-line;line-height:1.7"></div>
+      <div style="padding:8px 14px;border-top:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--muted)" id="soins-albert-source"></div>
+    </div>
+  </div>
+
+  <!-- ── TIMELINE PROJECTION ── -->
+  <div class="soins-timeline" id="soins-timeline">
+    <div class="tl-header">
+      <span class="tl-title">📅 Projection de retour à la normale</span>
+      <span class="tl-now-label">Maintenant ▶</span>
+      <span class="tl-eta-global tl-eta-unknown" id="tl-eta-global">— Aucun ETA disponible</span>
+    </div>
+    <div class="tl-track-wrap" id="tl-track-wrap">
+      <div class="tl-rail">
+        <div class="tl-rail-filled" id="tl-rail-filled" style="width:0%"></div>
+      </div>
+      <div class="tl-cursor" id="tl-cursor"></div>
+      <!-- Pins injectés dynamiquement -->
+    </div>
+    <div class="tl-ticks" id="tl-ticks"></div>
+    <div class="tl-legend-row">
+      <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#f87171;border-color:#f87171"></div>Critique (U4)</div>
+      <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#fb923c;border-color:#fb923c"></div>Grave (U3)</div>
+      <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#fbbf24;border-color:#fbbf24"></div>Modéré (U2)</div>
+      <div class="tl-legend-item"><div class="tl-legend-dot" style="background:#60a5fa;border-color:#60a5fa"></div>Info (U1)</div>
+      <div class="tl-legend-item" style="margin-left:auto;color:var(--muted);font-size:9px">◀ Glisser pour projeter dans le temps ▶</div>
+    </div>
+  </div>
+
+</div><!-- /tab-soins -->
+
+<!-- ══════════════════ TAB CELLULE ══════════════════════ -->
+<div id="tab-cellule" class="tab-content">
+  <div class="cellule-col">
+    <div class="col-header"><h2>👥 Registre des présences</h2></div>
+    <div class="col-body" id="presence-list"><div class="empty-state">Aucune présence</div></div>
+    <div class="col-footer">
+      <div class="form-row" style="margin-bottom:5px">
+        <input type="text" id="p-nom"  placeholder="Nom de l'acteur" style="flex:1">
+        <input type="text" id="p-role" placeholder="Rôle/Fonction"   style="flex:1">
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <button class="btn-success" style="flex:1" onclick="logPresence('ENTRÉE')">▶ ENTRÉE</button>
+        <button class="btn-danger"  style="flex:1" onclick="logPresence('SORTIE')">◀ SORTIE</button>
+      </div>
+    </div>
+  </div>
+  <div class="cellule-col">
+    <div class="col-header"><h2>⚖️ Chronologie décisionnelle</h2></div>
+    <div class="col-body" id="decision-list"><div class="empty-state">Aucune décision</div></div>
+    <div class="col-footer">
+      <div class="field" style="margin-bottom:4px"><input type="text" id="d-responsable" placeholder="Responsable"></div>
+      <div class="field" style="margin-bottom:4px">
+        <select id="d-base">
+          <option value="Plan Blanc">Plan Blanc</option><option value="ORSAN">ORSAN</option>
+          <option value="PCA">PCA</option>
+          <option value="Décision direction">Décision direction</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:5px">
+        <textarea id="d-texte" placeholder="Décision prise..." rows="3"></textarea>
+      </div>
+      <button class="btn-primary" style="width:100%" onclick="saveDecision()">⚖️ ACTER</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ TAB RELÈVE ═══════════════════════ -->
+<div id="tab-releve" class="tab-content">
+  <div class="cellule-col" style="max-width:340px">
+    <div class="col-header"><h2>🔄 Nouvelle consigne</h2></div>
+    <div class="col-footer" style="border-top:none;border-bottom:1px solid var(--border)">
+      <div class="field" style="margin-bottom:4px"><label>Pour qui ?</label>
+        <input type="text" id="r-pour" placeholder="Reprenant">
+      </div>
+      <div class="field" style="margin-bottom:7px"><label>Consigne</label>
+        <textarea id="r-texte" placeholder="Actions en attente, vigilances..." rows="6"></textarea>
+      </div>
+      <button class="btn-primary" style="width:100%" onclick="sendConsigne()">📤 TRANSMETTRE</button>
+    </div>
+  </div>
+  <div class="cellule-col">
+    <div class="col-header"><h2>📋 Journal de relève</h2></div>
+    <div class="col-body" id="consigne-list"><div class="empty-state">Aucune consigne</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════ TAB ANNUAIRE ════════════════════ -->
+<div id="tab-annuaire" class="tab-content">
+  <div class="annuaire-layout">
+    <div class="annuaire-sidebar">
+      <div class="annuaire-sidebar-header"><h3>📞 Annuaire</h3></div>
+      <button class="ann-mode-btn active" onclick="switchAnnuaire('normal',this)">📗 Téléphonie normale</button>
+      <button class="ann-mode-btn"        onclick="switchAnnuaire('secours',this)">🚨 Téléphonie de secours</button>
+      <div style="margin-top:auto;padding:10px 12px;font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border)">
+        <b style="color:var(--muted2)">SECOURS (cyber/IPBX)</b><br>
+        • Seuls les fixes de secours fonctionnent<br>
+        • Faire le 9 pour le standard<br>
+        • Précéder d'un 0 pour l'extérieur<br>
+        • DECT Wi-Fi = hors service
+      </div>
+    </div>
+    <div class="annuaire-content">
+      <div class="ann-search-bar">
+        <input type="text" id="ann-search" placeholder="🔍 Rechercher un service, un numéro..." oninput="filterAnnuaire()">
+      </div>
+      <div class="annuaire-list" id="annuaire-list"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════ LOGIN OVERLAY ══════════════════ -->
+<div id="login-overlay" style="display:flex">
+  <div class="login-box">
+    <div class="login-logo">SCRIBE <span>v6</span></div>
+    <div class="login-sub">Votre Établissement — Crisis OS</div>
+    <div class="login-field"><label>Identifiant</label><input type="text" id="login-user" placeholder="dircrise" autocomplete="username"></div>
+    <div class="login-field"><label>Mot de passe</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-login" onclick="doLogin()">CONNEXION</button>
+    <div class="login-err" id="login-err">Identifiants incorrects</div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;margin-top:4px">Réseau parallèle — Accès restreint</div>
+  </div>
+</div>
+
+<!-- ══════════════════ NOTIF PANEL ══════════════════════ -->
+<div id="notif-panel">
+  <div class="np-header">
+    <span class="np-title">🔔 Inbox</span>
+    <button style="font-family:var(--mono);font-size:9px;padding:2px 7px;background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:3px;cursor:pointer" onclick="markAllRead()">Tout lire</button>
+    <span class="np-close" onclick="toggleNotifPanel()">✕</span>
+  </div>
+  <div class="np-list" id="notif-list"><div class="empty-state">Aucune notification</div></div>
+  <div class="np-actions">
+    <span style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="np-count-info"></span>
+  </div>
+</div>
+
+<!-- ══════════════════ ADMIN PANEL ═════════════════════ -->
+<div id="admin-panel">
+  <div class="admin-box">
+    <div class="admin-header">
+      <span class="admin-title">⚙️ Administration SCRIBE v6</span>
+      <button class="btn-sm blue" onclick="closeAdminPanel()">✕ Fermer</button>
+    </div>
+    <div class="admin-body">
+      <div class="admin-section">
+        <h3>Comptes utilisateurs</h3>
+        <div class="user-list" id="admin-user-list"><div class="empty-state">Chargement...</div></div>
+      </div>
+      <div class="admin-section" id="create-user-section">
+        <h3>Créer un compte</h3>
+        <div class="admin-form-grid">
+          <div class="admin-field"><label>Identifiant</label><input type="text" id="nu-username" placeholder="ex: jdupont"></div>
+          <div class="admin-field"><label>Nom affiché</label><input type="text" id="nu-display" placeholder="ex: M. Dupont DSI"></div>
+          <div class="admin-field"><label>Mot de passe</label><input type="password" id="nu-pass" placeholder="••••••••"></div>
+          <div class="admin-field"><label>Rôle</label>
+            <select id="nu-role"><option value="directeur">Directeur</option><option value="observateur">Observateur</option><option value="admin">Admin</option></select>
+          </div>
+          <div class="admin-field" style="grid-column:1/-1"><label>Périmètre (optionnel)</label><input type="text" id="nu-perimetre" placeholder="ex: CANCEROLOGIE, DNA, ANNECY..."></div>
+        </div>
+        <button class="btn-primary" style="margin-top:10px;width:100%" onclick="createUser()">➕ Créer le compte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ TAB KANBAN ══════════════════════ -->
+<div id="tab-kanban" class="tab-content">
+  <div class="kanban-header">
+    <h2>📋 Tableau de bord opérationnel — Kanban</h2>
+    <button class="btn-new-task" onclick="openTaskModal()">+ Nouvelle tâche</button>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:8px">Glisser-déposer pour déplacer</span>
+  </div>
+  <div class="kanban-board" id="kanban-board">
+    <div class="kanban-col" data-col="BACKLOG">
+      <div class="kanban-col-header" style="border-top:3px solid var(--muted)">
+        <span class="kanban-col-title">📥 Backlog</span>
+        <span class="kanban-col-count" id="cnt-BACKLOG">0</span>
+      </div>
+      <div class="kanban-cards" id="col-BACKLOG" ondragover="onDragOver(event,'BACKLOG')" ondrop="onDrop(event,'BACKLOG')" ondragleave="onDragLeave(event)"></div>
+      <button class="kanban-add-btn" onclick="openTaskModal(null,'BACKLOG')">+ Ajouter une tâche</button>
+    </div>
+    <div class="kanban-col" data-col="EN_COURS">
+      <div class="kanban-col-header" style="border-top:3px solid #3b82f6">
+        <span class="kanban-col-title" style="color:#60a5fa">▶ En cours</span>
+        <span class="kanban-col-count" id="cnt-EN_COURS">0</span>
+      </div>
+      <div class="kanban-cards" id="col-EN_COURS" ondragover="onDragOver(event,'EN_COURS')" ondrop="onDrop(event,'EN_COURS')" ondragleave="onDragLeave(event)"></div>
+      <button class="kanban-add-btn" onclick="openTaskModal(null,'EN_COURS')">+ Ajouter une tâche</button>
+    </div>
+    <div class="kanban-col" data-col="EN_ATTENTE">
+      <div class="kanban-col-header" style="border-top:3px solid var(--amber)">
+        <span class="kanban-col-title" style="color:#fbbf24">⏸ En attente</span>
+        <span class="kanban-col-count" id="cnt-EN_ATTENTE">0</span>
+      </div>
+      <div class="kanban-cards" id="col-EN_ATTENTE" ondragover="onDragOver(event,'EN_ATTENTE')" ondrop="onDrop(event,'EN_ATTENTE')" ondragleave="onDragLeave(event)"></div>
+      <button class="kanban-add-btn" onclick="openTaskModal(null,'EN_ATTENTE')">+ Ajouter une tâche</button>
+    </div>
+    <div class="kanban-col" data-col="TERMINÉ">
+      <div class="kanban-col-header" style="border-top:3px solid var(--green)">
+        <span class="kanban-col-title" style="color:#4ade80">✓ Terminé</span>
+        <span class="kanban-col-count" id="cnt-TERMINÉ">0</span>
+      </div>
+      <div class="kanban-cards" id="col-TERMINÉ" ondragover="onDragOver(event,'TERMINÉ')" ondrop="onDrop(event,'TERMINÉ')" ondragleave="onDragLeave(event)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ TAB REX ══════════════════════════ -->
+<div id="tab-rex" class="tab-content">
+  <div class="rex-header">
+    <h2>📊 Retour d'Expérience (REX)</h2>
+    <button class="btn-new-rex" onclick="openRexModal()">+ Nouveau REX</button>
+    <a class="btn-export" href="/api/v1/sitrep/export-csv" download style="margin-left:auto">📥 Export CSV incidents</a>
+  </div>
+  <div class="rex-body" id="rex-body">
+    <div class="rex-stats-grid" id="rex-stats-grid">
+      <div class="rex-kpi"><div class="rex-kpi-val" id="rex-total">—</div><div class="rex-kpi-label">REX Total</div></div>
+      <div class="rex-kpi"><div class="rex-kpi-val" id="rex-mttr" style="color:#fbbf24">—</div><div class="rex-kpi-label">MTTR Moyen</div></div>
+      <div class="rex-kpi"><div class="rex-kpi-val" id="rex-mttd" style="color:#f87171">—</div><div class="rex-kpi-label">MTTD Moyen</div></div>
+      <div class="rex-kpi"><div class="rex-kpi-val" id="rex-jalons-pct" style="color:#4ade80">—</div><div class="rex-kpi-label">Jalons % complétés</div></div>
+    </div>
+    <div class="rex-chart-row">
+      <div class="rex-chart-box" style="flex:1.5">
+        <div class="rex-chart-title">Incidents par type</div>
+        <div class="rex-bar-wrap" id="rex-by-type"></div>
+      </div>
+      <div class="rex-chart-box" style="flex:1">
+        <div class="rex-chart-title">Dernières fiches REX</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="rex-recent-list">Aucune fiche</div>
+      </div>
+    </div>
+    <div class="rex-chart-box" id="rex-incident-import-section">
+      <div class="rex-chart-title">Générer REX depuis un incident</div>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+        <div class="admin-field" style="flex:1"><label>Incident à analyser</label>
+          <select id="rex-inc-id">
+            <option value="">— Sélectionner un incident —</option>
+          </select>
+        </div>
+        <button class="btn-new-rex" onclick="genRexFromIncident()">🔄 Pré-remplir REX</button>
+        <a id="dl-rapport-btn" style="display:none" class="btn-export" href="#">📄 Télécharger rapport DOCX</a>
+      </div>
+    </div>
+    <div class="rex-list" id="rex-list"><div class="empty-state">Aucune fiche REX — créez-en une via le bouton ci-dessus</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════ TASK MODAL ══════════════════════ -->
+<div id="task-modal">
+  <div class="task-modal-box">
+    <div class="task-modal-header">
+      <span style="font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);flex:1" id="task-modal-title">Nouvelle tâche</span>
+      <button class="btn-sm" onclick="closeTaskModal()">✕</button>
+    </div>
+    <div class="task-modal-body">
+      <div class="admin-field"><label>Titre</label><input type="text" id="tm-titre" placeholder="Description courte de la tâche"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="admin-field"><label>Assigné à</label><input type="text" id="tm-assignee" placeholder="ex: jdupont"></div>
+        <div class="admin-field"><label>Priorité</label>
+          <select id="tm-priorite">
+            <option value="4">🔴 4 — Critique</option>
+            <option value="3">🟠 3 — Haute</option>
+            <option value="2" selected>🟡 2 — Normale</option>
+            <option value="1">🟢 1 — Basse</option>
+          </select>
+        </div>
+        <div class="admin-field"><label>Colonne</label>
+          <select id="tm-colonne">
+            <option value="BACKLOG">Backlog</option>
+            <option value="EN_COURS">En cours</option>
+            <option value="EN_ATTENTE">En attente</option>
+            <option value="TERMINÉ">Terminé</option>
+          </select>
+        </div>
+        <div class="admin-field"><label>Lié à l'incident</label>
+          <select id="tm-incident">
+            <option value="">— Aucun —</option>
+          </select>
+        </div>
+      </div>
+      <div class="admin-field"><label>Description</label><textarea id="tm-desc" rows="3" placeholder="Détails, contexte..."></textarea></div>
+      <div class="admin-field"><label>Échéance</label><input type="datetime-local" id="tm-due"></div>
+    </div>
+    <div class="task-modal-footer">
+      <button class="btn-sm" onclick="closeTaskModal()">Annuler</button>
+      <button class="btn-primary" style="padding:6px 18px;flex:unset" onclick="saveTask()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ REX MODAL ══════════════════════ -->
+<div id="rex-modal">
+  <div class="rex-modal-box">
+    <div class="admin-header">
+      <span class="admin-title">📊 Nouvelle fiche REX</span>
+      <button class="btn-sm" onclick="closeRexModal()">✕</button>
+    </div>
+    <div class="rex-modal-body">
+
+      <div class="rex-wizard-step">
+        <div class="rex-wizard-step-title"><span class="rex-wizard-step-num">1</span>Informations générales</div>
+        <div class="rex-natural-field">
+          <label>Quel incident analysez-vous ?</label>
+          <input type="text" id="rex-titre" placeholder="ex: Panne serveur imagerie médicale — nuit du 10 mars">
+          <span class="hint">Nommez l'événement de façon simple et mémorable</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="rex-natural-field" style="flex:1;min-width:120px">
+            <label>Type de crise</label>
+            <select id="rex-type">
+              <option value="CYBER">🛡️ Cyber / Informatique</option>
+              <option value="SANITAIRE">🏥 Sanitaire / Soins</option>
+              <option value="MIXTE">⚠️ Mixte</option>
+            </select>
+          </div>
+          <div class="rex-natural-field" style="flex:1;min-width:140px">
+            <label>Rédigé par</label>
+            <input type="text" id="rex-redacteur" placeholder="Votre nom / fonction">
+          </div>
+        </div>
+      </div>
+
+      <div class="rex-wizard-step">
+        <div class="rex-wizard-step-title"><span class="rex-wizard-step-num">2</span>Chronologie — Combien de temps ?</div>
+        <div class="rex-natural-field">
+          <label>⏱ Quand avez-vous su qu'il y avait un problème ? <small style="color:var(--muted)">(délai depuis le début réel)</small></label>
+          <div class="rex-duration-row">
+            <input type="number" id="rex-mttd-h" placeholder="0" min="0" style="width:60px">
+            <span style="color:var(--muted);font-family:var(--mono);font-size:11px">h</span>
+            <input type="number" id="rex-mttd-m" placeholder="0" min="0" max="59" style="width:60px">
+            <span style="color:var(--muted);font-family:var(--mono);font-size:11px">min</span>
+            <span class="hint" style="margin:0">après le début de l'incident</span>
+          </div>
+        </div>
+        <div class="rex-natural-field">
+          <label>🔧 Combien de temps pour résoudre le problème ?</label>
+          <div class="rex-duration-row">
+            <input type="number" id="rex-mttr-h" placeholder="0" min="0" style="width:60px">
+            <span style="color:var(--muted);font-family:var(--mono);font-size:11px">h</span>
+            <input type="number" id="rex-mttr-m" placeholder="0" min="0" max="59" style="width:60px">
+            <span style="color:var(--muted);font-family:var(--mono);font-size:11px">min</span>
+            <span class="hint" style="margin:0">du début à la résolution</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="rex-natural-field" style="flex:1;min-width:100px">
+            <label>🏥 Combien de services impactés ?</label>
+            <input type="number" id="rex-poles" value="0" min="0">
+          </div>
+          <div class="rex-natural-field" style="flex:1;min-width:100px">
+            <label>⚖️ Décisions prises en cellule</label>
+            <input type="number" id="rex-decisions" value="0" min="0">
+          </div>
+          <div class="rex-natural-field" style="flex:1;min-width:100px">
+            <label>✅ Étapes réalisées / prévues</label>
+            <div style="display:flex;gap:4px;align-items:center">
+              <input type="number" id="rex-jd" value="0" min="0" style="width:55px">
+              <span style="color:var(--muted);font-size:11px">sur</span>
+              <input type="number" id="rex-jt" value="0" min="0" style="width:55px">
+            </div>
+          </div>
+        </div>
+        <!-- champs cachés pour compatibilité backend -->
+        <input type="hidden" id="rex-duree">
+        <input type="hidden" id="rex-mttd-in">
+        <input type="hidden" id="rex-mttr-in">
+      </div>
+
+      <div class="rex-wizard-step">
+        <div class="rex-wizard-step-title"><span class="rex-wizard-step-num">3</span>Bilan — Ce qu'on retient</div>
+        <div class="rex-natural-field">
+          <label>👍 Qu'est-ce qui a bien fonctionné ? <span class="hint" style="display:inline">(un point par ligne)</span></label>
+          <textarea id="rex-pos" rows="2" placeholder="La cellule de crise a été rapidement activée&#10;Les sauvegardes étaient disponibles&#10;..."></textarea>
+        </div>
+        <div class="rex-natural-field">
+          <label>👎 Qu'est-ce qui peut être amélioré ? <span class="hint" style="display:inline">(un point par ligne)</span></label>
+          <textarea id="rex-amelio" rows="2" placeholder="La procédure n'était pas connue de tous&#10;Délai de communication trop long&#10;..."></textarea>
+        </div>
+        <div class="rex-natural-field">
+          <label>🎯 Quelles actions concrètes pour ne pas répéter ? <span class="hint" style="display:inline">(un point par ligne)</span></label>
+          <textarea id="rex-actions" rows="2" placeholder="Former les cadres de nuit à la procédure P12&#10;Tester les sauvegardes chaque trimestre&#10;..."></textarea>
+        </div>
+        <div class="rex-natural-field">
+          <label>📖 Message principal à retenir de cet incident</label>
+          <textarea id="rex-lecons" rows="2" placeholder="En résumé, ce qu'il faut retenir pour les prochains exercices..."></textarea>
+        </div>
+      </div>
+
+    </div>
+    <div class="task-modal-footer">
+      <button class="btn-sm" onclick="closeRexModal()">Annuler</button>
+      <button class="btn-primary" style="padding:6px 18px;flex:unset" onclick="saveRex()">💾 Enregistrer REX</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ═══════════════════ SCRIBE v4 ════════════════════════ */
+
+let map, markers = {};
+let allIncidents = [], allDecisions = [];
+let incAttachments = {};  // cache PJ par incident id
+let selectedUrgency = 1, selectedCrise = "CYBER";
+let jalonsList = [];
+let annuaireMode = 'normal';
+
+const URG_LABELS = {1:'VEILLE',2:'ALERTE',3:'CRISE',4:'CRITIQUE'};
+const STATUSES   = ['SIGNALÉ','ANALYSE','RÉSOLUTION','RÉSOLU'];
+
+// ── ANNUAIRE DATA ─────────────────────────────────────
+// Téléphonie nominale (interne 4 chiffres)
+// Annuaires chargés depuis config.js (généré par setup.py)
+const ANNUAIRE_NORMAL  = (typeof SCRIBE_CONFIG !== 'undefined') ? SCRIBE_CONFIG.annuaire_normal  : [];
+const ANNUAIRE_SECOURS = (typeof SCRIBE_CONFIG !== 'undefined') ? SCRIBE_CONFIG.annuaire_secours : [];
+
+// ── INIT ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  startClock();
+  applyScribeConfig();   // charge directeurs + titre depuis config.js
+  initMap();
+  await loadSites();
+  await loadUfToPole();
+  await refreshAll();
+  setInterval(refreshAll, 12000);
+  renderAnnuaire();
+});
+
+// ── CONFIG DYNAMIQUE (depuis config.js généré par setup.py) ──────────
+function applyScribeConfig() {
+  if (typeof SCRIBE_CONFIG === 'undefined') return;
+
+  // Titre de la page et brand
+  const etab = SCRIBE_CONFIG.etablissement || {};
+  if (etab.nom) {
+    document.title = `SCRIBE | ${etab.nom}`;
+    const sigleEl = document.getElementById('etab-sigle');
+    if (sigleEl && etab.sigle) sigleEl.textContent = etab.sigle;
+  }
+
+  // Badge fournisseur IA (chargé depuis l'API)
+  fetch('/api/v1/albert/config').then(r=>r.json()).then(cfg => {
+    const badge = document.getElementById('ia-badge');
+    if (!badge) return;
+    const icons = {
+      albert:'🇫🇷', openai:'🤖', anthropic:'🟤', gemini:'🔷',
+      mistral:'🌪️', ollama:'🏠', openai_compat:'⚙️'
+    };
+    const icon = icons[cfg.provider] || '🧠';
+    badge.textContent = `${icon} ${cfg.provider.toUpperCase()}`;
+    badge.title = cfg.display_name;
+    badge.style.display = 'inline-block';
+  }).catch(() => {});
+
+  // Peupler le select des directeurs (formulaire déclaration)
+  const selDir = document.getElementById('directeur_crise');
+  if (selDir && SCRIBE_CONFIG.directeurs && SCRIBE_CONFIG.directeurs.length) {
+    SCRIBE_CONFIG.directeurs.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.nom;
+      opt.textContent = `${d.nom} (${d.abreviation})`;
+      selDir.appendChild(opt);
+    });
+  }
+
+  // Peupler le filtre directeur (barre de filtres)
+  const selFDir = document.getElementById('f-directeur');
+  if (selFDir && SCRIBE_CONFIG.directeurs && SCRIBE_CONFIG.directeurs.length) {
+    SCRIBE_CONFIG.directeurs.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.nom;
+      opt.textContent = `${d.nom.split(' ').pop()} (${d.abreviation})`;
+      selFDir.appendChild(opt);
+    });
+  }
+}
+
+function startClock() {
+  setInterval(() => document.getElementById('clock').textContent = new Date().toLocaleTimeString('fr-FR'), 1000);
+}
+
+// ── NAV ──────────────────────────────────────────────
+function openTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'tab-veille')    setTimeout(() => map && map.invalidateSize(), 200);
+  if (id === 'tab-rex')       populateRexIncidentSelect();
+  if (id === 'tab-soins')     { loadServiceStatuses().then(renderTransverses); renderSoins(); setTimeout(() => renderSoinsTimeline(allIncidents), 50); }
+  if (id === 'tab-cellule')   { loadPresences(); loadDecisions(); }
+  if (id === 'tab-releve')    loadConsignes();
+  if (id === 'tab-annuaire')  renderAnnuaire();
+}
+
+// ── CARTE ────────────────────────────────────────────
+function initMap() {
+  map = L.map('map', {zoomControl:true}).setView([45.96,6.09],11);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    {attribution:'©OSM ©CartoDB',maxZoom:19}).addTo(map);
+}
+
+function markerColor(n) {
+  return !n ? '#4ade80' : n<=2 ? '#fbbf24' : n<=5 ? '#f87171' : '#c084fc';
+}
+
+function updateMap(bySite) {
+  const sm = Object.fromEntries(bySite.map(s=>[s.site,s.count]));
+  Object.entries(markers).forEach(([nom,m]) => {
+    const c = sm[nom]||0, col = markerColor(c);
+    m.setIcon(L.divIcon({className:'',
+      html:`<div style="width:13px;height:13px;border-radius:50%;background:${col};border:2px solid rgba(255,255,255,.3);box-shadow:0 0 8px ${col}"></div>`,
+      iconSize:[13,13],iconAnchor:[6,6]}));
+    m.setPopupContent(`<b>${nom}</b><br>${c} incident(s) ouvert(s)`);
+  });
+}
+
+async function loadSites() {
+  try {
+    const sites = await (await fetch('/api/v1/cartographie/sites')).json();
+    ['site_id','f-site'].forEach(id => {
+      const sel = document.getElementById(id);
+      sites.forEach(s => sel.add(new Option(s.nom, s.nom)));
+    });
+    sites.forEach(s => {
+      const m = L.marker([s.latitude,s.longitude]).addTo(map).bindPopup(`<b>${s.nom}</b>`);
+      markers[s.nom] = m;
+    });
+  } catch(e) {}
+}
+
+let allUFList = []; // [{code_uf, libelle, pole}]
+let ufDropdownIdx = -1;
+
+async function loadUF() {
+  const site = document.getElementById('site_id').value;
+  allUFList = [];
+  clearUF();
+  if (!site) return;
+  try {
+    const units = await (await fetch(`/api/v1/cartographie/${encodeURIComponent(site)}/units`)).json();
+    allUFList = units;
+  } catch(e) {}
+}
+
+function filterUFList() {
+  const q = document.getElementById('uf_search').value.trim().toLowerCase();
+  document.getElementById('unite_fonctionnelle').value = ''; // reset hidden
+  showUFDropdown(q);
+}
+
+function showUFDropdown(q = '') {
+  const dd = document.getElementById('uf-dropdown');
+  if (!allUFList.length) { dd.style.display='none'; return; }
+  const filtered = q
+    ? allUFList.filter(u =>
+        u.code_uf.toLowerCase().startsWith(q) ||
+        u.libelle.toLowerCase().includes(q)
+      ).slice(0, 40)
+    : allUFList.slice(0, 40);
+
+  if (!filtered.length) { dd.style.display='none'; return; }
+  ufDropdownIdx = -1;
+  dd.innerHTML = filtered.map((u,i) =>
+    `<div class="uf-dd-item" data-code="${u.code_uf}" data-idx="${i}"
+      onmousedown="selectUF('${u.code_uf}','${u.libelle.replace(/'/g,"\\'")}')">
+      <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:#60a5fa;min-width:42px;display:inline-block">${u.code_uf}</span>
+      <span style="font-size:11px;color:var(--text)">${u.libelle}</span>
+    </div>`
+  ).join('');
+  dd.style.display = 'block';
+}
+
+function selectUF(code, libelle) {
+  document.getElementById('uf_search').value = `${code} — ${libelle}`;
+  document.getElementById('unite_fonctionnelle').value = code;
+  document.getElementById('uf-dropdown').style.display = 'none';
+}
+
+function clearUF() {
+  document.getElementById('uf_search').value = '';
+  document.getElementById('unite_fonctionnelle').value = '';
+  document.getElementById('uf-dropdown').style.display = 'none';
+}
+
+function ufKeyNav(e) {
+  const dd = document.getElementById('uf-dropdown');
+  const items = dd.querySelectorAll('.uf-dd-item');
+  if (!items.length) return;
+  if (e.key === 'ArrowDown') {
+    ufDropdownIdx = Math.min(ufDropdownIdx+1, items.length-1);
+    items.forEach((el,i) => el.style.background = i===ufDropdownIdx ? 'var(--surface3)':'');
+    e.preventDefault();
+  } else if (e.key === 'ArrowUp') {
+    ufDropdownIdx = Math.max(ufDropdownIdx-1, 0);
+    items.forEach((el,i) => el.style.background = i===ufDropdownIdx ? 'var(--surface3)':'');
+    e.preventDefault();
+  } else if (e.key === 'Enter' && ufDropdownIdx >= 0) {
+    const item = items[ufDropdownIdx];
+    selectUF(item.dataset.code, item.textContent.trim().split('—').slice(1).join('—').trim());
+    e.preventDefault();
+  } else if (e.key === 'Escape') {
+    dd.style.display = 'none';
+  }
+}
+
+// Fermer dropdown si clic ailleurs
+document.addEventListener('click', e => {
+  if (!e.target.closest('#uf_search') && !e.target.closest('#uf-dropdown'))
+    document.getElementById('uf-dropdown').style.display = 'none';
+});
+
+
+// ── REFRESH ──────────────────────────────────────────
+async function refreshAll() {
+  try {
+    const [incidents, stats, decisions] = await Promise.all([
+      fetch('/api/v1/sitrep/history').then(r=>r.json()),
+      fetch('/api/v1/sitrep/stats').then(r=>r.json()),
+      fetch('/api/v1/cellule/decisions').then(r=>r.json()).catch(()=>[]),
+    ]);
+    allIncidents = incidents;
+    allDecisions = decisions;
+    // Charger les PJ pour tous les incidents
+    const pjResults = await Promise.all(
+      incidents.map(i => fetch(`/api/v1/attachments/${i.id}`).then(r=>r.json()).catch(()=>[]))
+    );
+    incidents.forEach((inc, idx) => { incAttachments[inc.id] = pjResults[idx] || []; });
+    updateKPIs(stats);
+    updateLevel(stats);
+    updateMap(stats.by_site||[]);
+    applyFilters();
+  } catch(e) { console.error('refreshAll error:', e); }
+}
+
+function updateKPIs(s) {
+  document.getElementById('kpi-total').textContent    = s.total||0;
+  document.getElementById('kpi-critical').textContent = s.critical||0;
+  document.getElementById('kpi-open').textContent     = s.ouverts||0;
+  document.getElementById('kpi-cyber').textContent    = s.cyber||0;
+  document.getElementById('kpi-sani').textContent     = s.sanitaire||0;
+}
+
+function updateLevel(s) {
+  const el = document.getElementById('incident-level');
+  const c=s.critical||0, o=s.ouverts||0;
+  if(c>0){el.className='black';el.textContent='CRITIQUE';}
+  else if(o>=3){el.className='red';el.textContent='CRISE';}
+  else if(o>=1){el.className='amber';el.textContent='ALERTE';}
+  else{el.className='green';el.textContent='VEILLE NORMALE';}
+}
+
+// ── TIMELINE ─────────────────────────────────────────
+function applyFilters() {
+  const site = document.getElementById('f-site').value;
+  const dir  = document.getElementById('f-directeur').value;
+  const urg  = document.getElementById('f-urgency').value;
+  const sta  = document.getElementById('f-status').value;
+  const typ  = document.getElementById('f-type').value;
+  renderTimeline(allIncidents.filter(i=>
+    (!site || i.site_id===site) &&
+    (!dir  || (i.directeur_crise||'')===dir) &&
+    (!urg  || String(i.urgency)===urg) &&
+    (!sta  || i.status===sta) &&
+    (!typ  || i.type_crise===typ)
+  ));
+}
+
+function resetFilters() {
+  ['f-site','f-directeur','f-urgency','f-status','f-type'].forEach(id=>document.getElementById(id).value='');
+  renderTimeline(allIncidents);
+}
+
+function renderTimeline(list) {
+  const el = document.getElementById('timeline');
+  if (!list.length) { el.innerHTML='<div class="empty-state">Aucun incident — Système en veille</div>'; return; }
+  el.innerHTML = list.map(h => buildCard(h)).join('');
+}
+
+function buildCard(h) {
+  const ts = new Date(h.timestamp).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const opts = STATUSES.map(s=>`<option value="${s}"${h.status===s?' selected':''}>${s}</option>`).join('');
+  const urgLbl = URG_LABELS[h.urgency]||h.urgency;
+  // Pièces jointes — chargées en cache
+  const pjHTML = (incAttachments[h.id]||[]).length > 0
+    ? `<div class="pj-list">${(incAttachments[h.id]).map(a=>{
+        const ext = a.filename.split('.').pop().toUpperCase();
+        const url = '/uploads/' + encodeURIComponent(a.filename.replace(/ /g,'_').replace(/^/,''));
+        // reconstruct url as stored by server: {id}_{filename}
+        const serverName = h.id + '_' + a.filename.replace(/ /g,'_');
+        return `<a class="pj-chip" href="/uploads/${encodeURIComponent(serverName)}" target="_blank" onclick="event.stopPropagation()" title="${a.filename}">
+          <span class="pj-ext">${ext}</span>${a.filename.length > 20 ? a.filename.substring(0,18)+'…' : a.filename}
+        </a>`;
+      }).join('')}</div>`
+    : '';
+
+  // Jalons
+  let jalonsHTML='';
+  if(h.jalons){try{
+    const js=JSON.parse(h.jalons), tot=js.length, done=js.filter(j=>j.done).length, pct=tot?Math.round(done/tot*100):0;
+    jalonsHTML=`<div class="jalons-section">
+      <div class="jalons-title">⏱ JALONS — ${pct}%</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      ${js.map((j,i)=>`<div class="jalon-item">
+        <input type="checkbox" class="jalon-cb"${j.done?' checked':''} onchange="toggleJalon(${h.id},${i},this.checked)" onclick="event.stopPropagation()">
+        <span class="jalon-label${j.done?' jalon-done':''}">${j.label}</span>
+        ${j.done_at?`<span class="jalon-time">${new Date(j.done_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>`:''}
+      </div>`).join('')}
+    </div>`;}catch(e){}}
+
+  // Projection
+  let projHTML='';
+  if(h.estimated_resolution && h.status!=='RÉSOLU'){
+    const eta=new Date(h.estimated_resolution), now=new Date(), dm=Math.round((eta-now)/60000);
+    const ds=dm>0?(dm>=60?`dans ${Math.floor(dm/60)}h${String(dm%60).padStart(2,'0')}`:`dans ${dm} min`):'DÉPASSÉE';
+    projHTML=`<div class="projection-section">
+      <div class="proj-title">📊 PROJECTION RETOUR NORMAL</div>
+      <div class="proj-row"><span class="proj-label">Résolution estimée:</span><span class="proj-val">${eta.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span></div>
+      <div class="proj-eta">${ds}</div>
+      ${h.completion_percent?`<div class="proj-row"><span class="proj-label">Avancement:</span><span class="proj-val">${h.completion_percent}%</span></div>`:''}
+    </div>`;
+  }
+
+  // Albert avis
+  let alHTML='';
+  if(h.albert_avis){
+    alHTML=`<div class="albert-inline">
+      <div class="albert-inline-title">⚡ AVIS ALBERT AI</div>
+      <div class="albert-inline-body">${h.albert_avis}</div>
+    </div>`;}
+
+  const resBadge=h.resolved_at?`<span class="resolved-badge">✓ ${new Date(h.resolved_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span>`:'';
+
+  const dirBadge=h.directeur_crise?`<span class="inc-dir">${h.directeur_crise.split(' ').slice(-1)[0]}</span>`:'';
+
+  const detail=[
+    h.analyse?`<div><b>Analyse:</b> ${h.analyse}</div>`:'',
+    h.moyens_engages?`<div><b>Moyens:</b> ${h.moyens_engages}</div>`:'',
+    h.intervenant_nom?`<div><b>Intervenant:</b> ${h.intervenant_nom} ${h.intervenant_contact||''}</div>`:'',
+  ].join('');
+
+  return `<div class="incident-item urgency-${h.urgency}" id="inc-${h.id}" onclick="toggleExpand(this)">
+    <div class="inc-header">
+      <span class="inc-urg urg-${h.urgency}">${urgLbl}</span>
+      <span class="inc-type type-${h.type_crise}">${h.type_crise}</span>
+      ${dirBadge}
+      <span class="inc-site">${h.site_id}${h.unite_fonctionnelle?' / '+h.unite_fonctionnelle:''}</span>
+      <span class="inc-time">${ts}</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--muted);background:var(--surface3);padding:1px 5px;border-radius:3px;flex-shrink:0">#${h.id}</span>
+    </div>
+    <div class="inc-fait">${h.fait}</div>
+    ${pjHTML}
+    <div class="inc-detail">
+      ${detail}${jalonsHTML}${projHTML}${alHTML}
+      <div class="inc-status-row">
+        <select onchange="updateStatus(${h.id},this.value)" onclick="event.stopPropagation()">${opts}</select>
+        ${resBadge}
+        <span class="inc-declarant">→ ${h.declarant_nom||'?'}</span>
+        <div class="btn-row-small">
+          <button class="btn-sm blue" onclick="askAlbertIncident(${h.id},'${encodeURIComponent(h.fait)}','${encodeURIComponent(h.analyse||'')}','${h.type_crise}',event)">🤖</button>
+          <button class="btn-sm green" onclick="uploadFor(${h.id},event)" title="Ajouter pièce jointe">📎</button>
+          <button class="btn-sm red" onclick="deleteInc(${h.id},event)">🗑</button>
+          <button class="btn-sm" style="color:#a78bfa;border-color:#7c3aed" onclick="quickCreateTask(${h.id},'${encodeURIComponent(h.fait.substring(0,60))}',event)" title="Créer tâche Kanban">📋</button>
+          <button class="btn-sm" style="color:#4ade80;border-color:#16a34a" onclick="quickRex(${h.id},event)" title="Générer rapport / REX">📄</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleExpand(el){el.classList.toggle('expanded')}
+
+
+// ── SERVICES TRANSVERSES (Sécurité physique / Logistique) ─────────────────
+let serviceStatuses = [];   // cache des statuts chargés depuis l'API
+
+async function loadServiceStatuses() {
+  try {
+    const r = await fetch('/api/v1/cartographie/service-status');
+    serviceStatuses = await r.json();
+  } catch(e) { serviceStatuses = []; }
+}
+
+function renderTransverses() {
+  const section = document.getElementById('transverses-section');
+  if (!section) return;
+  if (!serviceStatuses.length) {
+    section.innerHTML = '';
+    return;
+  }
+  const ICONS = { securite_physique: '🔒', logistique: '📦' };
+  const cardsHtml = serviceStatuses.map(s => {
+    const icon   = ICONS[s.service_id] || '⚙️';
+    const isOk   = s.statut === 'OK';
+    const isDeg  = s.statut === 'DEGRADE';
+    const isCrit = s.statut === 'CRITIQUE';
+    const ts     = s.updated_at ? new Date(s.updated_at).toLocaleTimeString('fr-FR') : '';
+    return `<div class="service-card">
+      <div class="service-card-header">
+        <span class="service-name">${icon} ${s.libelle}</span>
+        <div class="service-badge-btns">
+          <button class="${isOk   ? 'active-ok'       : 'inactive'}"
+                  onclick="setServiceStatus('${s.service_id}','OK',this)"
+                  title="Opérationnel">✓ OK</button>
+          <button class="${isDeg  ? 'active-degrade'  : 'inactive'}"
+                  onclick="setServiceStatus('${s.service_id}','DEGRADE',this)"
+                  title="Mode dégradé">⚡ DÉGRADÉ</button>
+          <button class="${isCrit ? 'active-critique'  : 'inactive'}"
+                  onclick="setServiceStatus('${s.service_id}','CRITIQUE',this)"
+                  title="Impact critique">⚠ CRITIQUE</button>
+        </div>
+      </div>
+      <textarea class="service-comment" rows="1"
+        placeholder="Commentaire..."
+        onblur="saveServiceComment('${s.service_id}', this.value)"
+        >${s.commentaire || ''}</textarea>
+      <span class="service-updated" id="svc-ts-${s.service_id}">${ts ? 'Mis à jour : ' + ts : ''}</span>
+    </div>`;
+  }).join('');
+
+  section.innerHTML = `
+    <div class="transverses-title">🔧 Services transverses</div>
+    <div class="transverses-grid">${cardsHtml}</div>`;
+}
+
+async function setServiceStatus(serviceId, statut, btn) {
+  // Optimistic UI
+  const card = btn.closest('.service-card');
+  card.querySelectorAll('.service-badge-btns button').forEach(b => {
+    b.className = 'inactive';
+  });
+  const cls = statut === 'OK' ? 'active-ok' : statut === 'DEGRADE' ? 'active-degrade' : 'active-critique';
+  btn.className = cls;
+
+  const comment = card.querySelector('.service-comment').value;
+  try {
+    const r = await fetch(`/api/v1/cartographie/service-status/${serviceId}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('scribe_token') || '')},
+      body: JSON.stringify({ statut, commentaire: comment })
+    });
+    if (!r.ok) throw new Error('Erreur serveur');
+    // Mettre à jour le cache
+    const idx = serviceStatuses.findIndex(s => s.service_id === serviceId);
+    if (idx >= 0) { serviceStatuses[idx].statut = statut; }
+    const tsEl = document.getElementById('svc-ts-' + serviceId);
+    if (tsEl) tsEl.textContent = 'Mis à jour : ' + new Date().toLocaleTimeString('fr-FR');
+    toast('Statut mis à jour ✓', 'ok');
+  } catch(e) {
+    toast('Erreur mise à jour : ' + e.message, 'err');
+    // Rollback visuel
+    await loadServiceStatuses();
+    renderTransverses();
+  }
+}
+
+async function saveServiceComment(serviceId, comment) {
+  const svc = serviceStatuses.find(s => s.service_id === serviceId);
+  if (!svc) return;
+  try {
+    await fetch(`/api/v1/cartographie/service-status/${serviceId}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('scribe_token') || '')},
+      body: JSON.stringify({ statut: svc.statut, commentaire: comment })
+    });
+    const idx = serviceStatuses.findIndex(s => s.service_id === serviceId);
+    if (idx >= 0) serviceStatuses[idx].commentaire = comment;
+  } catch(e) { /* silencieux */ }
+}
+
+// ── SOINS ─────────────────────────────────────────────
+// Map UF -> pôle chargée depuis l'API (basée sur les libellés BDD)
+let ufToPoleMap = {};
+
+// Variables timeline (déclarées ici pour être accessibles par renderSoins)
+const PIN_COLORS = { 4:'#f87171', 3:'#fb923c', 2:'#fbbf24', 1:'#60a5fa' };
+const URGENCY_DEFAULT_H = { 4:72, 3:24, 2:8, 1:2 };
+let tlNow = Date.now();
+let tlRangeMs = 72 * 3600000;
+let tlProjectedMs = 0;
+let tlIncidentETAs = [];
+let tlDragging = false;
+
+async function loadUfToPole() {
+  try {
+    const r = await fetch('/api/v1/cartographie/uf-to-pole');
+    ufToPoleMap = await r.json();
+  } catch(e) { console.warn('uf-to-pole:', e); }
+}
+
+const POLES_LIST = [
+  'CANCEROLOGIE','CARDIOVASCULAIRE','CHIRURGIE ANESTHESIE','DNA','FME',
+  'GERIATRIE','MEDECINE','MEDICO-TECHNIQUE ET REEDUCATION','SANTE MENTALE',
+  'SANTE PUBLIQUE ET COMMUNAUTAIRE','SOINS CRITIQUES','URGENCES','IFSI','SUPPORT'
+];
+
+function _getPoleForIncident(incident) {
+  // Priorité 1 : code UF exact déclaré sur l'incident
+  if (incident.unite_fonctionnelle && ufToPoleMap[incident.unite_fonctionnelle]) {
+    return ufToPoleMap[incident.unite_fonctionnelle];
+  }
+  // Priorité 2 : chercher un code UF numérique dans le texte libre
+  const hay = (incident.fait + ' ' + (incident.analyse||''));
+  const ufMatch = hay.match(/\b(\d{3,5})\b/g);
+  if (ufMatch) {
+    for (const m of ufMatch) {
+      if (ufToPoleMap[m]) return ufToPoleMap[m];
+    }
+  }
+  return null;
+}
+
+function renderSoins() {
+  // Ne pas écraser le label si on est en mode projection
+  if (!tlProjectedMs) {
+    document.getElementById('soins-last-update').textContent = `Mis à jour: ${new Date().toLocaleTimeString('fr-FR')}`;
+  }
+  renderTransverses();
+  const grid = document.getElementById('soins-grid');
+  const openInc = allIncidents.filter(i => i.status !== 'RÉSOLU');
+
+  // Grouper par pôle via la map UF
+  const incByPole = {};
+  POLES_LIST.forEach(p => incByPole[p] = []);
+  openInc.forEach(i => {
+    const pole = _getPoleForIncident(i);
+    if (pole && incByPole[pole] !== undefined) incByPole[pole].push(i);
+  });
+
+  grid.innerHTML = POLES_LIST.map(pole => {
+    const linked = incByPole[pole];
+    const maxUrg = linked.length ? Math.max(...linked.map(i => i.urgency)) : 0;
+    let statusClass, statusLabel;
+    if (maxUrg >= 3)      { statusClass='soins-critique'; statusLabel='⚠ CRITIQUE'; }
+    else if (maxUrg >= 2) { statusClass='soins-degrade';  statusLabel='⚡ MODE DÉGRADÉ'; }
+    else if (maxUrg >= 1) { statusClass='soins-degrade';  statusLabel='⚡ INCIDENT'; }
+    else                  { statusClass='soins-ok';        statusLabel='✓ OPÉRATIONNEL'; }
+
+    const incItems = linked.slice(0,3).map(i =>
+      `<div class="soins-incident-link">
+        <span>[${URG_LABELS[i.urgency]}]</span>
+        ${i.fait.substring(0,60)}${i.fait.length>60?'...':''}
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted)"> ${i.unite_fonctionnelle||''}</span>
+      </div>`
+    ).join('');
+
+    return `<div class="soins-card">
+      <div class="soins-card-header">
+        <span class="soins-pole-name">${pole}</span>
+        <span class="soins-status-badge ${statusClass}">${statusLabel}</span>
+      </div>
+      <div class="soins-card-body">
+        ${linked.length ? incItems : '<span class="soins-empty">Aucun incident lié</span>'}
+        ${linked.length > 3 ? `<div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px">+${linked.length-3} autres</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Redessiner la timeline si le tab soins est actif (après rendu du DOM)
+  if (document.getElementById('tab-soins').classList.contains('active')) {
+    requestAnimationFrame(() => renderSoinsTimeline(allIncidents));
+  }
+}
+
+function closeSoinsAlbert() {
+  document.getElementById('soins-albert-panel').style.display = 'none';
+}
+
+async function askAlbertSoins() {
+  const openInc = allIncidents.filter(i => i.status !== 'RÉSOLU');
+  if (!openInc.length) { toast('Aucun incident ouvert à analyser', 'err'); return; }
+
+  // Charger le contexte cellule pour calibrer la réponse Albert
+  let presences = [], decisions = [];
+  try {
+    presences = await (await fetch('/api/v1/cellule/presences')).json();
+    const dList = await (await fetch('/api/v1/cellule/decisions')).json();
+    decisions = dList.map(d => d.contenu);
+    allDecisions = dList;
+  } catch(e) {}
+
+  const celluleActive = presences.length > 0;
+
+  // Résumé des pôles impactés
+  const incByPole = {};
+  openInc.forEach(i => { const p=_getPoleForIncident(i); if(p){if(!incByPole[p])incByPole[p]=[];incByPole[p].push(i);} });
+  const polesResume = Object.entries(incByPole)
+    .map(([p,inc])=>`${p}: ${inc.length} incident(s) urgence max ${Math.max(...inc.map(i=>i.urgency))}`)
+    .join('\n');
+
+  // Ajouter l'état des services transverses au résumé des pôles
+  const svcResume = serviceStatuses.map(s =>
+    `[SERVICE TRANSVERSE] ${s.libelle} : ${s.statut}${s.commentaire ? ' — ' + s.commentaire : ''}`
+  ).join('\n');
+  const polesEtServices = [polesResume, svcResume].filter(Boolean).join('\n');
+
+  toast('⏳ Albert analyse...','ok');
+  try {
+    const res = await fetch('/api/v1/albert/situation-globale', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        incidents: openInc.map(i=>({fait:i.fait,analyse:i.analyse||'',status:i.status,urgency:i.urgency,type_crise:i.type_crise,site_id:i.site_id})),
+        decisions,
+        contexte: celluleActive
+          ? `Cellule de crise activée — ${presences.length} personne(s) présente(s).`
+          : 'AUCUNE cellule de crise activée. Situation de veille. Ne pas recommander d\'activation si non justifiée.',
+        poles_impactes: polesEtServices || 'Aucun pôle directement identifié',
+        services_transverses: serviceStatuses.map(s =>
+          `${s.libelle} : ${s.statut}${s.commentaire ? ' ('+s.commentaire+')' : ''}`
+        ).join('\n') || ''
+      })
+    });
+    if (!res.ok) { const e=await res.json(); throw new Error(e.detail||'Erreur'); }
+    const data = await res.json();
+
+    // Panel latéral — ne cache PAS la grille
+    const panel = document.getElementById('soins-albert-panel');
+    document.getElementById('soins-albert-body').textContent = data.analyse || '';
+    const lvl = data.niveau_global || 'ANALYSE';
+    const lvlEl = document.getElementById('soins-albert-level');
+    const c = lvl==='CRITIQUE'||lvl==='CRISE'?'#f87171':lvl==='ALERTE'?'#fbbf24':'#4ade80';
+    lvlEl.textContent=lvl; lvlEl.style.color=c; lvlEl.style.background='rgba(0,0,0,.3)';
+    document.getElementById('soins-albert-source').textContent = data.source||'';
+    panel.style.display = 'flex';
+    toast('Analyse reçue ✓','ok');
+  } catch(e) { toast('Albert: '+e.message,'err'); }
+}
+
+
+// ── TIMELINE PROJECTION ──────────────────────────────────────────────────────
+// Architecture :
+//  - Axe temps : NOW → farthestETA+20% (ou NOW+72h si aucun ETA)
+//  - Pins = incidents avec ETA ou estimation par urgence
+//  - Slider cursor déplace un "instant projeté" → recalcule les badges de pôles
+//  - ETA global = dernier instant où tous les incidents sont résolus
+
+function _buildIncidentETAs(incidents) {
+  const now = Date.now();
+  return incidents
+    .filter(i => i.status !== 'RÉSOLU')
+    .map(i => {
+      const pole = _getPoleForIncident(i);
+      let etaMs;
+      if (i.estimated_resolution) {
+        etaMs = new Date(i.estimated_resolution).getTime() - now;
+        if (etaMs < 0) etaMs = 5 * 60000; // passé → dans 5min
+      } else {
+        // Estimation par urgence
+        etaMs = URGENCY_DEFAULT_H[i.urgency] * 3600000;
+      }
+      const hasETA = !!i.estimated_resolution;
+      return {
+        id: i.id,
+        pole,
+        urgency: i.urgency,
+        etaMs,
+        hasETA,
+        fait: i.fait
+      };
+    });
+}
+
+function _fmtDelta(ms) {
+  if (ms < 0) return 'dépassé';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h === 0) return `${m}min`;
+  if (m === 0) return `${h}h`;
+  return `${h}h${String(m).padStart(2,'0')}`;
+}
+
+function _fmtAbsolute(ms) {
+  const d = new Date(Date.now() + ms);
+  return d.toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit'}) + ' ' +
+         d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+}
+
+function renderSoinsTimeline(incidents) {
+  tlNow = Date.now();
+  tlIncidentETAs = _buildIncidentETAs(incidents);
+
+  const wrap  = document.getElementById('tl-track-wrap');
+  const ticks = document.getElementById('tl-ticks');
+  if (!wrap) return;
+
+  // Calcul de la plage
+  const maxEtaMs = tlIncidentETAs.length
+    ? Math.max(...tlIncidentETAs.map(t => t.etaMs))
+    : 72 * 3600000;
+  tlRangeMs = Math.max(maxEtaMs * 1.25, 4 * 3600000); // 25% de marge, min 4h
+
+  // Nettoyage pins existants
+  wrap.querySelectorAll('.tl-pin').forEach(el => el.remove());
+
+  const railEl = wrap.querySelector('.tl-rail');
+  const railW  = railEl ? railEl.offsetWidth : wrap.offsetWidth - 4;
+
+  // ── PINS ──
+  tlIncidentETAs.forEach(t => {
+    const pct = Math.min(t.etaMs / tlRangeMs, 1) * 100;
+    const col = PIN_COLORS[t.urgency] || '#94a3b8';
+    const pin = document.createElement('div');
+    pin.className = 'tl-pin';
+    pin.style.left = pct + '%';
+    pin.innerHTML = `
+      <div class="tl-pin-dot" style="background:${col};border-color:${col}"></div>
+      <div class="tl-pin-label">U${t.urgency}${t.pole ? ' · ' + t.pole.split(' ')[0] : ''}</div>
+      <div class="tl-pin-tooltip">
+        <b>${t.fait.substring(0,40)}${t.fait.length>40?'…':''}</b><br>
+        ETA : ${_fmtAbsolute(t.etaMs)} (dans ${_fmtDelta(t.etaMs)})
+        ${t.hasETA ? '' : '<br><i style="color:#94a3b8">⚠ Estimation auto</i>'}
+        ${t.pole ? `<br>Pôle : ${t.pole}` : ''}
+      </div>`;
+    wrap.appendChild(pin);
+  });
+
+  // ── TICKS ──
+  const NB_TICKS = 7;
+  ticks.innerHTML = '';
+  for (let i = 0; i <= NB_TICKS; i++) {
+    const pct = (i / NB_TICKS) * 100;
+    const ms  = (i / NB_TICKS) * tlRangeMs;
+    const tick = document.createElement('div');
+    tick.className = 'tl-tick';
+    tick.style.left = pct + '%';
+    tick.innerHTML = `<div class="tl-tick-line"></div>${i===0?'Maintenant':_fmtDelta(ms)}`;
+    ticks.appendChild(tick);
+  }
+
+  // ── ETA GLOBAL ──
+  const etaEl = document.getElementById('tl-eta-global');
+  if (tlIncidentETAs.length) {
+    const maxEta  = Math.max(...tlIncidentETAs.map(t => t.etaMs));
+    const hasAll  = tlIncidentETAs.every(t => t.hasETA);
+    etaEl.textContent = `Retour normal estimé : ${_fmtAbsolute(maxEta)} (dans ${_fmtDelta(maxEta)})${hasAll?'':' ⚠'}`;
+    etaEl.className = 'tl-eta-global ' + (hasAll ? 'tl-eta-ok' : 'tl-eta-pending');
+  } else {
+    etaEl.textContent = '— Aucun incident ouvert';
+    etaEl.className   = 'tl-eta-global tl-eta-unknown';
+  }
+
+  // Curseur à sa position mémorisée (ou NOW par défaut)
+  _moveCursor(tlProjectedMs / tlRangeMs * 100, false);
+}
+
+function _moveCursor(pct, updateCards = true) {
+  pct = Math.max(0, Math.min(100, pct));
+  tlProjectedMs = (pct / 100) * tlRangeMs;
+
+  const cursor   = document.getElementById('tl-cursor');
+  const filled   = document.getElementById('tl-rail-filled');
+  if (cursor) cursor.style.left = pct + '%';
+  if (filled) filled.style.width = pct + '%';
+
+  if (updateCards) _updateCardsForProjection(tlProjectedMs);
+}
+
+function _updateCardsForProjection(offsetMs) {
+  // Pour chaque pôle, regarder si TOUS ses incidents seront résolus à t=offsetMs
+  const poleStatus = {};
+  POLES_LIST.forEach(p => poleStatus[p] = { maxUrg: 0, anyPending: false });
+
+  tlIncidentETAs.forEach(t => {
+    if (!t.pole || !poleStatus[t.pole]) return;
+    const resolved = offsetMs >= t.etaMs;
+    if (!resolved) {
+      poleStatus[t.pole].anyPending = true;
+      poleStatus[t.pole].maxUrg = Math.max(poleStatus[t.pole].maxUrg, t.urgency);
+    }
+  });
+
+  // Mettre à jour les badges visuellement
+  document.querySelectorAll('.soins-card').forEach(card => {
+    const poleName = card.querySelector('.soins-pole-name')?.textContent?.trim();
+    if (!poleName || !poleStatus[poleName]) return;
+    const badge  = card.querySelector('.soins-status-badge');
+    if (!badge) return;
+    const st = poleStatus[poleName];
+    if (!st.anyPending) {
+      // Projection : retour à la normale
+      badge.className = 'soins-status-badge soins-ok';
+      badge.textContent = '✓ OPÉRATIONNEL';
+      card.style.opacity = offsetMs > 0 ? '0.7' : '1';
+    } else {
+      // Toujours impacté à cet instant
+      if (st.maxUrg >= 3) { badge.className='soins-status-badge soins-critique'; badge.textContent='⚠ CRITIQUE'; }
+      else                 { badge.className='soins-status-badge soins-degrade'; badge.textContent='⚡ MODE DÉGRADÉ'; }
+      card.style.opacity = '1';
+    }
+  });
+
+  // Afficher l'instant projeté dans le header si ≠ 0
+  const lbl = document.getElementById('soins-last-update');
+  if (lbl) {
+    if (offsetMs > 0) {
+      lbl.textContent = `⏩ Projection : +${_fmtDelta(offsetMs)} — ${_fmtAbsolute(offsetMs)}`;
+      lbl.style.color = '#fbbf24';
+    } else {
+      lbl.textContent = `Mis à jour: ${new Date().toLocaleTimeString('fr-FR')}`;
+      lbl.style.color = '';
+    }
+  }
+}
+
+// ── Drag sur le curseur ────────────────────────────────
+(function initTimelineDrag() {
+  let startX = 0, startPct = 0;
+
+  function getRailBounds() {
+    const rail = document.getElementById('tl-track-wrap');
+    if (!rail) return { left: 0, width: 1 };
+    const r = rail.getBoundingClientRect();
+    return { left: r.left, width: r.width };
+  }
+
+  function onPointerMove(e) {
+    if (!tlDragging) return;
+    const { left, width } = getRailBounds();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX);
+    const pct = ((x - left) / width) * 100;
+    _moveCursor(pct);
+  }
+
+  function onPointerUp() {
+    tlDragging = false;
+    document.removeEventListener('mousemove', onPointerMove);
+    document.removeEventListener('mouseup', onPointerUp);
+    document.removeEventListener('touchmove', onPointerMove);
+    document.removeEventListener('touchend', onPointerUp);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const cursor = document.getElementById('tl-cursor');
+    const rail   = document.getElementById('tl-track-wrap');
+    if (!cursor || !rail) return;
+
+    // Drag sur le curseur
+    cursor.addEventListener('mousedown', e => {
+      tlDragging = true;
+      e.preventDefault();
+      document.addEventListener('mousemove', onPointerMove);
+      document.addEventListener('mouseup', onPointerUp);
+    });
+    cursor.addEventListener('touchstart', e => {
+      tlDragging = true;
+      document.addEventListener('touchmove', onPointerMove, {passive:true});
+      document.addEventListener('touchend', onPointerUp);
+    });
+
+    // Clic direct sur le rail
+    rail.addEventListener('click', e => {
+      if (e.target === cursor) return;
+      const r = rail.getBoundingClientRect();
+      const pct = ((e.clientX - r.left) / r.width) * 100;
+      _moveCursor(pct);
+    });
+  });
+})();
+
+
+async function toggleJalon(id, idx, checked) {
+  const inc = allIncidents.find(i=>i.id===id);
+  if(!inc||!inc.jalons) return;
+  const js=JSON.parse(inc.jalons);
+  js[idx].done=checked; js[idx].done_at=checked?new Date().toISOString():null;
+  await fetch(`/api/v1/sitrep/${id}/jalons`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({jalons:js})});
+  await refreshAll();
+}
+
+function togglePreset(btn) {
+  const label=btn.dataset.label;
+  if(btn.classList.contains('active')){btn.classList.remove('active');jalonsList=jalonsList.filter(j=>j!==label);}
+  else{btn.classList.add('active');jalonsList.push(label);}
+  renderJalonTags();
+}
+
+function addCustomJalon() {
+  const val=document.getElementById('jalon-custom').value.trim();
+  if(!val||jalonsList.includes(val)) return;
+  jalonsList.push(val); document.getElementById('jalon-custom').value='';
+  renderJalonTags();
+}
+
+function removeJalon(label) {
+  jalonsList=jalonsList.filter(j=>j!==label);
+  document.querySelectorAll(`[data-label="${label}"]`).forEach(b=>b.classList.remove('active'));
+  renderJalonTags();
+}
+
+function renderJalonTags() {
+  document.getElementById('jalon-tags').innerHTML=jalonsList.map(j=>
+    `<div class="jalon-tag">${j}<span class="jtag-rm" onclick="removeJalon('${j.replace(/'/g,"\\'")}')">✕</span></div>`
+  ).join('');
+}
+
+// ── CRUD ─────────────────────────────────────────────
+async function submitIncident() {
+  const fait=document.getElementById('fait').value.trim();
+  const siteId=document.getElementById('site_id').value;
+  if(!fait){toast('FAIT obligatoire','err');return;}
+  if(!siteId){toast('Sélectionner un site','err');return;}
+
+  let estimated_resolution=null;
+  const h=parseFloat(document.getElementById('resolution-hours').value);
+  if(h) estimated_resolution=new Date(Date.now()+h*3600000).toISOString();
+
+  const payload={
+    declarant_nom: document.getElementById('declarant_nom').value||'Anonyme',
+    directeur_crise: document.getElementById('directeur_crise').value,
+    site_id: siteId,
+    unite_fonctionnelle: document.getElementById('unite_fonctionnelle').value,
+    type_crise: selectedCrise, urgency: selectedUrgency, fait,
+    analyse: document.getElementById('analyse').value,
+    moyens_engages: document.getElementById('moyens_engages').value,
+    intervenant_nom: document.getElementById('intervenant_nom').value,
+    intervenant_contact: document.getElementById('intervenant_contact').value,
+    estimated_resolution, jalons_labels:[...jalonsList]
+  };
+
+  try {
+    const res=await fetch('/api/v1/sitrep/post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok) throw new Error(await res.text());
+    const newInc=await res.json();
+
+    const files=document.getElementById('attachments-input').files;
+    for(const f of files){
+      const fd=new FormData(); fd.append('file',f);
+      await fetch(`/api/v1/attachments/${newInc.id}/upload`,{method:'POST',body:fd});
+    }
+
+    ['fait','analyse','moyens_engages','intervenant_nom','intervenant_contact'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('resolution-hours').value='';
+    document.getElementById('attachments-input').value='';
+    jalonsList=[]; renderJalonTags();
+    document.querySelectorAll('.jalon-preset-btn').forEach(b=>b.classList.remove('active'));
+    toast(`Incident diffusé${files.length?' + '+files.length+' PJ':''} ✓`,'ok');
+    await refreshAll();
+  } catch(e){toast('Erreur: '+e.message,'err');}
+}
+
+async function updateStatus(id,status) {
+  await fetch(`/api/v1/sitrep/${id}/status`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+  if(status==='RÉSOLU') toast('Résolution horodatée ✓','ok');
+  await refreshAll();
+}
+
+async function deleteInc(id,e) {
+  e.stopPropagation();
+  if(!confirm('Supprimer ?')) return;
+  await fetch(`/api/v1/sitrep/${id}`,{method:'DELETE'});
+  toast('Supprimé','ok'); await refreshAll();
+}
+
+function uploadFor(id,e) {
+  e.stopPropagation();
+  const inp=document.createElement('input'); inp.type='file'; inp.multiple=true;
+  inp.onchange=async()=>{
+    for(const f of inp.files){const fd=new FormData();fd.append('file',f);await fetch(`/api/v1/attachments/${id}/upload`,{method:'POST',body:fd});}
+    toast(`${inp.files.length} PJ ajoutée(s) ✓`,'ok');
+    // Recharger PJ de cet incident immédiatement
+    try { incAttachments[id] = await fetch(`/api/v1/attachments/${id}`).then(r=>r.json()); } catch(_) {}
+    applyFilters();
+  }; inp.click();
+}
+
+// ── ALBERT ───────────────────────────────────────────
+async function _callAlbert(endpoint, payload, label) {
+  try {
+    const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok){const e=await res.json();throw new Error(e.detail||`HTTP ${res.status}`);}
+    return await res.json();
+  } catch(e) { toast(`Albert (${label}): ${e.message}`,'err'); return null; }
+}
+
+async function askAlbertForm() {
+  const fait=document.getElementById('fait').value.trim();
+  if(!fait){toast('Saisir un FAIT d\'abord','err');return;}
+  toast('⏳ Albert analyse...','ok');
+  const data=await _callAlbert('/api/v1/albert/analyser',{fait,analyse:document.getElementById('analyse').value,type_crise:selectedCrise},'incident');
+  if(data) showGlobalPanel(data.niveau_alerte,data.recommandation,data.source);
+}
+
+async function askAlbertIncident(id,fE,aE,tc,e) {
+  e.stopPropagation();
+  toast('⏳ Albert analyse cet incident...','ok');
+  const data=await _callAlbert('/api/v1/albert/analyser',{fait:decodeURIComponent(fE),analyse:decodeURIComponent(aE),type_crise:tc},'incident');
+  if(data){
+    await fetch(`/api/v1/sitrep/${id}/albert-avis`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({avis:data.recommandation})});
+    toast('Avis Albert enregistré ✓','ok'); await refreshAll();
+  }
+}
+
+async function askAlbertGlobal() {
+  const btn=document.getElementById('btn-global-albert');
+  const open=allIncidents.filter(i=>i.status!=='RÉSOLU');
+  if(!open.length){toast('Aucun incident ouvert','err');return;}
+  btn.classList.add('loading'); btn.textContent='⏳ Analyse...';
+  toast(`⏳ Albert analyse ${open.length} incident(s)...`,'ok');
+
+  let decs=[];
+  try{const dr=await fetch('/api/v1/cellule/decisions');const dl=await dr.json();decs=dl.map(d=>d.contenu);}catch(e){}
+  allDecisions = decs.map ? allDecisions : [];
+
+  const data=await _callAlbert('/api/v1/albert/situation-globale',{
+    incidents:open.map(i=>({fait:i.fait,analyse:i.analyse||'',status:i.status,urgency:i.urgency,type_crise:i.type_crise,site_id:i.site_id})),
+    decisions:decs
+  },'global');
+
+  btn.classList.remove('loading'); btn.textContent='🧠 ANALYSE GLOBALE';
+  if(data) showGlobalPanel(data.niveau_global,data.analyse,data.source);
+}
+
+function showGlobalPanel(niveau,texte,source) {
+  document.getElementById('global-albert-panel').classList.add('show');
+  document.getElementById('btn-toggle-global').style.display='';
+  const lv=document.getElementById('gap-level');
+  const c=niveau==='CRITIQUE'||niveau==='CRISE'?'#f87171':niveau==='ALERTE'?'#fbbf24':'#4ade80';
+  const bg=niveau==='CRITIQUE'||niveau==='CRISE'?'rgba(229,62,62,.2)':niveau==='ALERTE'?'rgba(217,119,6,.2)':'rgba(22,163,74,.2)';
+  lv.textContent=niveau||'ANALYSE'; lv.style.color=c; lv.style.background=bg;
+  document.getElementById('gap-body').textContent=(texte||'')+'\n\n['+source+']';
+  document.getElementById('global-status-txt').textContent=`Analyse: ${new Date().toLocaleTimeString('fr-FR')}`;
+}
+
+function toggleGlobalPanel() {
+  const p=document.getElementById('global-albert-panel'),b=document.getElementById('btn-toggle-global');
+  const s=p.classList.contains('show');p.classList.toggle('show',!s);b.textContent=s?'▼ Voir':'▲ Réduire';
+}
+function closeGlobalPanel() {
+  document.getElementById('global-albert-panel').classList.remove('show');
+  document.getElementById('btn-toggle-global').textContent='▼ Voir';
+}
+
+// ── SÉLECTEURS ───────────────────────────────────────
+function selectUrgency(btn) {
+  document.querySelectorAll('#urgency-selector .sel-btn').forEach(b=>b.classList.remove('sel-active'));
+  btn.classList.add('sel-active'); selectedUrgency=parseInt(btn.dataset.val);
+}
+
+function selectCrise(btn) {
+  document.querySelectorAll('#crise-selector .sel-btn').forEach(b=>b.classList.remove('sel-active'));
+  btn.classList.add('sel-active'); selectedCrise=btn.dataset.crise;
+}
+
+// ── CELLULE ──────────────────────────────────────────
+async function logPresence(action) {
+  const nom=document.getElementById('p-nom').value.trim();
+  if(!nom){toast('Saisir un nom','err');return;}
+  const role=document.getElementById('p-role').value.trim();
+  await fetch('/api/v1/cellule/presences',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nom,role,action})});
+  document.getElementById('p-nom').value='';document.getElementById('p-role').value='';
+  toast(`${action} — ${nom} ✓`,'ok'); loadPresences();
+}
+
+async function loadPresences() {
+  try{
+    const list=await(await fetch('/api/v1/cellule/presences')).json();
+    const el=document.getElementById('presence-list');
+    if(!list.length){el.innerHTML='<div class="empty-state">Aucune présence</div>';return;}
+    el.innerHTML=list.map(p=>{
+      const t=new Date(p.timestamp).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      return `<div class="presence-entry">
+        <div class="presence-time">${t}</div>
+        <div class="presence-info"><div class="presence-nom">${p.nom}</div>${p.role?`<div class="presence-role">${p.role}</div>`:''}</div>
+        <div class="presence-badge ${p.action==='ENTRÉE'?'entree':'sortie'}">${p.action}</div>
+      </div>`;
+    }).join('');
+  }catch(e){}
+}
+
+async function saveDecision() {
+  const texte=document.getElementById('d-texte').value.trim();
+  if(!texte){toast('Saisir une décision','err');return;}
+  await fetch('/api/v1/cellule/decisions',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contenu:texte,responsable:document.getElementById('d-responsable').value.trim(),base_reglementaire:document.getElementById('d-base').value})});
+  document.getElementById('d-texte').value='';document.getElementById('d-responsable').value='';
+  toast('Décision actée ✓','ok'); loadDecisions();
+}
+
+async function loadDecisions() {
+  try{
+    const list=await(await fetch('/api/v1/cellule/decisions')).json();
+    allDecisions=list;
+    const el=document.getElementById('decision-list');
+    if(!list.length){el.innerHTML='<div class="empty-state">Aucune décision</div>';return;}
+    el.innerHTML=list.map(d=>{
+      const t=new Date(d.timestamp).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      return `<div class="decision-entry">
+        <div class="decision-time">${t}</div>
+        ${d.responsable?`<div class="decision-responsable">▶ ${d.responsable}</div>`:''}
+        <div class="decision-text">${d.contenu}</div>
+        <span class="decision-base">${d.base_reglementaire||'Plan Blanc'}</span>
+      </div>`;
+    }).join('');
+  }catch(e){}
+}
+
+// ── RELÈVE ───────────────────────────────────────────
+async function sendConsigne() {
+  const pour=document.getElementById('r-pour').value.trim(),texte=document.getElementById('r-texte').value.trim();
+  if(!pour||!texte){toast('Remplir destinataire et consigne','err');return;}
+  await fetch('/api/v1/releve/post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pour,texte})});
+  document.getElementById('r-pour').value='';document.getElementById('r-texte').value='';
+  toast('Consigne transmise ✓','ok'); loadConsignes();
+}
+
+async function loadConsignes() {
+  try{
+    const list=await(await fetch('/api/v1/releve/history')).json();
+    const el=document.getElementById('consigne-list');
+    if(!list.length){el.innerHTML='<div class="empty-state">Aucune consigne</div>';return;}
+    el.innerHTML=list.map(c=>{
+      const t=new Date(c.timestamp).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      const ack=c.accuse
+        ?`<span class="badge-accuse ok">✓ REÇU ${c.accuse_at?'— '+new Date(c.accuse_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</span>`
+        :`<button class="btn-accuse" onclick="accuserReception(${c.id})">✓ ACCUSER RÉCEPTION</button>`;
+      return `<div class="consigne-item">
+        <div class="consigne-header"><span class="consigne-pour">→ ${c.pour}</span><span class="consigne-time">${t}</span></div>
+        <div class="consigne-text">${c.texte}</div>${ack}
+      </div>`;
+    }).join('');
+  }catch(e){}
+}
+
+async function accuserReception(id) {
+  await fetch(`/api/v1/releve/${id}/accuser`,{method:'PUT'});
+  toast('Réception accusée ✓','ok'); loadConsignes();
+}
+
+// ── ANNUAIRE ─────────────────────────────────────────
+function switchAnnuaire(mode, btn) {
+  annuaireMode=mode;
+  document.querySelectorAll('.ann-mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ann-search').value='';
+  renderAnnuaire();
+}
+
+function renderAnnuaire(filter='') {
+  const data = annuaireMode==='secours' ? ANNUAIRE_SECOURS : ANNUAIRE_NORMAL;
+  const q = filter.toLowerCase();
+  const filtered = q ? data.filter(e =>
+    e.service.toLowerCase().includes(q) ||
+    (e.local||'').toLowerCase().includes(q) ||
+    e.tel.includes(q)
+  ) : data;
+
+  const el = document.getElementById('annuaire-list');
+  if (!filtered.length) { el.innerHTML='<div class="empty-state">Aucun résultat</div>'; return; }
+
+  // Grouper par première lettre du service
+  const grouped = {};
+  filtered.forEach(e => {
+    const key = e.service[0].toUpperCase();
+    if (!grouped[key]) grouped[key]=[]; grouped[key].push(e);
+  });
+
+  const badge = annuaireMode==='secours'
+    ? '<span class="ann-secours-badge">🚨 SECOURS</span>'
+    : '<span class="ann-normal-badge">📗 NOMINALE</span>';
+
+  el.innerHTML = Object.keys(grouped).sort().map(letter => `
+    <div class="ann-group">
+      <div class="ann-group-header">${letter}</div>
+      ${grouped[letter].map(e => {
+        const initials = e.service.split(/[\s-\/]+/).filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join('');
+        const noteHtml = e.note ? `<div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px">${e.note}</div>` : '';
+        return `<div class="ann-entry">
+          <div class="ann-avatar">${initials||e.service[0]}</div>
+          <div class="ann-info">
+            <div class="ann-name">${e.service}</div>
+            <div class="ann-service">${e.local||''}</div>
+            ${noteHtml}
+          </div>
+          <div class="ann-phones">
+            <div class="ann-phone">${e.tel}</div>
+            ${badge}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+function filterAnnuaire() {
+  renderAnnuaire(document.getElementById('ann-search').value);
+}
+
+// ── TOAST ────────────────────────────────────────────
+let toastTimer;
+function toast(msg,type='ok') {
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className=`show ${type}`;
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.className='',3500);
+}
+
+/* ═══════════════════ SCRIBE v5 — NEW JS ══════════════════ */
+
+// ── AUTH STATE ────────────────────────────────────────────
+let currentUser = null;
+let authToken = null;
+let notifInterval = null;
+
+// ── LOGIN ─────────────────────────────────────────────────
+async function doLogin() {
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-err');
+  errEl.classList.remove('show');
+  try {
+    const r = await fetch('/api/v1/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    if (!r.ok) {
+      const msg = r.status === 401 ? 'Identifiants incorrects' : 'Erreur serveur ' + r.status;
+      errEl.textContent = msg;
+      errEl.classList.add('show');
+      document.getElementById('login-pass').value = '';
+      document.getElementById('login-pass').focus();
+      return;
+    }
+    const data = await r.json();
+    authToken = data.token;
+    currentUser = data.user;
+    localStorage.setItem('scribe_token', authToken);
+    localStorage.setItem('scribe_user', JSON.stringify(currentUser));
+    applyUserState();
+    document.getElementById('login-overlay').classList.add('hidden');
+  } catch(e) {
+    errEl.textContent = 'Erreur réseau — serveur inaccessible';
+    errEl.classList.add('show');
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('scribe_token');
+  localStorage.removeItem('scribe_user');
+  authToken = null; currentUser = null;
+  document.getElementById('login-overlay').classList.remove('hidden');
+  clearInterval(notifInterval);
+}
+
+function applyUserState() {
+  if (!currentUser) return;
+  const nameEl = document.getElementById('current-user-name');
+  const dotEl  = document.getElementById('role-dot');
+  if (nameEl) nameEl.textContent = currentUser.display_name || currentUser.username;
+  if (dotEl)  { dotEl.className = 'role-dot' + (currentUser.role === 'admin' ? ' admin' : ''); }
+  // Show admin panel button only for admins
+  const chip = document.getElementById('user-chip');
+  if (chip) chip.title = currentUser.role === 'admin' ? 'Panneau admin' : 'Mon compte';
+  // Start polling notifications
+  loadNotifications();
+  notifInterval = setInterval(loadNotifications, 15000);
+}
+
+function authHeaders() {
+  return authToken ? {'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json'} : {'Content-Type': 'application/json'};
+}
+
+// On load: restore session avec vérification serveur
+window.addEventListener('load', async () => {
+  const tok = localStorage.getItem('scribe_token');
+  const usr = localStorage.getItem('scribe_user');
+  if (tok && usr) {
+    authToken = tok;
+    try {
+      // Vérifier que le token est encore valide
+      const r = await fetch('/api/v1/auth/me', {headers: {'Authorization': 'Bearer ' + tok}});
+      if (r.ok) {
+        currentUser = await r.json();
+        localStorage.setItem('scribe_user', JSON.stringify(currentUser));
+        applyUserState();
+        document.getElementById('login-overlay').classList.add('hidden');
+        return;
+      }
+    } catch(e) {}
+    // Token invalide ou expiré
+    localStorage.removeItem('scribe_token');
+    localStorage.removeItem('scribe_user');
+    authToken = null; currentUser = null;
+  }
+  // Pas de session valide : afficher login
+  document.getElementById('login-overlay').classList.remove('hidden');
+});
+
+// ── ADMIN PANEL ───────────────────────────────────────────
+function showAdminPanel() {
+  if (!currentUser) return;
+  if (currentUser.role !== 'admin') { toast('Accès réservé à l\'administrateur','err'); return; }
+  document.getElementById('admin-panel').classList.add('open');
+  loadAdminUsers();
+}
+function closeAdminPanel() {
+  document.getElementById('admin-panel').classList.remove('open');
+}
+
+async function loadAdminUsers() {
+  try {
+    const r = await fetch('/api/v1/auth/users', {headers: authHeaders()});
+    const users = await r.json();
+    const el = document.getElementById('admin-user-list');
+    if (!users.length) { el.innerHTML = '<div class="empty-state">Aucun compte</div>'; return; }
+    el.innerHTML = users.map(u => `
+      <div class="user-row">
+        <span class="user-row-name">${u.display_name}</span>
+        <span class="user-row-meta">@${u.username}</span>
+        <span class="role-${u.role}">${u.role}</span>
+        ${u.perimetre ? `<span style="font-family:var(--mono);font-size:9px;color:var(--muted)">${u.perimetre}</span>` : ''}
+        <span style="font-family:var(--mono);font-size:9px;color:${u.active?'#4ade80':'#f87171'}">${u.active?'Actif':'Inactif'}</span>
+        ${u.role !== 'admin' ? `<button class="kc-btn" style="margin-left:auto" onclick="toggleUserActive(${u.id},${u.active})">${u.active?'Désactiver':'Activer'}</button>
+        <button class="kc-btn" style="color:#f87171" onclick="deleteUser(${u.id})">✕</button>` : ''}
+      </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function createUser() {
+  const body = {
+    username:     document.getElementById('nu-username').value.trim(),
+    display_name: document.getElementById('nu-display').value.trim(),
+    password:     document.getElementById('nu-pass').value,
+    role:         document.getElementById('nu-role').value,
+    perimetre:    document.getElementById('nu-perimetre').value.trim() || null
+  };
+  if (!body.username || !body.display_name || !body.password) { toast('Tous les champs obligatoires','err'); return; }
+  try {
+    const r = await fetch('/api/v1/auth/users', { method:'POST', headers: authHeaders(), body: JSON.stringify(body) });
+    if (!r.ok) { const d=await r.json(); toast(d.detail||'Erreur','err'); return; }
+    toast('Compte créé : @'+body.username);
+    ['nu-username','nu-display','nu-pass','nu-perimetre'].forEach(id => document.getElementById(id).value='');
+    loadAdminUsers();
+  } catch(e) { toast('Erreur réseau','err'); }
+}
+
+async function toggleUserActive(uid, active) {
+  await fetch(`/api/v1/auth/users/${uid}`, { method:'PUT', headers: authHeaders(), body: JSON.stringify({active: !active}) });
+  loadAdminUsers();
+}
+
+async function deleteUser(uid) {
+  if (!confirm('Supprimer cet utilisateur ?')) return;
+  await fetch(`/api/v1/auth/users/${uid}`, { method:'DELETE', headers: authHeaders() });
+  loadAdminUsers();
+}
+
+// ── NOTIFICATIONS INBOX ───────────────────────────────────
+function toggleNotifPanel() {
+  document.getElementById('notif-panel').classList.toggle('open');
+  if (document.getElementById('notif-panel').classList.contains('open')) loadNotifications();
+}
+
+async function loadNotifications() {
+  if (!authToken) return;
+  try {
+    const r = await fetch('/api/v1/auth/notifications', {headers: authHeaders()});
+    if (!r.ok) return;
+    const notifs = await r.json();
+    const unread = notifs.filter(n => !n.lu).length;
+    const badge = document.getElementById('notif-badge');
+    const countTxt = document.getElementById('notif-count-txt');
+    if (badge) { badge.textContent = unread; badge.className = 'notif-badge' + (unread > 0 ? ' show' : ''); }
+    if (countTxt) countTxt.textContent = unread > 0 ? `Inbox (${unread})` : 'Inbox';
+    const list = document.getElementById('notif-list');
+    if (!list) return;
+    if (!notifs.length) { list.innerHTML = '<div class="empty-state">Aucune notification</div>'; return; }
+    list.innerHTML = notifs.map(n => `
+      <div class="np-item ${n.lu ? '' : 'unread'}" onclick="readNotif(${n.id}, ${n.incident_id})">
+        <div class="np-item-titre">${n.titre}</div>
+        <div class="np-item-msg">${n.message}</div>
+        <div class="np-item-time">${n.timestamp ? new Date(n.timestamp).toLocaleString('fr-FR') : ''}</div>
+      </div>`).join('');
+    document.getElementById('np-count-info').textContent = `${notifs.length} notification(s) — ${unread} non lue(s)`;
+  } catch(e) {}
+}
+
+async function readNotif(id, incidentId) {
+  await fetch(`/api/v1/auth/notifications/${id}/read`, {method:'PUT', headers: authHeaders()});
+  loadNotifications();
+  if (incidentId) {
+    // Navigate to veille and highlight incident
+    const btn = document.querySelector('.tab-btn');
+    openTab('tab-veille', btn);
+    setTimeout(() => { const el = document.getElementById(`inc-${incidentId}`); if(el) { el.scrollIntoView({behavior:'smooth'}); el.classList.add('expanded'); } }, 300);
+  }
+}
+
+async function markAllRead() {
+  if (!authToken) return;
+  await fetch('/api/v1/auth/notifications/read-all', {method:'PUT', headers: authHeaders()});
+  loadNotifications();
+}
+
+// ── MAP RESIZE ────────────────────────────────────────────
+(function() {
+  const handle = document.getElementById('map-resize-handle');
+  const mapEl  = document.getElementById('map');
+  if (!handle || !mapEl) return;
+  let dragging = false, startY = 0, startH = 0;
+  handle.addEventListener('mousedown', e => {
+    dragging = true; startY = e.clientY; startH = mapEl.offsetHeight;
+    document.body.style.cursor = 'ns-resize'; e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const newH = Math.max(80, Math.min(500, startH + e.clientY - startY));
+    mapEl.style.height = newH + 'px';
+    if (map) map.invalidateSize();
+  });
+  document.addEventListener('mouseup', () => {
+    if (dragging) { dragging = false; document.body.style.cursor = ''; }
+  });
+})();
+
+// Auto-zoom map on highest incident sites
+function autoZoomMap(bySite) {
+  if (!map || !bySite || !bySite.length) return;
+  const top = bySite.filter(s => s.count > 0).sort((a,b) => b.count - a.count);
+  if (!top.length) return;
+  const topSite = top[0];
+  const marker = markers[topSite.site];
+  if (marker) {
+    const latlng = marker.getLatLng();
+    map.flyTo(latlng, top.length === 1 ? 14 : 12, {duration: 1.2});
+  }
+}
+
+// ── KANBAN ────────────────────────────────────────────────
+let allTasks = [];
+let draggedTaskId = null;
+let editingTaskId = null;
+
+async function loadTasks() {
+  try {
+    const r = await fetch('/api/v1/tasks/');
+    allTasks = await r.json();
+    renderKanban();
+  } catch(e) {}
+}
+
+function renderKanban() {
+  const cols = ['BACKLOG','EN_COURS','EN_ATTENTE','TERMINÉ'];
+  const PRIO_LABEL = {4:'CRITIQUE',3:'HAUTE',2:'NORMALE',1:'BASSE'};
+  cols.forEach(col => {
+    const tasks = allTasks.filter(t => t.colonne === col);
+    const cnt = document.getElementById('cnt-' + col);
+    if (cnt) cnt.textContent = tasks.length;
+    const el = document.getElementById('col-' + col);
+    if (!el) return;
+    el.innerHTML = tasks.map(t => {
+      const dueTxt = t.due_at ? new Date(t.due_at).toLocaleString('fr-FR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+      const overdue = t.due_at && new Date(t.due_at) < new Date() && col !== 'TERMINÉ';
+      return `
+      <div class="kanban-card p${t.priorite}" id="kcard-${t.id}"
+        draggable="true" ondragstart="onDragStart(event,${t.id})" ondragend="onDragEnd(event)">
+        <div class="kc-actions">
+          <button class="kc-btn" onclick="openTaskModal(${t.id})">✏️</button>
+          <button class="kc-btn" style="color:#f87171" onclick="deleteTask(${t.id})">✕</button>
+        </div>
+        <div class="kc-title">${t.titre}</div>
+        <div class="kc-meta">
+          <span class="kc-prio kc-p${t.priorite}">${PRIO_LABEL[t.priorite]||t.priorite}</span>
+          ${t.assignee ? `<span class="kc-assignee">👤 ${t.assignee}</span>` : ''}
+          ${dueTxt ? `<span class="kc-due" style="color:${overdue?'#f87171':'var(--muted)'}">⏱ ${dueTxt}</span>` : ''}
+        </div>
+        ${t.incident_id ? `<div class="kc-inc-link">#${t.incident_id}</div>` : ''}
+        ${t.description ? `<div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</div>` : ''}
+      </div>`;
+    }).join('');
+  });
+}
+
+function onDragStart(e, id) {
+  draggedTaskId = id;
+  setTimeout(() => { const el = document.getElementById('kcard-' + id); if(el) el.classList.add('dragging'); }, 0);
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragEnd(e) {
+  document.querySelectorAll('.kanban-card').forEach(c => c.classList.remove('dragging'));
+  document.querySelectorAll('.kanban-cards').forEach(c => c.classList.remove('drag-over'));
+}
+function onDragOver(e, col) {
+  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+  document.getElementById('col-' + col).classList.add('drag-over');
+}
+function onDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+async function onDrop(e, col) {
+  e.preventDefault();
+  document.getElementById('col-' + col).classList.remove('drag-over');
+  if (draggedTaskId === null) return;
+  try {
+    await fetch(`/api/v1/tasks/${draggedTaskId}/move`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({colonne: col})
+    });
+    await loadTasks();
+  } catch(err) { toast('Erreur déplacement','err'); }
+  draggedTaskId = null;
+}
+
+function openTaskModal(taskId = null, defaultCol = 'BACKLOG') {
+  editingTaskId = taskId;
+  const titleEl = document.getElementById('task-modal-title');
+  if (taskId) {
+    const t = allTasks.find(x => x.id === taskId);
+    if (t) {
+      titleEl.textContent = 'Modifier la tâche';
+      document.getElementById('tm-titre').value = t.titre;
+      document.getElementById('tm-assignee').value = t.assignee || '';
+      document.getElementById('tm-priorite').value = t.priorite;
+      document.getElementById('tm-colonne').value = t.colonne;
+      document.getElementById('tm-incident').value = t.incident_id || '';
+      document.getElementById('tm-desc').value = t.description || '';
+      document.getElementById('tm-due').value = t.due_at ? new Date(t.due_at).toISOString().slice(0,16) : '';
+    }
+  } else {
+    titleEl.textContent = 'Nouvelle tâche';
+    document.getElementById('tm-titre').value = '';
+    document.getElementById('tm-assignee').value = '';
+    document.getElementById('tm-priorite').value = 2;
+    document.getElementById('tm-colonne').value = defaultCol;
+    document.getElementById('tm-incident').value = '';
+    document.getElementById('tm-desc').value = '';
+    document.getElementById('tm-due').value = '';
+  }
+  document.getElementById('task-modal').classList.add('open');
+  setTimeout(() => document.getElementById('tm-titre').focus(), 50);
+}
+
+function closeTaskModal() { document.getElementById('task-modal').classList.remove('open'); }
+
+async function saveTask() {
+  const titre = document.getElementById('tm-titre').value.trim();
+  if (!titre) { toast('Le titre est obligatoire','err'); return; }
+  const body = {
+    titre,
+    assignee:    document.getElementById('tm-assignee').value.trim() || null,
+    priorite:    parseInt(document.getElementById('tm-priorite').value),
+    colonne:     document.getElementById('tm-colonne').value,
+    incident_id: parseInt(document.getElementById('tm-incident').value) || null,
+    description: document.getElementById('tm-desc').value.trim() || null,
+    due_at:      document.getElementById('tm-due').value || null,
+  };
+  try {
+    if (editingTaskId) {
+      await fetch(`/api/v1/tasks/${editingTaskId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    } else {
+      await fetch('/api/v1/tasks/', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    }
+    closeTaskModal();
+    await loadTasks();
+    toast(editingTaskId ? 'Tâche mise à jour' : 'Tâche créée');
+  } catch(e) { toast('Erreur sauvegarde','err'); }
+}
+
+async function deleteTask(id) {
+  if (!confirm('Supprimer cette tâche ?')) return;
+  await fetch(`/api/v1/tasks/${id}`, {method:'DELETE'});
+  await loadTasks();
+  toast('Tâche supprimée');
+}
+
+// ── REX ───────────────────────────────────────────────────
+function openRexModal() {
+  ['rex-titre','rex-pos','rex-amelio','rex-actions','rex-lecons','rex-redacteur',
+   'rex-mttd-h','rex-mttd-m','rex-mttr-h','rex-mttr-m'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  ['rex-poles','rex-decisions','rex-jt','rex-jd'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='0';
+  });
+  document.getElementById('rex-modal').classList.add('open');
+}
+function closeRexModal() { document.getElementById('rex-modal').classList.remove('open'); }
+
+async function saveRex() {
+  const titre = document.getElementById('rex-titre').value.trim();
+  if (!titre) { toast('Titre obligatoire','err'); return; }
+  const parseLines = id => document.getElementById(id).value.split('\n').map(s=>s.trim()).filter(Boolean);
+  // Convertir h+min en minutes totales
+  const _hm = (hId, mId) => {
+    const h = parseInt(document.getElementById(hId)?.value)||0;
+    const m = parseInt(document.getElementById(mId)?.value)||0;
+    const total = h*60+m;
+    return total > 0 ? total : null;
+  };
+  const mttd = _hm('rex-mttd-h','rex-mttd-m');
+  const mttr = _hm('rex-mttr-h','rex-mttr-m');
+  const body = {
+    titre,
+    type_crise:      document.getElementById('rex-type').value,
+    duree_minutes:   mttr,   // durée totale = MTTR
+    mttd_minutes:    mttd,
+    mttr_minutes:    mttr,
+    nb_poles:        parseInt(document.getElementById('rex-poles').value)||0,
+    nb_decisions:    parseInt(document.getElementById('rex-decisions').value)||0,
+    nb_jalons_total: parseInt(document.getElementById('rex-jt').value)||0,
+    nb_jalons_done:  parseInt(document.getElementById('rex-jd').value)||0,
+    points_positifs: parseLines('rex-pos'),
+    points_amelio:   parseLines('rex-amelio'),
+    actions_futures: parseLines('rex-actions'),
+    lecons:          document.getElementById('rex-lecons').value.trim(),
+    redacteur:       document.getElementById('rex-redacteur').value.trim(),
+  };
+  try {
+    const r = await fetch('/api/v1/rapport/rex', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    if (!r.ok) throw new Error();
+    closeRexModal();
+    await loadRex();
+    toast('Fiche REX enregistrée');
+  } catch(e) { toast('Erreur sauvegarde REX','err'); }
+}
+
+async function loadRex() {
+  try {
+    const [rexRes, statsRes] = await Promise.all([
+      fetch('/api/v1/rapport/rex'),
+      fetch('/api/v1/rapport/rex-stats')
+    ]);
+    const rexList  = await rexRes.json();
+    const stats    = await statsRes.json();
+    // KPIs
+    const _min = m => m ? (m>=60 ? `${Math.floor(m/60)}h${(m%60).toString().padStart(2,'0')}` : m+'min') : '—';
+    document.getElementById('rex-total').textContent     = stats.total || '0';
+    document.getElementById('rex-mttr').textContent      = _min(stats.avg_mttr_min);
+    document.getElementById('rex-mttd').textContent      = _min(stats.avg_mttd_min);
+    document.getElementById('rex-jalons-pct').textContent = stats.avg_jalons_pct != null ? stats.avg_jalons_pct + '%' : '—';
+    // Bar chart by type
+    const typeEl = document.getElementById('rex-by-type');
+    const typeColors = {CYBER:'#60a5fa',SANITAIRE:'#4ade80',MIXTE:'#fbbf24'};
+    const byType = stats.by_type || {};
+    const maxV = Math.max(...Object.values(byType), 1);
+    typeEl.innerHTML = Object.entries(byType).map(([k,v]) =>
+      `<div class="rex-bar-row">
+        <span class="rex-bar-label">${k}</span>
+        <div class="rex-bar"><div class="rex-bar-fill" style="width:${v/maxV*100}%;background:${typeColors[k]||'#60a5fa'}"></div></div>
+        <span class="rex-bar-val">${v}</span>
+      </div>`).join('') || '<div style="color:var(--muted);font-family:var(--mono);font-size:10px">Aucune donnée</div>';
+    // REX list
+    const listEl = document.getElementById('rex-list');
+    if (!rexList.length) { listEl.innerHTML='<div class="empty-state">Aucune fiche REX</div>'; return; }
+    listEl.innerHTML = rexList.map(r => {
+      const pos = _parseList(r.points_positifs);
+      const amelio = _parseList(r.points_amelio);
+      const actions = _parseList(r.actions_futures);
+      const typeColor = {CYBER:'#60a5fa',SANITAIRE:'#4ade80',MIXTE:'#fbbf24'}[r.type_crise]||'var(--muted)';
+      return `
+      <div class="rex-entry-card">
+        <div class="rex-entry-header">
+          <span class="rex-entry-titre">${r.titre}</span>
+          <span class="rex-entry-type" style="color:${typeColor};border:1px solid ${typeColor};background:${typeColor}22">${r.type_crise||'?'}</span>
+          <span class="rex-entry-date">${r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : ''}</span>
+          <button class="kc-btn" style="color:#f87171" onclick="deleteRex(${r.id})">✕</button>
+        </div>
+        <div class="rex-entry-metrics">
+          ${r.duree_minutes ? `<div class="rex-metric"><div class="rex-metric-val">${_min(r.duree_minutes)}</div><div class="rex-metric-label">Durée</div></div>` : ''}
+          ${r.mttr_minutes  ? `<div class="rex-metric"><div class="rex-metric-val" style="color:#fbbf24">${_min(r.mttr_minutes)}</div><div class="rex-metric-label">MTTR</div></div>` : ''}
+          ${r.mttd_minutes  ? `<div class="rex-metric"><div class="rex-metric-val" style="color:#f87171">${_min(r.mttd_minutes)}</div><div class="rex-metric-label">MTTD</div></div>` : ''}
+          ${r.nb_poles ? `<div class="rex-metric"><div class="rex-metric-val">${r.nb_poles}</div><div class="rex-metric-label">Pôles</div></div>` : ''}
+          ${r.nb_jalons_total ? `<div class="rex-metric"><div class="rex-metric-val" style="color:#4ade80">${r.nb_jalons_done}/${r.nb_jalons_total}</div><div class="rex-metric-label">Jalons</div></div>` : ''}
+        </div>
+        ${pos.length   ? `<div class="rex-section"><div class="rex-section-title">✅ Points positifs</div>${pos.map(p=>`<span class="rex-tag pos">${p}</span>`).join('')}</div>` : ''}
+        ${amelio.length? `<div class="rex-section"><div class="rex-section-title">⚠️ À améliorer</div>${amelio.map(p=>`<span class="rex-tag amelio">${p}</span>`).join('')}</div>` : ''}
+        ${actions.length?`<div class="rex-section"><div class="rex-section-title">🎯 Actions</div>${actions.map(p=>`<span class="rex-tag action">${p}</span>`).join('')}</div>` : ''}
+        ${r.lecons ? `<div class="rex-section"><div class="rex-section-title">📖 Leçons</div><div style="font-size:12px;color:var(--muted2);margin-top:3px">${r.lecons}</div></div>` : ''}
+        ${r.incident_id ? `<div style="margin-top:7px"><a class="btn-export" href="/api/v1/rapport/rapport/${r.incident_id}" download>📄 Rapport DOCX incident #${r.incident_id}</a></div>` : ''}
+        ${r.redacteur ? `<div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:5px">Rédacteur : ${r.redacteur}</div>` : ''}
+      </div>`;
+    }).join('');
+  } catch(e) { console.error(e); }
+}
+
+function _parseList(val) {
+  if (!val) return [];
+  try { const p = JSON.parse(val); return Array.isArray(p) ? p : []; } catch { return []; }
+}
+
+async function deleteRex(id) {
+  if (!confirm('Supprimer cette fiche REX ?')) return;
+  await fetch(`/api/v1/rapport/rex/${id}`, {method:'DELETE'});
+  await loadRex();
+  toast('REX supprimé');
+}
+
+async function genRexFromIncident() {
+  const selVal = document.getElementById('rex-inc-id').value;
+  const id = parseInt(selVal);
+  if (!id) { toast('Sélectionner un incident','err'); return; }
+  try {
+    const r = await fetch(`/api/v1/sitrep/history`);
+    const all = await r.json();
+    const inc = all.find(i => i.id === id);
+    if (!inc) { toast('Incident #' + id + ' non trouvé','err'); return; }
+    const ts = new Date(inc.timestamp);
+    const resolved = inc.resolved_at ? new Date(inc.resolved_at) : null;
+    const dureeMin = resolved ? Math.round((resolved - ts) / 60000) : null;
+    const jalons = inc.jalons ? (() => { try { return JSON.parse(inc.jalons); } catch { return []; } })() : [];
+    // Pré-remplir le modal REX
+    document.getElementById('rex-titre').value = `Incident #${id} — ${inc.fait.substring(0,60)}`;
+    document.getElementById('rex-type').value = inc.type_crise || 'CYBER';
+    // Pré-remplir durée en h/min
+    if (dureeMin) {
+      document.getElementById('rex-mttr-h').value = Math.floor(dureeMin/60);
+      document.getElementById('rex-mttr-m').value = dureeMin % 60;
+    }
+    document.getElementById('rex-jt').value = jalons.length;
+    document.getElementById('rex-jd').value = jalons.filter(j=>j.done).length;
+    // Show rapport download link
+    const dlBtn = document.getElementById('dl-rapport-btn');
+    if (dlBtn) { dlBtn.href = `/api/v1/rapport/rapport/${id}`; dlBtn.style.display = 'inline-flex'; }
+    openRexModal();
+    toast('Données pré-remplies depuis l\'incident #' + id);
+  } catch(e) { toast('Erreur chargement incident','err'); }
+}
+
+// Patch openTab to load kanban/rex
+const _origOpenTab = openTab;
+openTab = function(id, btn) {
+  _origOpenTab(id, btn);
+  if (id === 'tab-kanban') loadTasks();
+  if (id === 'tab-rex')    loadRex();
+};
+
+// Patch updateMap to also auto-zoom
+const _origUpdateMap = updateMap;
+updateMap = function(bySite) {
+  _origUpdateMap(bySite);
+  autoZoomMap(bySite);
+};
+
+
+/* ═══════════════════ SCRIBE v6 — NOUVEAUX JS ══════════════════ */
+
+// ── THEME SWITCH ─────────────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('scribe_theme', isLight ? 'light' : 'dark');
+}
+
+// Restaurer le thème au démarrage
+(function() {
+  const saved = localStorage.getItem('scribe_theme');
+  if (saved === 'light') {
+    document.body.classList.add('light');
+    // Le bouton n'est pas encore dans le DOM au moment de l'IIFE,
+    // on patch au DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('theme-toggle-btn');
+      if (btn) btn.textContent = '🌙';
+    });
+  }
+})();
+
+// ── KANBAN : charger incidents dans le select tm-incident ─────────────
+async function populateIncidentSelect() {
+  try {
+    const incidents = await fetch('/api/v1/sitrep/history').then(r=>r.json());
+    const sel = document.getElementById('tm-incident');
+    if (!sel) return;
+    // Garder la valeur actuelle
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Aucun —</option>';
+    // Trier : ouverts d'abord, puis par urgence desc
+    const open = incidents.filter(i => i.status !== 'RÉSOLU').sort((a,b) => b.urgency - a.urgency);
+    const closed = incidents.filter(i => i.status === 'RÉSOLU');
+    if (open.length) {
+      const grp = document.createElement('optgroup');
+      grp.label = '🔴 Incidents ouverts';
+      open.forEach(i => {
+        const opt = document.createElement('option');
+        opt.value = i.id;
+        opt.textContent = `#${i.id} — U${i.urgency} ${i.site_id} : ${i.fait.substring(0,45)}${i.fait.length>45?'…':''}`;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    }
+    if (closed.length) {
+      const grp = document.createElement('optgroup');
+      grp.label = '✓ Résolus';
+      closed.slice(0,10).forEach(i => {
+        const opt = document.createElement('option');
+        opt.value = i.id;
+        opt.textContent = `#${i.id} — ${i.site_id} : ${i.fait.substring(0,40)}…`;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    }
+    if (current) sel.value = current;
+  } catch(e) {}
+}
+
+// ── REX : peupler le select incident ─────────────────────────────────
+async function populateRexIncidentSelect() {
+  try {
+    const incidents = await fetch('/api/v1/sitrep/history').then(r=>r.json());
+    const sel = document.getElementById('rex-inc-id');
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Sélectionner un incident —</option>';
+    const open   = incidents.filter(i => i.status !== 'RÉSOLU').sort((a,b) => b.urgency - a.urgency);
+    const closed = incidents.filter(i => i.status === 'RÉSOLU');
+    if (open.length) {
+      const grp = document.createElement('optgroup');
+      grp.label = '🔴 Incidents ouverts';
+      open.forEach(i => {
+        const opt = document.createElement('option');
+        opt.value = i.id;
+        const ts = new Date(i.timestamp).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+        opt.textContent = `#${i.id} — U${i.urgency} ${i.site_id} [${ts}] : ${i.fait.substring(0,50)}${i.fait.length>50?'…':''}`;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    }
+    if (closed.length) {
+      const grp = document.createElement('optgroup');
+      grp.label = '✓ Résolus';
+      closed.forEach(i => {
+        const opt = document.createElement('option');
+        opt.value = i.id;
+        const ts = new Date(i.timestamp).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+        opt.textContent = `#${i.id} — ${i.site_id} [${ts}] : ${i.fait.substring(0,45)}${i.fait.length>45?'…':''}`;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    }
+    if (current) sel.value = current;
+  } catch(e) {}
+}
+
+// Patch openTaskModal pour peupler le select
+const _origOpenTaskModal = openTaskModal;
+openTaskModal = function(taskId, defaultCol) {
+  _origOpenTaskModal(taskId, defaultCol);
+  populateIncidentSelect().then(() => {
+    // Restaurer la valeur si édition
+    if (taskId) {
+      const t = allTasks.find(x => x.id === taskId);
+      if (t && t.incident_id) {
+        const sel = document.getElementById('tm-incident');
+        if (sel) sel.value = t.incident_id;
+      }
+    }
+  });
+};
+
+// Patch saveTask pour lire la valeur select (déjà string/number, OK)
+
+// ── QUICK ACTIONS depuis les cards ───────────────────────────────────
+function quickCreateTask(incidentId, encodedFait, e) {
+  e.stopPropagation();
+  // Ouvrir kanban + modal pré-rempli
+  const kanbBtn = document.querySelector('[onclick*="tab-kanban"]');
+  if (kanbBtn) openTab('tab-kanban', kanbBtn);
+  setTimeout(() => {
+    openTaskModal(null, 'BACKLOG');
+    setTimeout(() => {
+      const titre = document.getElementById('tm-titre');
+      const inc   = document.getElementById('tm-incident');
+      if (titre) titre.value = decodeURIComponent(encodedFait);
+      if (inc)   { inc.value = incidentId; }
+    }, 300);
+  }, 100);
+}
+
+function quickRex(incidentId, e) {
+  e.stopPropagation();
+  const rexBtn = document.querySelector('[onclick*="tab-rex"]');
+  if (rexBtn) openTab('tab-rex', rexBtn);
+  setTimeout(async () => {
+    await populateRexIncidentSelect();
+    document.getElementById('rex-inc-id').value = incidentId;
+    genRexFromIncident();
+  }, 150);
+}
+
+// ── Afficher l'icone thème correctement après login ───────────────────
+const _origApplyUserState = applyUserState;
+applyUserState = function() {
+  _origApplyUserState();
+  const isLight = document.body.classList.contains('light');
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = isLight ? '🌙' : '☀️';
+};
+
+</script>
+</body>
+</html>
