@@ -1,0 +1,39 @@
+# ── SCRIBE — docker-compose.yml (version open-source) ─────────────────────
+# Usage :
+#   docker compose up -d          → premier démarrage
+#   docker compose down           → arrêt
+#   docker compose logs -f        → logs en temps réel
+#   docker compose pull && docker compose up -d  → mise à jour
+
+services:
+  scribe:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: scribe
+    restart: unless-stopped
+    ports:
+      - "${SCRIBE_PORT:-8000}:8000"
+    volumes:
+      # Données persistantes : base SQLite, uploads, config générée
+      - scribe_data:/data
+      # Monter votre config.xml personnalisée (optionnel)
+      # - ./config.xml:/data/config.xml:ro
+    environment:
+      # Fournisseur IA (surpasse config.xml si renseigné)
+      - SCRIBE_IA_PROVIDER=${SCRIBE_IA_PROVIDER:-albert}
+      - SCRIBE_IA_KEY=${SCRIBE_IA_KEY:-}
+      - SCRIBE_IA_MODEL=${SCRIBE_IA_MODEL:-}
+      - SCRIBE_IA_URL=${SCRIBE_IA_URL:-}
+      # Niveau de log
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  scribe_data:
+    driver: local

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="60">
+<title>État du système — SCRIBE</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f8fafc;--surface:#ffffff;--surface2:#f1f5f9;
+  --border:#e2e8f0;--text:#0f172a;--muted:#64748b;--muted2:#94a3b8;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-border:#bbf7d0;
+  --yellow:#b45309;--yellow-bg:#fffbeb;--yellow-border:#fde68a;
+  --orange:#c2410c;--orange-bg:#fff7ed;--orange-border:#fed7aa;
+  --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;
+  --blue:#1d4ed8;--blue-bg:#eff6ff;--blue-border:#bfdbfe;
+  --mono:'Courier New',monospace;
+  --radius:8px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0f172a;--surface:#1e293b;--surface2:#0f172a;
+    --border:#334155;--text:#f1f5f9;--muted:#94a3b8;--muted2:#64748b;
+    --green:#4ade80;--green-bg:rgba(22,163,74,.12);--green-border:rgba(74,222,128,.25);
+    --yellow:#fbbf24;--yellow-bg:rgba(180,83,9,.12);--yellow-border:rgba(251,191,36,.25);
+    --orange:#fb923c;--orange-bg:rgba(194,65,12,.12);--orange-border:rgba(251,146,60,.25);
+    --red:#f87171;--red-bg:rgba(220,38,38,.12);--red-border:rgba(248,113,113,.25);
+    --blue:#60a5fa;--blue-bg:rgba(29,78,216,.12);--blue-border:rgba(96,165,250,.25);
+  }
+}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;line-height:1.6;min-height:100vh}
+a{color:var(--blue);text-decoration:none}
+
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 0}
+.hdr-inner{max-width:900px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.hdr-left h1{font-size:18px;font-weight:600}
+.hdr-left .sub{font-size:13px;color:var(--muted);margin-top:1px}
+.hdr-ts{font-size:12px;color:var(--muted);font-family:var(--mono)}
+
+/* LEVEL BANNER */
+.banner{padding:16px 0;margin-bottom:0}
+.banner-inner{max-width:900px;margin:0 auto;padding:0 20px}
+.banner-card{border-radius:var(--radius);border:1px solid;padding:16px 20px;display:flex;align-items:center;gap:14px}
+.banner-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.banner-level{font-size:15px;font-weight:600}
+.banner-msg{font-size:14px;color:var(--muted);margin-top:2px}
+.banner-by{font-size:11px;color:var(--muted2);margin-top:4px;font-family:var(--mono)}
+.level-OPERATIONNEL  .banner-card{background:var(--green-bg);border-color:var(--green-border)}
+.level-OPERATIONNEL  .banner-dot{background:var(--green)}
+.level-OPERATIONNEL  .banner-level{color:var(--green)}
+.level-PERTURBE      .banner-card{background:var(--yellow-bg);border-color:var(--yellow-border)}
+.level-PERTURBE      .banner-dot{background:var(--yellow)}
+.level-PERTURBE      .banner-level{color:var(--yellow)}
+.level-INCIDENT_MAJEUR .banner-card{background:var(--red-bg);border-color:var(--red-border)}
+.level-INCIDENT_MAJEUR .banner-dot{background:var(--red)}
+.level-INCIDENT_MAJEUR .banner-level{color:var(--red)}
+.level-MAINTENANCE   .banner-card{background:var(--blue-bg);border-color:var(--blue-border)}
+.level-MAINTENANCE   .banner-dot{background:var(--blue)}
+.level-MAINTENANCE   .banner-level{color:var(--blue)}
+
+/* MAIN */
+.main{max-width:900px;margin:0 auto;padding:20px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+.card-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.card-hdr h2{font-size:13px;font-weight:600;letter-spacing:.3px}
+.card-hdr .count{font-size:11px;color:var(--muted);font-family:var(--mono);margin-left:auto}
+.card-body{padding:0}
+
+/* SERVICE ROWS */
+.svc-row{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);gap:10px}
+.svc-row:last-child{border-bottom:none}
+.svc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.svc-label{font-size:13px;flex:1}
+.svc-badge{font-size:11px;font-weight:500;padding:2px 9px;border-radius:20px;white-space:nowrap}
+.s-OK{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.s-PERTURBE{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow-border)}
+.s-HS{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.s-MAINTENANCE{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.dot-OK{background:var(--green)}
+.dot-PERTURBE{background:var(--yellow)}
+.dot-HS{background:var(--red)}
+.dot-MAINTENANCE{background:var(--blue)}
+
+/* FAQ */
+.faq-item{padding:14px 16px;border-bottom:1px solid var(--border)}
+.faq-item:last-child{border-bottom:none}
+.faq-q{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px}
+.faq-r{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* CHRONOLOGIE */
+.chron-item{display:flex;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.chron-item:last-child{border-bottom:none}
+.chron-line{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0;padding-top:4px}
+.chron-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0}
+.chron-stem{width:1px;flex:1;background:var(--border);margin:3px 0;min-height:14px}
+.chron-item:last-child .chron-stem{display:none}
+.chron-content{flex:1}
+.chron-ts{font-size:11px;color:var(--muted2);font-family:var(--mono);margin-bottom:2px}
+.chron-texte{font-size:13px;color:var(--text)}
+.chron-by{font-size:11px;color:var(--muted2);font-family:var(--mono);margin-top:2px}
+
+/* FOOTER */
+.footer{max-width:900px;margin:0 auto;padding:16px 20px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.footer-left{font-size:11px;color:var(--muted2);font-family:var(--mono)}
+.footer-qr{text-align:right}
+.qr-label{font-size:10px;color:var(--muted2);margin-top:4px;font-family:var(--mono)}
+
+/* NO STATUS */
+.no-status{max-width:900px;margin:60px auto;padding:0 20px;text-align:center}
+.no-status h2{font-size:18px;font-weight:500;margin-bottom:8px}
+.no-status p{font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div style="text-align:center;padding:40px;color:#64748b;font-family:monospace;font-size:13px">Chargement…</div>
+</div>
+
+<script>
+const LABELS = {
+  OPERATIONNEL:   '✓ Système opérationnel',
+  PERTURBE:       '⚠ Système perturbé',
+  INCIDENT_MAJEUR:'✕ Incident majeur en cours',
+  MAINTENANCE:    '↻ Maintenance en cours',
+};
+const SVC_LABELS = { OK:'Opérationnel', PERTURBE:'Perturbé', HS:'Hors service', MAINTENANCE:'Maintenance' };
+
+function fmt(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})
+    + ' à ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function svcRow(s){
+  return `<div class="svc-row">
+    <div class="svc-dot dot-${s.statut||'OK'}"></div>
+    <div class="svc-label">${s.label}</div>
+    <span class="svc-badge s-${s.statut||'OK'}">${SVC_LABELS[s.statut]||s.statut}</span>
+  </div>`;
+}
+
+async function load(){
+  const app = document.getElementById('app');
+  try{
+    const r = await fetch('/api/v1/status/public');
+    const d = await r.json();
+    const etab = d.etablissement || {};
+
+    if(!d.published){
+      app.innerHTML = `
+        <div class="hdr"><div class="hdr-inner">
+          <div class="hdr-left">
+            <h1>${etab.nom||'Établissement de santé'}</h1>
+            <div class="sub">État du système d'information</div>
+          </div>
+        </div></div>
+        <div class="no-status">
+          <h2>Aucun point de situation publié</h2>
+          <p>L'équipe n'a pas encore publié de point de situation.<br>Veuillez réessayer ultérieurement ou contacter directement l'établissement.</p>
+        </div>`;
+      return;
+    }
+
+    const lvl = d.niveau_global || 'OPERATIONNEL';
+    const siSvcs = d.services_si || [];
+    const pecSvcs = d.prise_en_charge || [];
+    const faq = (d.faq || []).filter(f=>f.visible && f.reponse);
+    const chrons = d.chronologie || [];
+
+    const nbPertSI  = siSvcs.filter(s=>s.statut!=='OK').length;
+    const nbPertPEC = pecSvcs.filter(s=>s.statut!=='OK').length;
+
+    app.innerHTML = `
+<div class="hdr">
+  <div class="hdr-inner">
+    <div class="hdr-left">
+      <h1>${etab.nom||'Établissement de santé'}</h1>
+      <div class="sub">État du système d'information — Point de situation officiel</div>
+    </div>
+    <div class="hdr-ts">Mis à jour le ${fmt(d.updated_at)}</div>
+  </div>
+</div>
+
+<div class="banner level-${lvl}">
+  <div class="banner-inner">
+    <div class="banner-card">
+      <div class="banner-dot"></div>
+      <div>
+        <div class="banner-level">${LABELS[lvl]||lvl}</div>
+        ${d.message_public?`<div class="banner-msg">${d.message_public}</div>`:''}
+        ${d.updated_by?`<div class="banner-by">Publié par ${d.updated_by}</div>`:''}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Système d'information</h2>
+        ${nbPertSI?`<span class="count">${nbPertSI} service(s) perturbé(s)</span>`:'<span class="count" style="color:var(--green)">Tous opérationnels</span>'}
+      </div>
+      <div class="card-body">${siSvcs.map(svcRow).join('')}</div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Prise en charge patients</h2>
+        ${nbPertPEC?`<span class="count">${nbPertPEC} service(s) impacté(s)</span>`:'<span class="count" style="color:var(--green)">Maintenue</span>'}
+      </div>
+      <div class="card-body">${pecSvcs.map(svcRow).join('')}</div>
+    </div>
+  </div>
+
+  ${faq.length?`
+  <div class="card">
+    <div class="card-hdr"><h2>Questions fréquentes</h2></div>
+    <div class="card-body">${faq.map(f=>`
+      <div class="faq-item">
+        <div class="faq-q">${f.question}</div>
+        <div class="faq-r">${f.reponse}</div>
+      </div>`).join('')}
+    </div>
+  </div>`:''}
+
+  ${chrons.length?`
+  <div class="card">
+    <div class="card-hdr"><h2>Chronologie</h2></div>
+    <div class="card-body">${chrons.map((c,i)=>`
+      <div class="chron-item">
+        <div class="chron-line">
+          <div class="chron-dot"></div>
+          ${i<chrons.length-1?'<div class="chron-stem"></div>':''}
+        </div>
+        <div class="chron-content">
+          <div class="chron-ts">${fmt(c.ts)}</div>
+          <div class="chron-texte">${c.texte}</div>
+          ${c.publie_par?`<div class="chron-by">${c.publie_par}</div>`:''}
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`:''}
+
+</div>
+<div class="footer">
+  <div class="footer-left">
+    ${etab.nom||''} — Cette page se rafraîchit automatiquement toutes les 60 secondes.<br>
+    URL permanente : <a href="/status">/status</a> &nbsp;|&nbsp; JSON : <a href="/api/v1/status/public">/api/v1/status/public</a>
+  </div>
+</div>`;
+  }catch(e){
+    app.innerHTML = `<div style="text-align:center;padding:40px;color:#dc2626;font-family:monospace;font-size:13px">Erreur de chargement : ${e.message}</div>`;
+  }
+}
+load();
+</script>
+</body>
+</html>

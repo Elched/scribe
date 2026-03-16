@@ -176,6 +176,22 @@ def setup_admin(db, root):
 
 
 # ── config.js pour le frontend ─────────────────────────────────────────
+def _parse_federation(root):
+    """Lit la section <federation> du config.xml."""
+    fed_el = root.find("federation")
+    if fed_el is None:
+        return {"enabled": "false"}
+    return {
+        "enabled":             (fed_el.findtext("enabled")             or "false").strip(),
+        "collecteur_url":      (fed_el.findtext("collecteur_url")      or "").strip(),
+        "token":               (fed_el.findtext("token")               or "").strip(),
+        "intervalle_secondes": (fed_el.findtext("intervalle_secondes") or "120").strip(),
+        "share_details":       (fed_el.findtext("share_details")       or "true").strip(),
+        "share_min_urgency":   (fed_el.findtext("share_min_urgency")   or "1").strip(),
+    }
+
+
+
 def generate_config_js(root, site_names):
     """
     Génère app/static/config.js avec :
@@ -234,6 +250,7 @@ def generate_config_js(root, site_names):
         "annuaire_normal":  ann_normal,
         "annuaire_secours": ann_secours,
         "ia":             ia_cfg,
+        "federation":     _parse_federation(root),
     }
 
     out_dir = os.path.join(BASE_DIR, "app", "static")

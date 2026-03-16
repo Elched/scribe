@@ -1,645 +1,424 @@
-# 🏥 SCRIBE — Main courante de crise hospitalière
+# SCRIBE — Release Candidate 1.0.0
 
-> **Outil open-source de gestion opérationnelle des crises cyber et sanitaires pour les établissements de santé français.**
-
-[![Licence: MIT](https://img.shields.io/badge/licence-MIT-brightgreen)](LICENSE)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688)](https://fastapi.tiangolo.com)
-[![Réseau isolé](https://img.shields.io/badge/réseau-isolé%20compatible-orange)](#déploiement-en-5-minutes)
-[![NIS2](https://img.shields.io/badge/conformité-NIS2%20%7C%20CERT%20Santé-red)](#conformité-réglementaire)
+> Main courante numérique de gestion de crise hospitalière  
+> Cyber · Sanitaire · Mixte · Plan Blanc · ORSAN  
+> Open source — Licence MIT — https://github.com/nocomp/scribe
 
 ---
 
-## Pourquoi SCRIBE ?
+## Supervision territoriale multi-établissements
 
-Lors d'une crise cyber ou sanitaire à l'hôpital, les équipes font face à un problème constant : **la perte de traçabilité**. Les décisions sont prises oralement, les chronologies se reconstituent de mémoire, les consignes de relève s'échangent par SMS, et le rapport post-incident mobilise des jours de travail.
+![Collecteur territorial — supervision temps réel](screenshots/supervision.png)
 
-SCRIBE résout ce problème en fournissant une **main courante numérique centralisée**, accessible depuis n'importe quel poste du réseau interne, qui fonctionne même en cas de panne des systèmes d'information principaux.
-
-**Conçu par des professionnels de la sécurité des SI hospitaliers**, SCRIBE est calibré pour les contraintes réelles du terrain : réseau parallèle isolé, absence d'Active Directory, personnel non-technique en salle de crise, obligations réglementaires NIS2 et CERT Santé.
+*Collecteur territorial — 1 établissement en ALERTE, incident cyber actif, statut public publié*
 
 ---
 
-## Table des matières
+## Fonctionnalités
 
-- [Aperçu](#aperçu)
-- [Fonctionnalités détaillées](#fonctionnalités-détaillées)
-- [Déploiement en 5 minutes](#déploiement-en-5-minutes)
-- [Configuration établissement](#configuration-établissement)
-- [Intelligence artificielle](#intelligence-artificielle-configurable)
-- [Architecture technique](#architecture-technique)
-- [Conformité réglementaire](#conformité-réglementaire)
-- [Feuille de route](#feuille-de-route)
+### 🌐 Veille — Main courante
+
+![Onglet Veille](screenshots/acc.png)
+
+Formulaire de déclaration d'incident à gauche, liste des incidents filtrables à droite avec carte Leaflet multi-sites. Jalons de résolution pré-configurés (CERT Santé, isolation réseau…), pièces jointes, analyse IA Albert en un clic.
 
 ---
 
-## Aperçu
+### 🏥 Soins — Cartographie de situation
 
-### 🌐 Main courante — Déclaration et suivi des incidents
+![Onglet Soins](screenshots/soin.png)
 
-![Onglet Veille — main courante principale](screenshots/acc.png)
-
-Formulaire de déclaration structuré (type, urgence, site, UF, fait, analyse, jalons, PJ) avec timeline horodatée en temps réel, carte géographique multi-sites et KPIs dynamiques. L'analyse IA est disponible en un clic à tout moment.
+Vue par pôles cliniques avec statut opérationnel / mode dégradé / impact critique. Projection temporelle de retour à la normale. Analyse capacitaire IA. Services transverses (sécurité physique, logistique).
 
 ---
 
-### 🏥 Cartographie des soins — Impact sur les pôles cliniques
+### 🏛️ Cellule — Coordination
 
-![Onglet Soins — état des pôles](screenshots/soin.png)
+![Onglet Cellule](screenshots/celulle.png)
 
-Vue transversale de l'impact sur chaque pôle clinique. Chaque unité peut être passée en Opérationnel, Mode dégradé ou Impact critique, avec horodatage automatique. Indispensable pour le Plan Blanc et les crises affectant les soins.
-
----
-
-### ⚖️ Cellule de crise — Registre décisionnel
-
-![Onglet Cellule — registre des décisions et présences](screenshots/celulle.png)
-
-Registre horodaté des présences en cellule et de chaque décision prise, avec responsable, base réglementaire (Plan Blanc, ORSAN, NIS2…) et statut de validation. Constitue la preuve documentaire exigée par NIS2 et le Plan Blanc.
+Registre des présences en temps réel (entrées/sorties horodatées). Chronologie décisionnelle avec base réglementaire (Plan Blanc, NIS2…). Traçabilité complète des décisions de crise.
 
 ---
 
-### 📋 Kanban — Gestion des tâches opérationnelles
+### 📋 Kanban — Tableau de bord opérationnel
 
-![Onglet Kanban — tableau des tâches](screenshots/kaban.png)
+![Onglet Kanban](screenshots/kaban.png)
 
-Tableau en 4 colonnes (Backlog → En cours → En attente → Terminé) avec liaison directe aux incidents ouverts, assignation, priorité et échéance. Mise à jour en temps réel pour tous les utilisateurs connectés.
+Tableau Backlog / En cours / En attente / Terminé. Glisser-déposer. Liaison directe avec les incidents. Priorités et assignataires.
 
 ---
 
 ### 📊 REX — Retour d'expérience
 
-![Onglet REX — retour d'expérience](screenshots/rex.png)
+![Onglet REX](screenshots/rex.png)
 
-Formulaire guidé en langage naturel (3 étapes), pré-rempli automatiquement depuis les données de la main courante. Dashboard de métriques agrégées (MTTR, MTTD, jalons). Export rapport de clôture DOCX en un clic.
-
----
-
-### 🔄 Relève — Passation entre équipes
-
-![Onglet Relève — consignes avec accusé de réception](screenshots/releve.png)
-
-Consignes horodatées avec accusé de réception numérique. Garantit la traçabilité complète des passations entre équipes, moment critique où l'information se perd habituellement.
+Fiche REX structurée en 3 sections : informations générales, chronologie (MTTD/MTTR), bilan. Génération automatique depuis un incident existant. Export DOCX. Dashboard agrégé.
 
 ---
 
-### 📞 Annuaire — Téléphonie nominale et de secours
+### 🔄 Relève — Consignes de prise en charge
 
-![Onglet Annuaire — double annuaire nominal et secours](screenshots/annuaire.png)
+![Onglet Relève](screenshots/releve.png)
 
-Double annuaire bascule en un clic : téléphonie IP/VoIP nominale et numéros de secours (GSM, fixes cuivre) utilisables si le système téléphonique IP est hors service. Entièrement configuré depuis `config.xml`, aucune donnée hardcodée.
-
----
-
-## Fonctionnalités détaillées
-
-### 🌐 Onglet VEILLE — Main courante principale
-
-**Déclaration d'incident**
-- Saisie guidée : type de crise (Cyber / Sanitaire / Mixte), niveau d'urgence (1 Veille → 4 Critique), site, unité fonctionnelle
-- Champ *Fait* (description factuelle) séparé du champ *Analyse* (impact et systèmes affectés) — distinction essentielle pour les rapports ANSSI/CERT Santé
-- Moyens engagés et coordonnées de l'intervenant
-- **Jalons de résolution** : boutons prédéfinis (Passé d'ordi, DSI contacté, RSSI alerté, Cellule activée, CERT Santé, Isolation réseau, Sauvegarde OK, Retour normal) + jalons personnalisés — chaque jalon est horodaté au clic
-- Projection de résolution estimée avec compte à rebours en temps réel
-- Pièces jointes : captures d'écran, logs, documents (PDF, images, tout format)
-- Demande d'avis IA au moment de la déclaration
-
-**Timeline des incidents**
-- Affichage en temps réel, rafraîchissement automatique toutes les 12 secondes
-- Code couleur par niveau d'urgence : bleu (veille) → orange (alerte) → rouge (crise) → noir (critique)
-- Progression des jalons par barre de pourcentage sur chaque fiche
-- Pièces jointes visibles directement sur la fiche (chips cliquables)
-- Numéro d'incident `#ID` affiché pour référencement croisé
-- Filtres combinables : site, directeur, urgence, statut, type
-- Changement de statut en un clic (Signalé → En cours → Résolu)
-- Actions rapides depuis chaque fiche : 🤖 Avis IA, 📎 PJ, 📋 Tâche Kanban, 📄 REX, 🗑 Supprimer
-
-**KPIs en temps réel**
-- Total incidents, Critiques, Ouverts, Cyber, Sanitaires
-- Indicateur de niveau global calculé automatiquement : VEILLE NORMALE → ALERTE → CRISE → CRITIQUE
-
-**Carte géographique**
-- Carte OpenStreetMap avec marqueurs colorés par niveau d'alerte de chaque site
-- Auto-zoom vers le site le plus critique
-- Intégration *La Suite Numérique* : boutons VISIO et PAD
-
-**Export**
-- Export CSV horodaté de toute la main courante (compatible tableur)
+Transmission de consignes horodatées avec accusé de réception. Traçabilité des passations entre équipes. Journal de relève chronologique.
 
 ---
 
-### 🏥 Onglet SOINS — Impact sur les unités de soins
+### 📞 Annuaire — Contacts nominaux et de secours
 
-- Toutes les unités fonctionnelles regroupées par pôle clinique
-- État par UF : Nominal / Dégradé / Critique / Fermé, avec compteur de patients et commentaire libre
-- Horodatage automatique de chaque mise à jour
-- Dashboard de synthèse : pôles impactés, patients concernés, % activité nominale vs dégradée
-- Résumé transmis automatiquement à l'analyse IA globale
+![Onglet Annuaire](screenshots/annuaire.png)
+
+Annuaire alphabétique avec recherche instantanée. Basculement en un clic entre téléphonie normale et téléphonie de secours. Instructions de secours affichées en cas de crise cyber/IPBX.
 
 ---
 
-### ⚖️ Onglet CELLULE — Registre de la cellule de crise
+## Architecture
 
-- **Registre des présences** : entrées/sorties horodatées, nom, fonction, action
-- **Chronologie décisionnelle** : chaque décision horodatée, avec responsable, référence réglementaire et statut de validation
-- **Analyse IA globale** : synthèse proportionnée de tous les incidents + décisions + état des pôles, avec actions prioritaires et points de vigilance
-
----
-
-### 📋 Onglet KANBAN — Gestion des tâches opérationnelles
-
-- Tableau BACKLOG → EN COURS → EN ATTENTE → TERMINÉ, drag & drop natif
-- Lien vers l'incident source via sélecteur dynamique (incidents ouverts en tête, triés par urgence)
-- Priorité : Critique (violet), Haute (rouge), Normale (jaune), Basse (vert)
-- Date d'échéance avec alerte visuelle si dépassée
-- Création rapide depuis une fiche incident en un clic (bouton 📋)
-
----
-
-### 📊 Onglet REX — Retour d'expérience
-
-**Formulaire en langage naturel — 3 étapes**
-- *Étape 1* : Quel incident ? Quel type ? Qui rédige ?
-- *Étape 2* : Délai de détection en h/min, durée de résolution en h/min, services impactés, jalons réalisés
-- *Étape 3* : Ce qui a bien fonctionné / axes d'amélioration / actions concrètes / leçon principale
-
-Sélecteur d'incident dynamique — pré-remplissage automatique depuis la main courante (durée, jalons, type).
-
-**Dashboard REX**
-- KPIs agrégés : MTTR moyen, MTTD moyen, % jalons complétés
-- Graphique de répartition par type de crise
-- Export rapport de clôture DOCX complet (page de garde, chronologie, décisions, présences, consignes, avis IA)
+```
+scribe_suite/
+├── README.md
+├── screenshots/              ← Captures d'écran
+├── collecteur/               ← Superviseur territorial (CERT Santé, ARS, GHT)
+│   ├── collecteur.py
+│   ├── collecteur_requirements.txt
+│   ├── Dockerfile
+│   └── docker-compose.yml
+└── scribe/                   ← Client SCRIBE (un déploiement par établissement)
+    ├── main.py
+    ├── setup.py              ← Init depuis config.xml
+    ├── setup_demo1.py        ← Init démo CHV Valmont (prêt à l'emploi)
+    ├── setup_demo2.py        ← Init démo CSBM Montrelay (prêt à l'emploi)
+    ├── setup_chag.py         ← Init avec uf.xlsx FICOM (usage interne CHAG)
+    ├── import_uf2.py         ← Import UF depuis Excel FICOM
+    ├── config.xml            ← Template de configuration
+    ├── config_demo1.xml      ← Config démo CHV
+    ├── config_demo2.xml      ← Config démo CSBM
+    ├── uf_modele.xlsx        ← Modèle Excel 37 UF génériques
+    ├── requirements.txt
+    └── app/
+        ├── api/              ← 14 modules FastAPI
+        ├── static/           ← SPA index.html (8 onglets), status.html
+        ├── models.py         ← 14 tables SQLAlchemy
+        └── database.py
+```
 
 ---
 
-### 🔄 Onglet RELÈVE — Passation entre équipes
-
-- Consignes horodatées destinées à une personne ou un poste
-- **Accusé de réception** numérique horodaté — non modifiable après accusé
-- Historique complet de toutes les consignes de la crise
-
----
-
-### 📞 Onglet ANNUAIRE — Téléphonie de crise
-
-- **Annuaire nominal** : numéros IP/VoIP/DECT du réseau téléphonique habituel
-- **Annuaire de secours** : GSM personnels, fixes cuivre — utilisables si le système téléphonique IP est hors service
-- Bascule en un clic entre les deux modes
-- Entièrement configuré depuis `config.xml`, aucune donnée hardcodée
-
----
-
-### 🔐 Authentification et gestion des utilisateurs
-
-- Aucune dépendance LDAP / Active Directory — fonctionne sur réseau isolé
-- JWT HS256, hash SHA-256 des mots de passe
-- Rôles : **Admin** (complet + gestion utilisateurs), **Directeur** (opérationnel), **Observateur** (lecture seule)
-- Périmètres : un directeur peut être limité à un site ou un service spécifique
-- Notifications de périmètre : inbox personnalisée par utilisateur
-
----
-
-### 🔔 Notifications
-
-- Badge non-lu dans le header, mis à jour toutes les 15 secondes
-- Panneau Inbox glissant : INCIDENT, TÂCHE, SYSTÈME
-- Clic → navigation directe vers l'incident concerné
-
----
-
-### 🧠 Intelligence artificielle (7 fournisseurs)
-
-| Fournisseur | Description | Données sortantes |
-|---|---|---|
-| 🇫🇷 **Albert** (défaut) | IA souveraine DINUM/Etalab | Serveurs gouvernementaux FR |
-| 🤖 **OpenAI** | ChatGPT (GPT-4o, GPT-4o-mini…) | Serveurs OpenAI US |
-| 🟤 **Anthropic** | Claude (Haiku, Sonnet, Opus…) | Serveurs Anthropic US |
-| 🔷 **Google Gemini** | Gemini 2.0 Flash, 1.5 Pro… | Serveurs Google |
-| 🌪️ **Mistral AI** | mistral-small, mistral-large… | Serveurs Mistral FR |
-| 🏠 **Ollama** | Modèle local (llama3, phi3…) | **Aucune — 100% local** |
-| ⚙️ **OpenAI-compat** | LM Studio, vLLM, Jan… | **Aucune — 100% local** |
-
-Changement de fournisseur : une seule ligne dans `config.xml`, puis `python setup.py`. Aucune modification de code.
-
-> Pour les établissements sur réseau totalement isolé, le mode **Ollama** permet une IA entièrement locale sans aucune donnée qui sort du SI.
-
----
-
-### 🎨 Interface
-
-- **Mode sombre / clair** : bascule via le bouton 🌙/☀️, mémorisé entre les sessions
-- Single Page Application : aucun rechargement de page, temps de réponse < 100ms
-- Badge du fournisseur IA actif affiché dans le header
-
----
-
-
-## Déploiement Docker
-
-Docker est la méthode recommandée pour une mise en production rapide et reproductible, notamment sur un serveur dédié en réseau isolé.
-
-### Prérequis
-
-- Docker ≥ 24.0 (`docker --version`)
-- Docker Compose ≥ 2.0 (`docker compose version`)
-
-### Démarrage en une commande
+## Prérequis
 
 ```bash
-# Cloner ou décompresser l'archive
-git clone https://github.com/nocomp/scribe && cd scribe
-# ou : unzip scribe_open.zip && cd scribe_open
-
-# (Optionnel) Personnaliser le port ou les variables IA
-cp .env.example .env && nano .env
-
-# Construire et démarrer
-docker compose up -d
-```
-
-Ouvrez **http://[IP-DU-SERVEUR]:8000** — Login : `dircrise` / `Scribe2026!`
-
-Au premier démarrage, l'entrypoint initialise automatiquement la base, lance `setup.py` et `seed.py`.
-
-### Commandes utiles
-
-```bash
-docker compose logs -f          # Logs en temps réel
-docker compose restart scribe   # Redémarrer le service
-docker compose down             # Arrêter
-docker compose down -v          # Arrêter ET supprimer les données (⚠ irréversible)
-```
-
-### Données persistantes
-
-Toutes les données (base SQLite, pièces jointes) sont stockées dans un volume Docker nommé `scribe_data`, monté sur `/data` dans le conteneur. La base survit aux redémarrages et aux mises à jour de l'image.
-
-```bash
-# Localiser le volume sur l'hôte
-docker volume inspect scribe_data
-
-# Sauvegarde manuelle de la base
-docker cp scribe:/data/db/scribe.db ./backup_$(date +%Y%m%d).db
-```
-
-### Personnaliser la configuration
-
-Montez votre `config.xml` comme volume en lecture seule :
-
-```yaml
-# Dans docker-compose.yml, section volumes du service :
-volumes:
-  - scribe_data:/data
-  - ./config.xml:/data/config.xml:ro   # ← décommenter cette ligne
-```
-
-Puis reconstruire : `docker compose up -d --build`
-
-### Fournisseur IA via variable d'environnement
-
-```bash
-# Fichier .env
-SCRIBE_IA_PROVIDER=openai
-SCRIBE_IA_KEY=sk-proj-xxxxx
-SCRIBE_IA_MODEL=gpt-4o-mini
-```
-
-Les variables d'environnement ont priorité sur `config.xml`. Utile pour injecter la clé API sans la stocker dans l'image.
-
-### Ollama sur le même serveur (IA 100% locale)
-
-```yaml
-# Ajouter dans docker-compose.yml
-services:
-  scribe:
-    environment:
-      - SCRIBE_IA_PROVIDER=ollama
-      - SCRIBE_IA_URL=http://ollama:11434
-    depends_on:
-      - ollama
-
-  ollama:
-    image: ollama/ollama
-    container_name: ollama
-    volumes:
-      - ollama_data:/root/.ollama
-    # Pour GPU Nvidia : décommenter les lignes suivantes
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - capabilities: [gpu]
-
-volumes:
-  scribe_data:
-  ollama_data:
-```
-
-```bash
-# Télécharger le modèle une fois le stack démarré
-docker exec ollama ollama pull llama3
-```
-
-### Reverse proxy Nginx (HTTPS)
-
-Pour exposer SCRIBE en HTTPS derrière un reverse proxy :
-
-```nginx
-server {
-    listen 443 ssl;
-    server_name scribe.monhopital.fr;
-
-    ssl_certificate     /etc/ssl/certs/scribe.crt;
-    ssl_certificate_key /etc/ssl/private/scribe.key;
-
-    location / {
-        proxy_pass         http://127.0.0.1:8000;
-        proxy_set_header   Host $host;
-        proxy_set_header   X-Real-IP $remote_addr;
-        proxy_http_version 1.1;
-        proxy_set_header   Upgrade $http_upgrade;
-        proxy_set_header   Connection "upgrade";
-    }
-}
+Python 3.9+
+pip install -r requirements.txt             # SCRIBE
+pip install -r collecteur_requirements.txt  # Collecteur
 ```
 
 ---
 
-## Déploiement en 5 minutes
+## Démarrage rapide — Instance unique
 
-### Prérequis
-
-- Python 3.9 ou supérieur (`python --version`)
-- Aucune base de données externe (SQLite embarqué)
-- Aucune connexion Internet requise en fonctionnement
-
-### Installation
-
-```bash
-# 1. Décompresser l'archive
-unzip scribe_open.zip && cd scribe_open
-
-# 2. Installer les dépendances Python
-pip install -r requirements.txt
-
-# 3. Éditer config.xml avec les données de votre établissement
-
-# 4. Initialiser
-python setup.py
-
-# 5. Démarrer
+```powershell
+# Windows PowerShell
+copy config_demo1.xml config.xml
+python setup_demo1.py
 python main.py
 ```
 
-Ouvrez **http://localhost:8000** — Login : `dircrise` / `Scribe2026!` (**à changer immédiatement** via le panneau admin).
-
-### Accès réseau (salle de crise)
+Ouvrir http://localhost:8000 — login : `dircrise` / `Scribe2026!`
 
 ```bash
-python main.py --host 0.0.0.0 --port 8000
-# → http://[IP-du-serveur]:8000 depuis tous les postes du réseau
-```
-
-### Import des unités fonctionnelles
-
-```bash
-# Option A — remplir le modèle fourni
-python import_uf2.py uf_modele.xlsx
-
-# Option B — export FICOM de votre établissement
-python import_uf2.py votre_export.xlsx
-```
-
-### Service systemd (production)
-
-```ini
-# /etc/systemd/system/scribe.service
-[Unit]
-Description=SCRIBE Main courante hospitalière
-After=network.target
-
-[Service]
-WorkingDirectory=/opt/scribe
-ExecStart=/usr/bin/python3 main.py --host 0.0.0.0 --port 8000
-Restart=always
-User=scribe
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-systemctl enable scribe && systemctl start scribe
+# Linux / Mac
+cp config_demo1.xml config.xml
+python3 setup_demo1.py
+python3 main.py
 ```
 
 ---
 
-## Configuration établissement
-
-Tout se configure dans **`config.xml`** — c'est le seul fichier à modifier.
-
-```xml
-<scribe>
-  <etablissement>
-    <nom>Centre Hospitalier de Votre Ville</nom>
-    <sigle>CHVV</sigle>
-    <finess>000000000</finess>
-  </etablissement>
-
-  <admin>
-    <login>dircrise</login>
-    <password>VotreMotDePasse!</password>   <!-- Changer après la 1ère connexion -->
-  </admin>
-
-  <sites>
-    <site>
-      <nom>Site Principal</nom>
-      <adresse>1 avenue de l'Hôpital, 00000 Ville</adresse>
-      <latitude>48.8566</latitude>
-      <longitude>2.3522</longitude>
-      <telephone_garde>01 00 00 00 00</telephone_garde>
-    </site>
-  </sites>
-
-  <directeurs>
-    <directeur>
-      <nom>M. Prénom NOM</nom>
-      <fonction>Directeur Général</fonction>
-      <abreviation>DG</abreviation>
-    </directeur>
-  </directeurs>
-
-  <unites_fonctionnelles site="Site Principal">
-    <uf code="1001" pole="URGENCES">Urgences adultes</uf>
-    <uf code="2001" pole="SOINS CRITIQUES">Réanimation</uf>
-  </unites_fonctionnelles>
-
-  <annuaire_normal>
-    <contact service="URGENCES" local="IOA" tel="5100"/>
-    <contact service="DSI INFORMATIQUE" local="Support" tel="6060"/>
-  </annuaire_normal>
-
-  <annuaire_secours>
-    <contact service="CADRE DE NUIT" local="GSM" tel="06 00 00 00 00"/>
-  </annuaire_secours>
-
-  <ia>
-    <fournisseur>albert</fournisseur>   <!-- albert | openai | anthropic | gemini | mistral | ollama -->
-    <cle_api></cle_api>
-    <modele></modele>                    <!-- Laisser vide = modèle par défaut -->
-  </ia>
-</scribe>
-```
-
-Puis : `python setup.py`
 
 ---
 
-## Intelligence artificielle configurable
+## ⚠️ Comprendre les deux tokens — LIRE AVANT TOUT
 
-### Changer de fournisseur
+La connexion entre SCRIBE et le collecteur repose sur **deux tokens distincts** qui ont des rôles différents. C'est le point qui prête le plus à confusion.
 
-```xml
-<ia>
-  <fournisseur>openai</fournisseur>
-  <cle_api>sk-proj-xxxxx</cle_api>
-  <modele>gpt-4o-mini</modele>
-</ia>
+| Token | Où il apparaît | À quoi il sert |
+|---|---|---|
+| **Token admin collecteur** | Affiché au démarrage du collecteur | Administrer le collecteur (créer/supprimer des établissements) |
+| **Token établissement** | Dans `config.xml` de SCRIBE | Authentifier les pushs de données de SCRIBE vers le collecteur |
+
+### Règle absolue
+
+```
+Token admin   → uniquement dans le -H "Authorization: Bearer ..."  de la commande curl
+Token établissement → dans config.xml <federation><token> ET dans le -d '{"token":"..."}' du curl
 ```
 
-### Mode 100% local avec Ollama
+**Ces deux tokens ne doivent jamais être identiques.**
+
+---
+
+### Exemple concret pas à pas
+
+**1. Démarrer le collecteur — noter le token admin**
+
+```
+Token admin : 5de7a658292d49f90284e45185c500eeb982ce3934c6cd8977b708dd5c0e532c
+```
+→ Ce token sert **uniquement** à administrer le collecteur. Il ne va nulle part dans SCRIBE.
+
+**2. Choisir un token pour l'établissement CHV**
 
 ```bash
-ollama pull llama3   # https://ollama.ai
+python3 -c "import secrets; print(secrets.token_hex(32))"
+# → a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2
 ```
+
+**3. Mettre CE token dans config.xml de SCRIBE**
 
 ```xml
-<ia>
-  <fournisseur>ollama</fournisseur>
-  <modele>llama3</modele>
-</ia>
+<federation>
+  <enabled>true</enabled>
+  <collecteur_url>http://192.168.1.109:9000/api/push</collecteur_url>
+  <token>a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2</token>
+</federation>
 ```
 
-Aucune donnée ne quitte le SI. Idéal pour les réseaux totalement isolés.
+**4. Relancer SCRIBE**
+
+```powershell
+python setup_demo1.py
+python main.py
+```
+
+**5. Enregistrer l'établissement dans le collecteur**
+
+```bash
+curl -X POST http://localhost:9000/api/admin/tokens   -H "Authorization: Bearer 5de7a658292d49f90284e45185c500eeb982ce3934c6cd8977b708dd5c0e532c"   -H "Content-Type: application/json"   -d '{"sigle":"CHV","token":"a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"}'
+```
+
+→ `Authorization: Bearer` = **token admin** (affiché au démarrage du collecteur)  
+→ `"token":` dans `-d` = **token établissement** (celui que tu as mis dans config.xml)
+
+**6. Vérification**
+
+Dans les logs SCRIBE dans les 30 secondes :
+```
+INFO:httpx:HTTP Request: POST http://192.168.1.109:9000/api/push "HTTP/1.1 200 OK"
+```
 
 ---
 
-## Architecture technique
+## Déploiement multi-sites — Séquence de démarrage
 
-| Composant | Technologie |
+> **Règle absolue : toujours démarrer le collecteur en premier**, avant les instances SCRIBE.
+
+### Étape 1 — Démarrer le collecteur
+
+```bash
+cd collecteur/
+python3 collecteur.py
+```
+
+Au démarrage, le token admin s'affiche — il est **persistant entre les redémarrages** :
+
+```
+╔══════════════════════════════════════════════╗
+║  SCRIBE Collecteur territorial               ║
+╚══════════════════════════════════════════════╝
+Dashboard     : http://0.0.0.0:9000
+Token admin   : abc123def456...
+(persistant dans collecteur_admin.json)
+```
+
+### Étape 2 — Choisir un token pour chaque établissement
+
+```bash
+python3 -c "import secrets; print(secrets.token_hex(32))"
+# → f3a8b2c1d4e5f6a7b8c9d0e1f2a3b4c5...
+```
+
+### Étape 3 — Configurer config.xml côté SCRIBE
+
+```xml
+<federation>
+  <enabled>true</enabled>
+  <collecteur_url>http://[IP_COLLECTEUR]:9000/api/push</collecteur_url>
+  <token>f3a8b2c1d4e5f6a7b8c9d0e1f2a3b4c5...</token>
+  <intervalle_secondes>30</intervalle_secondes>
+  <share_details>true</share_details>
+  <share_min_urgency>1</share_min_urgency>
+</federation>
+```
+
+### Étape 4 — Initialiser et démarrer SCRIBE
+
+```powershell
+python setup_demo1.py
+python main.py
+```
+
+### Étape 5 — Enregistrer l'établissement dans le collecteur
+
+```bash
+curl -X POST http://[IP_COLLECTEUR]:9000/api/admin/tokens \
+  -H "Authorization: Bearer TOKEN_ADMIN_COLLECTEUR" \
+  -H "Content-Type: application/json" \
+  -d '{"sigle":"CHV","token":"f3a8b2c1d4e5f6a7b8c9d0e1f2a3b4c5..."}'
+```
+
+Le token dans `{"token":"..."}` doit correspondre **exactement** à celui dans `config.xml`.
+
+### Vérification
+
+Dans les logs SCRIBE au démarrage :
+```
+INFO:scribe.federation:Federation activée → http://[IP]:9000/api/push
+INFO:httpx:HTTP Request: POST http://[IP]:9000/api/push "HTTP/1.1 200 OK"
+```
+
+---
+
+## POC — 2 SCRIBE + 1 collecteur
+
+| Machine | Rôle | IP | Config |
+|---|---|---|---|
+| PC-A | SCRIBE Démo 1 | 192.168.1.10 | `config_demo1.xml` + token CHV |
+| PC-B | SCRIBE Démo 2 | 192.168.1.11 | `config_demo2.xml` + token CSBM |
+| PC-C | Collecteur | 192.168.1.20 | — |
+
+```bash
+# 1. PC-C — démarrer le collecteur, noter le token admin
+python3 collecteur.py
+
+# 2. PC-C — enregistrer les deux établissements
+curl -X POST http://localhost:9000/api/admin/tokens \
+  -H "Authorization: Bearer TOKEN_ADMIN" \
+  -H "Content-Type: application/json" \
+  -d '{"sigle":"CHV","token":"token_chv_choisi"}'
+
+curl -X POST http://localhost:9000/api/admin/tokens \
+  -H "Authorization: Bearer TOKEN_ADMIN" \
+  -H "Content-Type: application/json" \
+  -d '{"sigle":"CSBM","token":"token_csbm_choisi"}'
+
+# 3. PC-A — éditer collecteur_url + token CHV dans config_demo1.xml
+copy config_demo1.xml config.xml
+python setup_demo1.py
+python main.py
+
+# 4. PC-B — éditer collecteur_url + token CSBM dans config_demo2.xml
+copy config_demo2.xml config.xml
+python setup_demo2.py
+python main.py
+```
+
+Dashboard collecteur : http://192.168.1.20:9000
+
+---
+
+## Initialisation from scratch (nouvel établissement)
+
+**1. Remplir `config.xml`**
+
+| Section | Contenu |
 |---|---|
-| Backend | Python 3.9+ / FastAPI / SQLAlchemy |
-| Base de données | SQLite (embarqué — fichier `scribe.db`) |
-| Frontend | HTML5 / CSS3 / JavaScript vanilla (SPA) |
-| Carte | Leaflet.js + OpenStreetMap |
-| Authentification | JWT HS256 / SHA-256 |
-| Rapports | python-docx |
-| IA | Adaptateur universel httpx (7 fournisseurs) |
+| `<etablissement>` | Nom, sigle, FINESS |
+| `<admin>` | Login et mot de passe initial |
+| `<sites>` | Sites géographiques avec coordonnées GPS |
+| `<directeurs>` | Directeurs de crise (liste déroulante formulaire) |
+| `<annuaire_normal>` | Contacts nominaux (VoIP/DECT) |
+| `<annuaire_secours>` | Contacts de secours (GSM, fixes cuivre) |
+| `<ia>` | Fournisseur IA et clé API |
+| `<federation>` | Désactivée par défaut |
 
-### Structure des fichiers
-
+**2. Initialiser**
+```bash
+python setup.py
 ```
-scribe/
-├── config.xml              ← À remplir
-├── setup.py                ← Initialisation
-├── main.py                 ← Serveur
-├── import_uf2.py           ← Import UF (FICOM ou modèle générique)
-├── uf_modele.xlsx          ← Modèle Excel à adapter
-├── seed.py                 ← Création des sites
-├── requirements.txt
-├── scribe.db               ← Base SQLite (générée)
-├── uploads/                ← Pièces jointes
-└── app/
-    ├── models.py
-    ├── database.py
-    └── api/
-        ├── ai_router.py    ← Routeur IA universel
-        ├── albert.py       ← Endpoints IA + prompts métier
-        ├── auth.py
-        ├── sitrep.py       ← Main courante
-        ├── cellule.py      ← Décisions + présences
-        ├── releve.py
-        ├── cartographie.py
-        ├── tasks.py        ← Kanban
-        ├── rapport.py      ← Export DOCX + REX
-        └── attachments.py
-    └── static/
-        ├── index.html      ← Interface SPA
-        └── config.js       ← Généré par setup.py
+
+**3. Importer les UF FICOM** (optionnel)
+```bash
+python import_uf2.py votre_export_ficom.xlsx
+```
+
+**4. Démarrer**
+```bash
+python main.py
+# → http://localhost:8000
 ```
 
 ---
 
-## Conformité réglementaire
+## Page de statut publique
 
-### NIS2
+Chaque SCRIBE expose une page accessible **sans authentification** :
 
-- Traçabilité horodatée de chaque incident avec déclarant identifié
-- MTTD/MTTR calculés automatiquement et exportables
-- L'IA rappelle l'obligation de notification dans les 24h pour les incidents significatifs
-- Le registre cellule constitue la preuve des actions correctives
+| URL | Usage |
+|---|---|
+| `http://[IP]:8000/status` | Page HTML — prestataires, journalistes, ARS |
+| `http://[IP]:8000/api/v1/status/public` | JSON — intégrations tierces |
 
-### CERT Santé
+**Publication** : onglet **📢 COMMUNIQUÉ** → définir le niveau → rédiger le message → cocher l'état des services SI et PEC → **Publier**
 
-- Main courante horodatée conforme aux exigences de traçabilité
-- Export CSV pour envoi des éléments de chronologie
-- Rapport de clôture DOCX aligné avec les attendus du CERT Santé
-- Contact CERT Santé pré-intégré dans l'annuaire de secours
-
-### HDS
-
-- Données hébergées localement (SQLite sur le serveur de l'établissement)
-- Aucune transmission à un tiers (sauf choix d'un fournisseur IA cloud)
-- Mode Ollama : IA entièrement locale, zéro donnée sortante
-
-### RGPD
-
-- Aucune donnée patient dans la main courante (données organisationnelles uniquement)
-- Pas de SaaS, pas de compte en ligne, pas de télémétrie
-
-### Plan Blanc / ORSAN
-
-- Structure de main courante conforme aux exigences du Plan Blanc
-- Registre des présences en cellule conforme
-- Base réglementaire associée à chaque décision
+Le collecteur récupère automatiquement les statuts publiés dans l'onglet **▦ Statuts publics**.
 
 ---
 
-## Cas d'usage
+## Fournisseurs IA
 
-### Ransomware à 3h du matin
-
-L'administrateur déclare un incident CYBER urgence 3 → SCRIBE notifie les directeurs → la cellule s'active, les présences sont enregistrées → les jalons s'enchaînent (Isolation réseau ✓, CERT Santé ✓) → les tâches sont distribuées via le Kanban → la relève de 6h est formalisée avec accusé de réception → le rapport de clôture DOCX est généré en un clic le lendemain.
-
-### Déclenchement Plan Blanc
-
-Afflux massif → incident SANITAIRE urgence 4 → l'onglet SOINS affiche l'état de chaque pôle → la cellule enregistre les décisions de réquisition → l'IA synthétise l'état des pôles → l'export CSV est transmis à l'ARS.
-
----
-
-## Feuille de route
-
-- [ ] Export PDF natif
-- [ ] Interface de configuration graphique (sans éditer config.xml manuellement)
-- [ ] Mode multi-établissements (GHT)
-- [ ] Synchronisation entre deux instances SCRIBE (réseau principal + réseau de crise)
-- [ ] Application mobile PWA pour les astreintes
-- [ ] Intégration messagerie sécurisée MSSanté
-- [ ] Modèles de jalons paramétrables par type de crise
+| `<fournisseur>` | Souverain | Clé API | Modèle par défaut |
+|---|---|---|---|
+| `albert` | ✓ FR (DINUM) | Optionnelle | Ministral-3-8B |
+| `ollama` | ✓ Local | Non | llama3 |
+| `openai` | ✗ | Oui | gpt-4o-mini |
+| `anthropic` | ✗ | Oui | claude-haiku |
+| `gemini` | ✗ | Oui | gemini-2.0-flash |
+| `mistral` | FR | Oui | mistral-small |
+| `openai_compat` | — | Optionnelle | LM Studio / vLLM |
 
 ---
 
-## Contribution
+## Docker
 
-SCRIBE est distribué librement aux établissements de santé publics et privés.
+```bash
+# SCRIBE
+cd scribe/
+docker compose up -d
 
-Ouvrez une *issue* pour signaler un bug ou proposer une fonctionnalité. Les *pull requests* sont bienvenues.
+# Collecteur
+cd collecteur/
+docker compose up -d
+docker compose logs | grep "Token admin"
+```
 
 ---
 
-## Licence
+## Sécurité et conformité
 
-MIT — voir [LICENSE](LICENSE)
+- **NIS2** : notification suggérée par l'IA pour tout incident cyber U3+
+- **CERT Santé** : contact pré-renseigné dans l'annuaire de secours
+- **HDS** : 100% on-premise, réseau isolé supporté, aucune donnée externe sans action explicite
+- **Fédération** : aucune donnée nominative dans les payloads push
+- **Statut public** : publication délibérée uniquement — rien n'est exposé par défaut
+- **Auth** : JWT HS256, SHA-256 passwords, pas de LDAP/AD requis
 
-*Développé par et pour les équipes de sécurité des SI hospitaliers français.*  
-*Conforme aux exigences NIS2, CERT Santé, HDS et Plan Blanc.*
+---
+
+## Changelog RC 1.0.0
+
+- 8 onglets : Veille, Soins, Cellule, Kanban, REX, Relève, Annuaire, Communiqué
+- Collecteur territorial multi-établissements temps réel
+- Cartographie GPS avec marqueurs et niveaux d'alerte
+- Statuts publics dans le collecteur (push automatique)
+- Page `/status` publique sans authentification
+- Services transverses Sécurité physique / Logistique
+- Export DOCX rapport de crise
+- 7 fournisseurs IA
+- Scripts de démo prêts à l'emploi (CHV Valmont, CSBM Montrelay)
+- Token admin collecteur persistant entre les redémarrages
+- Libellés UF métier dans la supervision territoriale
+
+---
+
+*CERT Santé : cert-sante@esante.gouv.fr — ANSSI : cybermalveillance.gouv.fr*  
+*Dépôt : https://github.com/nocomp/scribe — Licence MIT*

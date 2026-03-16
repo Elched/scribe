@@ -182,6 +182,64 @@ textarea{min-height:48px}
 .btn-ai{padding:7px 10px;font-family:var(--mono);font-size:11px;font-weight:600;background:var(--blue-dim);color:#93c5fd;border:1px solid #3b82f6;border-radius:4px;cursor:pointer;transition:all .15s;white-space:nowrap}
 .btn-ai:hover{background:var(--blue);color:#fff}
 
+
+/* ══ COMMUNIQUÉ TAB ══ */
+.communique-wrap{flex:1;display:flex;overflow:hidden;gap:0}
+.communique-editor{width:440px;min-width:360px;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;background:var(--surface)}
+.communique-preview{flex:1;overflow-y:auto;background:var(--bg)}
+.communique-section{padding:14px 16px;border-bottom:1px solid var(--border)}
+.communique-section h3{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+.niveau-btns{display:flex;gap:6px;flex-wrap:wrap}
+.niveau-btn{font-family:var(--mono);font-size:10px;padding:5px 12px;border-radius:4px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted2);cursor:pointer;transition:all .15s}
+.niveau-btn.active-OPERATIONNEL{background:#052e16;color:#4ade80;border-color:#16a34a}
+.niveau-btn.active-PERTURBE{background:#422006;color:#fbbf24;border-color:#b45309}
+.niveau-btn.active-INCIDENT_MAJEUR{background:#450a0a;color:#f87171;border-color:#dc2626}
+.niveau-btn.active-MAINTENANCE{background:#0c2340;color:#60a5fa;border-color:#1d4ed8}
+.svc-toggle-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)}
+.svc-toggle-row:last-child{border-bottom:none}
+.svc-toggle-label{font-family:var(--mono);font-size:10px;flex:1;color:var(--muted2)}
+.svc-state-btn{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--muted)}
+.svc-state-btn.s-OK{background:#052e16;color:#4ade80;border-color:#16a34a}
+.svc-state-btn.s-PERTURBE{background:#422006;color:#fbbf24;border-color:#b45309}
+.svc-state-btn.s-HS{background:#450a0a;color:#f87171;border-color:#dc2626}
+.svc-state-btn.s-MAINTENANCE{background:#0c2340;color:#60a5fa;border-color:#1d4ed8}
+.faq-row{padding:6px 0;border-bottom:1px solid var(--border)}
+.faq-row:last-child{border-bottom:none}
+.faq-q-label{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.faq-toggle{cursor:pointer;accent-color:var(--purple)}
+.faq-reponse{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:10px;padding:5px 8px;border-radius:3px;resize:none;line-height:1.5}
+.chron-add{display:flex;gap:6px;margin-top:8px}
+.chron-add textarea{flex:1;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:10px;padding:5px 8px;border-radius:3px;resize:none;height:44px}
+.chron-list-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--muted2)}
+.chron-list-item:last-child{border-bottom:none}
+.chron-ts{color:var(--muted);font-size:9px;flex-shrink:0;min-width:90px}
+.chron-texte{flex:1;color:var(--text)}
+.publish-bar{padding:12px 16px;background:var(--surface2);border-top:1px solid var(--border2);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.publish-status{font-family:var(--mono);font-size:10px;flex:1}
+.published-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px}
+.published-dot.on{background:#4ade80}
+.published-dot.off{background:var(--muted)}
+.btn-publish{font-family:var(--mono);font-size:10px;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:600;border:none}
+.btn-publish.on{background:#16a34a;color:#fff}
+.btn-publish.off{background:var(--surface3);color:var(--muted2);border:1px solid var(--border2)}
+.preview-frame{padding:20px;font-family:system-ui,sans-serif}
+.preview-hdr{background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:12px 16px;margin-bottom:12px}
+.preview-title{font-size:16px;font-weight:600}
+.preview-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.preview-banner{border-radius:6px;border:1px solid;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.preview-banner-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.preview-banner-level{font-size:14px;font-weight:600}
+.preview-banner-msg{font-size:13px;color:var(--muted);margin-top:2px}
+.preview-card{background:var(--surface);border:1px solid var(--border2);border-radius:6px;margin-bottom:10px;overflow:hidden}
+.preview-card-hdr{padding:8px 12px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;letter-spacing:.3px}
+.preview-svc-row{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--border);font-size:12px}
+.preview-svc-row:last-child{border-bottom:none}
+.preview-svc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.preview-svc-badge{font-size:10px;padding:1px 7px;border-radius:10px;margin-left:auto}
+.qr-box{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center;margin-top:12px}
+.qr-placeholder{width:80px;height:80px;margin:0 auto 6px;border:1px dashed var(--border2);border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:9px;font-family:var(--mono)}
+.qr-url{font-family:var(--mono);font-size:9px;color:var(--muted2)}
+
 /* ══ SOINS TAB ══ */
 
 /* ══ SERVICES TRANSVERSES (Sécurité physique / Logistique) ══ */
@@ -604,6 +662,7 @@ body.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
     <button class="tab-btn"        onclick="openTab('tab-rex',this)">📊 REX</button>
     <button class="tab-btn"        onclick="openTab('tab-releve',this)">🔄 RELÈVE</button>
     <button class="tab-btn"        onclick="openTab('tab-annuaire',this)">📞 ANNUAIRE</button>
+    <button class="tab-btn"        onclick="openTab('tab-communique',this)" id="tab-btn-communique">📢 COMMUNIQUÉ</button>
   </nav>
   <div class="header-right">
     <div id="incident-level" class="green">VEILLE NORMALE</div>
@@ -2924,6 +2983,7 @@ openTab = function(id, btn) {
   _origOpenTab(id, btn);
   if (id === 'tab-kanban') loadTasks();
   if (id === 'tab-rex')    loadRex();
+  if (id === 'tab-communique') loadCommData();
 };
 
 // Patch updateMap to also auto-zoom
@@ -3080,6 +3140,287 @@ function quickRex(incidentId, e) {
   }, 150);
 }
 
+// ══════════════════════════════════════════════════════════════
+//  COMMUNIQUÉ — Page de statut publique
+// ══════════════════════════════════════════════════════════════
+
+let commData = null;   // état courant chargé depuis l'API
+
+const NIVEAUX_LABELS = {
+  OPERATIONNEL:   '✓ Système opérationnel',
+  PERTURBE:       '⚠ Système perturbé',
+  INCIDENT_MAJEUR:'✕ Incident majeur en cours',
+  MAINTENANCE:    '↻ Maintenance en cours',
+};
+const SVC_STATES = ['OK','PERTURBE','HS','MAINTENANCE'];
+const SVC_STATE_LABELS = {OK:'OK',PERTURBE:'Perturbé',HS:'Hors service',MAINTENANCE:'Maintenance'};
+const NIVEAU_COLORS = {
+  OPERATIONNEL:   {bg:'#052e16',color:'#4ade80',border:'#16a34a',dot:'#4ade80'},
+  PERTURBE:       {bg:'#422006',color:'#fbbf24',border:'#b45309',dot:'#fbbf24'},
+  INCIDENT_MAJEUR:{bg:'#450a0a',color:'#f87171',border:'#dc2626',dot:'#f87171'},
+  MAINTENANCE:    {bg:'#0c2340',color:'#60a5fa',border:'#1d4ed8',dot:'#60a5fa'},
+};
+
+async function loadCommData() {
+  try {
+    const token = localStorage.getItem('scribe_token') || '';
+    const r = await fetch('/api/v1/status/current', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!r.ok) return;
+    commData = await r.json();
+    renderCommEditor();
+    renderCommPreview();
+  } catch(e) { console.warn('Status page:', e); }
+}
+
+function renderCommEditor() {
+  if (!commData) return;
+
+  // Niveau
+  document.querySelectorAll('.niveau-btn').forEach(b => {
+    const n = b.getAttribute('onclick').match(/'([A-Z_]+)'/)?.[1];
+    b.className = 'niveau-btn' + (n === commData.niveau_global ? ' active-' + n : '');
+  });
+
+  // Message
+  const msgEl = document.getElementById('comm-message');
+  if (msgEl) msgEl.value = commData.message_public || '';
+
+  // Services SI
+  renderSvcList('comm-si-list', commData.services_si || [], 'si');
+  // PEC
+  renderSvcList('comm-pec-list', commData.prise_en_charge || [], 'pec');
+  // FAQ
+  renderFaqList(commData.faq || []);
+  // Chronologie
+  renderChronList(commData.chronologie || []);
+  // Publish state
+  updatePublishBar(commData.published);
+}
+
+function renderSvcList(containerId, svcs, prefix) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  c.innerHTML = svcs.map((s, i) => `
+    <div class="svc-toggle-row">
+      <span class="svc-toggle-label">${s.label}</span>
+      ${SVC_STATES.map(st => `
+        <button class="svc-state-btn ${s.statut===st?'s-'+st:''}"
+          onclick="setSvcState('${prefix}',${i},'${st}')">${SVC_STATE_LABELS[st]}</button>
+      `).join('')}
+    </div>`).join('');
+}
+
+function renderFaqList(faq) {
+  const c = document.getElementById('comm-faq-list');
+  if (!c) return;
+  c.innerHTML = faq.map((f, i) => `
+    <div class="faq-row">
+      <div class="faq-q-label">
+        <input type="checkbox" class="faq-toggle" ${f.visible?'checked':''}
+          onchange="setFaqVisible(${i}, this.checked)">
+        <span>${f.question}</span>
+      </div>
+      ${f.visible ? `<textarea class="faq-reponse" rows="2"
+        placeholder="Réponse officielle..."
+        onblur="setFaqReponse(${i}, this.value)">${f.reponse||''}</textarea>` : ''}
+    </div>`).join('');
+}
+
+function renderChronList(chrons) {
+  const c = document.getElementById('comm-chron-list');
+  if (!c) return;
+  if (!chrons.length) { c.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);padding:4px 0">Aucune entrée</div>'; return; }
+  c.innerHTML = chrons.map(ch => {
+    const ts = ch.ts ? new Date(ch.ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div class="chron-list-item">
+      <span class="chron-ts">${ts}</span>
+      <span class="chron-texte">${ch.texte}</span>
+      <button onclick="delChronEntry(${ch.id})"
+        style="font-size:9px;padding:1px 5px;background:transparent;border:1px solid var(--border2);color:var(--muted);border-radius:2px;cursor:pointer">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderCommPreview() {
+  const c = document.getElementById('comm-preview');
+  if (!c || !commData) return;
+  const lvl   = commData.niveau_global || 'OPERATIONNEL';
+  const col   = NIVEAU_COLORS[lvl] || NIVEAU_COLORS.OPERATIONNEL;
+  const svcs  = commData.services_si || [];
+  const pec   = commData.prise_en_charge || [];
+  const faq   = (commData.faq||[]).filter(f=>f.visible&&f.reponse);
+  const chrons= commData.chronologie || [];
+  const etab  = (typeof SCRIBE_CONFIG !== 'undefined') ? SCRIBE_CONFIG.etablissement : {};
+
+  const svcRows = (list) => list.map(s => {
+    const C = {OK:'#4ade80',PERTURBE:'#fbbf24',HS:'#f87171',MAINTENANCE:'#60a5fa'}[s.statut]||'#64748b';
+    return `<div class="preview-svc-row">
+      <div class="preview-svc-dot" style="background:${C}"></div>
+      <span style="flex:1;font-size:12px">${s.label}</span>
+      <span class="preview-svc-badge" style="background:${C}22;color:${C};border:1px solid ${C}44">${SVC_STATE_LABELS[s.statut]||s.statut}</span>
+    </div>`;
+  }).join('');
+
+  c.innerHTML = `
+    <div class="preview-hdr">
+      <div class="preview-title">${etab.nom||'Établissement de santé'}</div>
+      <div class="preview-sub">État du système d'information — Point de situation</div>
+    </div>
+    <div class="preview-banner" style="background:${col.bg}22;border-color:${col.border}44">
+      <div class="preview-banner-dot" style="background:${col.dot}"></div>
+      <div>
+        <div class="preview-banner-level" style="color:${col.color}">${NIVEAUX_LABELS[lvl]||lvl}</div>
+        ${commData.message_public?`<div class="preview-banner-msg">${commData.message_public}</div>`:''}
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div class="preview-card">
+        <div class="preview-card-hdr">Système d'information</div>
+        ${svcRows(svcs)}
+      </div>
+      <div class="preview-card">
+        <div class="preview-card-hdr">Prise en charge patients</div>
+        ${svcRows(pec)}
+      </div>
+    </div>
+    ${faq.length?`<div class="preview-card">
+      <div class="preview-card-hdr">Questions fréquentes</div>
+      ${faq.map(f=>`<div style="padding:8px 12px;border-bottom:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:600;margin-bottom:3px">${f.question}</div>
+        <div style="font-size:11px;color:var(--muted)">${f.reponse}</div>
+      </div>`).join('')}
+    </div>`:''}
+    ${chrons.length?`<div class="preview-card">
+      <div class="preview-card-hdr">Chronologie</div>
+      ${chrons.map(ch=>`<div style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:11px">
+        <span style="color:var(--muted);font-family:var(--mono);font-size:10px;margin-right:8px">${ch.ts?new Date(ch.ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</span>
+        ${ch.texte}
+      </div>`).join('')}
+    </div>`:''}
+    <div class="qr-box">
+      <div class="qr-placeholder">QR</div>
+      <div class="qr-url">${window.location.origin}/status</div>
+    </div>
+  `;
+}
+
+function updatePublishBar(published) {
+  const dot = document.getElementById('comm-pub-dot');
+  const lbl = document.getElementById('comm-pub-label');
+  const btn = document.getElementById('comm-pub-btn');
+  if (!dot || !lbl || !btn) return;
+  if (published) {
+    dot.className = 'published-dot on';
+    lbl.textContent = 'Publié — accessible sur /status';
+    btn.textContent = 'Dépublier';
+    btn.className   = 'btn-publish on';
+  } else {
+    dot.className = 'published-dot off';
+    lbl.textContent = 'Non publié — /status non disponible';
+    btn.textContent = 'Publier';
+    btn.className   = 'btn-publish off';
+  }
+}
+
+// ── Actions ──────────────────────────────────────────────────────────
+
+function setNiveau(niveau, btn) {
+  if (!commData) return;
+  commData.niveau_global = niveau;
+  document.querySelectorAll('.niveau-btn').forEach(b => {
+    const n = b.getAttribute('onclick').match(/'([A-Z_]+)'/)?.[1];
+    b.className = 'niveau-btn' + (n === niveau ? ' active-' + n : '');
+  });
+  renderCommPreview();
+  saveStatus();
+}
+
+function setSvcState(prefix, idx, statut) {
+  if (!commData) return;
+  const arr = prefix === 'si' ? commData.services_si : commData.prise_en_charge;
+  if (arr && arr[idx]) arr[idx].statut = statut;
+  renderSvcList(prefix === 'si' ? 'comm-si-list' : 'comm-pec-list', arr, prefix);
+  renderCommPreview();
+  saveStatus();
+}
+
+function setFaqVisible(idx, visible) {
+  if (!commData || !commData.faq) return;
+  commData.faq[idx].visible = visible;
+  renderFaqList(commData.faq);
+  renderCommPreview();
+  saveStatus();
+}
+
+function setFaqReponse(idx, reponse) {
+  if (!commData || !commData.faq) return;
+  commData.faq[idx].reponse = reponse;
+  renderCommPreview();
+  saveStatus();
+}
+
+async function addChronEntry() {
+  const ta = document.getElementById('comm-chron-new');
+  if (!ta || !ta.value.trim()) return;
+  const token = localStorage.getItem('scribe_token') || '';
+  try {
+    await fetch('/api/v1/status/chronologie', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','Authorization':'Bearer '+token },
+      body: JSON.stringify({ texte: ta.value.trim() })
+    });
+    ta.value = '';
+    await loadCommData();
+  } catch(e) { toast('Erreur: ' + e.message, 'err'); }
+}
+
+async function delChronEntry(id) {
+  const token = localStorage.getItem('scribe_token') || '';
+  try {
+    await fetch('/api/v1/status/chronologie/' + id, {
+      method:'DELETE', headers:{'Authorization':'Bearer '+token}
+    });
+    await loadCommData();
+  } catch(e) { toast('Erreur: ' + e.message, 'err'); }
+}
+
+async function togglePublish() {
+  if (!commData) return;
+  commData.published = !commData.published;
+  updatePublishBar(commData.published);
+  await saveStatus();
+  toast(commData.published ? '✓ Point de situation publié sur /status' : 'Dépublié', commData.published ? 'ok' : 'warn');
+}
+
+let _saveTimer = null;
+async function saveStatus() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    if (!commData) return;
+    const token = localStorage.getItem('scribe_token') || '';
+    try {
+      const msgEl = document.getElementById('comm-message');
+      if (msgEl) commData.message_public = msgEl.value;
+      await fetch('/api/v1/status/update', {
+        method:'PUT',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body: JSON.stringify({
+          niveau_global:   commData.niveau_global,
+          message_public:  commData.message_public,
+          services_si:     commData.services_si,
+          prise_en_charge: commData.prise_en_charge,
+          faq:             commData.faq,
+          published:       commData.published,
+        })
+      });
+      renderCommPreview();
+    } catch(e) { console.warn('saveStatus:', e); }
+  }, 800);
+}
+
+
 // ── Afficher l'icone thème correctement après login ───────────────────
 const _origApplyUserState = applyUserState;
 applyUserState = function() {
@@ -3090,5 +3431,75 @@ applyUserState = function() {
 };
 
 </script>
+
+<!-- ══════════════════ TAB COMMUNIQUÉ ══════════════════ -->
+<div id="tab-communique" class="tab-content">
+  <div class="communique-wrap">
+
+    <!-- Éditeur gauche -->
+    <div class="communique-editor" id="comm-editor">
+
+      <div class="communique-section">
+        <h3>Niveau global</h3>
+        <div class="niveau-btns">
+          <button class="niveau-btn" onclick="setNiveau('OPERATIONNEL',this)">✓ Opérationnel</button>
+          <button class="niveau-btn" onclick="setNiveau('PERTURBE',this)">⚠ Perturbé</button>
+          <button class="niveau-btn" onclick="setNiveau('INCIDENT_MAJEUR',this)">✕ Incident majeur</button>
+          <button class="niveau-btn" onclick="setNiveau('MAINTENANCE',this)">↻ Maintenance</button>
+        </div>
+      </div>
+
+      <div class="communique-section">
+        <h3>Message officiel</h3>
+        <textarea id="comm-message" rows="3" placeholder="2-3 phrases décrivant la situation pour le public (prestataires, journalistes, partenaires)..."
+          style="width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:10px;padding:7px 9px;border-radius:4px;resize:none;line-height:1.6"
+          onchange="saveStatus()"></textarea>
+      </div>
+
+      <div class="communique-section">
+        <h3>Services SI</h3>
+        <div id="comm-si-list"></div>
+      </div>
+
+      <div class="communique-section">
+        <h3>Prise en charge patients</h3>
+        <div id="comm-pec-list"></div>
+      </div>
+
+      <div class="communique-section">
+        <h3>Questions fréquentes</h3>
+        <div id="comm-faq-list"></div>
+      </div>
+
+      <div class="communique-section">
+        <h3>Chronologie publique</h3>
+        <div class="chron-add">
+          <textarea id="comm-chron-new" placeholder="Ajouter un point de situation..."></textarea>
+          <button class="btn-primary" style="font-size:10px;padding:5px 10px;white-space:nowrap" onclick="addChronEntry()">+ Ajouter</button>
+        </div>
+        <div id="comm-chron-list" style="margin-top:8px"></div>
+      </div>
+
+      <div class="publish-bar">
+        <div class="publish-status" id="comm-publish-status">
+          <span class="published-dot off" id="comm-pub-dot"></span>
+          <span id="comm-pub-label">Non publié — accès /status non disponible</span>
+        </div>
+        <button class="btn-publish off" id="comm-pub-btn" onclick="togglePublish()">Publier</button>
+        <a href="/status" target="_blank" class="btn-secondary" style="font-family:var(--mono);font-size:10px;padding:5px 10px;text-decoration:none">↗ Voir</a>
+      </div>
+    </div>
+
+    <!-- Prévisualisation droite -->
+    <div class="communique-preview">
+      <div class="preview-frame" id="comm-preview">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:40px 0">Prévisualisation…</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
 </body>
 </html>
