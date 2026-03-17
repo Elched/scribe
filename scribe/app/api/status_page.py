@@ -36,9 +36,11 @@ router = APIRouter()
 # ── Modèles SQLAlchemy ─────────────────────────────────────────────────────
 
 class StatusPage(Base):
-    """État courant de la page de statut — une seule ligne (upsert)."""
+    """État courant de la page de statut — une ligne par site (site_id=0 = global)."""
     __tablename__ = "status_page"
-    id              = Column(Integer, primary_key=True, default=1)
+    id              = Column(Integer, primary_key=True)
+    site_id         = Column(Integer, default=0, index=True)  # 0 = global établissement
+    site_nom        = Column(String, default="")  # nom du site pour affichage
     niveau_global   = Column(String, default="OPERATIONNEL")
     # "OPERATIONNEL" | "PERTURBE" | "INCIDENT_MAJEUR" | "MAINTENANCE"
     message_public  = Column(Text, default="")
@@ -100,12 +102,16 @@ DEFAULT_FAQ = [
 ]
 
 
-def _get_or_create(db: Session) -> StatusPage:
-    """Retourne l'unique ligne de statut, la crée si absente."""
-    row = db.query(StatusPage).filter_by(id=1).first()
+def _get_or_create(db: Session, site_id: int = 0, site_nom: str = "") -> StatusPage:
+    """Retourne la ligne de statut pour un site donné (0=global), la crée si absente."""
+    row = db.query(StatusPage).filter_by(site_id=site_id).first()
     if not row:
+        # Calculer le prochain id disponible
+        max_id = db.query(StatusPage).count()
         row = StatusPage(
-            id=1,
+            id=max_id + 1,
+            site_id=site_id,
+            site_nom=site_nom,
             services_si=json.dumps(DEFAULT_SERVICES_SI, ensure_ascii=False),
             prise_en_charge=json.dumps(DEFAULT_PRISE_EN_CHARGE, ensure_ascii=False),
             faq=json.dumps(DEFAULT_FAQ, ensure_ascii=False),
@@ -114,11 +120,18 @@ def _get_or_create(db: Session) -> StatusPage:
         db.add(row)
         db.commit()
         db.refresh(row)
+    else:
+        # Mettre à jour le nom si fourni
+        if site_nom and not row.site_nom:
+            row.site_nom = site_nom
+            db.commit()
     return row
 
 
 def _row_to_dict(row: StatusPage, chrons: list) -> dict:
     return {
+        "site_id":         row.site_id,
+        "site_nom":        row.site_nom or "",
         "niveau_global":   row.niveau_global,
         "message_public":  row.message_public or "",
         "updated_at":      row.updated_at.isoformat() if row.updated_at else "",
@@ -168,25 +181,27 @@ class FaqUpdate(BaseModel):
 # ── Routes internes (auth) ─────────────────────────────────────────────────
 
 @router.get("/current")
-def get_current(db: Session = Depends(get_db), user=Depends(get_current_user)):
-    row    = _get_or_create(db)
+def get_current(site_id: int = 0, site_nom: str = "", db: Session = Depends(get_db), user=Depends(get_current_user)):
+    row    = _get_or_create(db, site_id, site_nom)
     chrons = db.query(StatusPageChronologie).order_by(
         StatusPageChronologie.timestamp.desc()).limit(20).all()
     chrons_list = [
         {"id": c.id, "ts": c.timestamp.isoformat(), "texte": c.texte, "publie_par": c.publie_par or ""}
         for c in chrons
     ]
-    return _row_to_dict(row, chrons_list)
+    data = _row_to_dict(row, chrons_list)
+    data["site_id"] = site_id
+    return data
 
 
 @router.put("/update")
-def update_status(req: StatusUpdateRequest, db: Session = Depends(get_db),
+def update_status(req: StatusUpdateRequest, site_id: int = 0, site_nom: str = "", db: Session = Depends(get_db),
                   user=Depends(get_current_user)):
     NIVEAUX_VALIDES = {"OPERATIONNEL", "PERTURBE", "INCIDENT_MAJEUR", "MAINTENANCE"}
     if req.niveau_global not in NIVEAUX_VALIDES:
         raise HTTPException(400, f"niveau_global invalide : {req.niveau_global}")
 
-    row = _get_or_create(db)
+    row = _get_or_create(db, site_id, site_nom)
     row.niveau_global  = req.niveau_global
     row.message_public = req.message_public or ""
     row.updated_by     = getattr(user, "display_name", "") or getattr(user, "username", "")
@@ -222,14 +237,20 @@ def delete_chronologie(entry_id: int, db: Session = Depends(get_db),
 # ── Route publique JSON (sans auth) ───────────────────────────────────────
 
 @router.get("/public")
-def get_public(db: Session = Depends(get_db)):
-    """Retourne le statut public — accessible sans authentification."""
-    row = _get_or_create(db)
+def get_public(site_id: int = 0, db: Session = Depends(get_db)):
+    """Retourne le statut public — accessible sans authentification.
+    site_id=0 (défaut) = statut global établissement.
+    """
+    row = _get_or_create(db, site_id)
+    etab = _load_etablissement()
+    # Si site_id non trouvé ou non publié, fallback sur global
+    if not row.published and site_id != 0:
+        row = _get_or_create(db, 0)
     if not row.published:
         return {
             "published": False,
             "message":   "Aucun point de situation publié pour le moment.",
-            "etablissement": _load_etablissement(),
+            "etablissement": etab,
         }
     chrons = db.query(StatusPageChronologie).order_by(
         StatusPageChronologie.timestamp.desc()).limit(20).all()
@@ -238,7 +259,27 @@ def get_public(db: Session = Depends(get_db)):
         for c in chrons
     ]
     data = _row_to_dict(row, chrons_list)
-    data["etablissement"] = _load_etablissement()
-    # Filtrer FAQ non visibles
+    data["etablissement"] = etab
+    data["site_id"] = site_id
     data["faq"] = [f for f in data["faq"] if f.get("visible") and f.get("reponse")]
     return data
+
+@router.get("/all-published")
+def get_all_published(db: Session = Depends(get_db)):
+    """Retourne tous les statuts publiés (global + sites) pour la fédération."""
+    rows = db.query(StatusPage).filter_by(published=True).all()
+    chrons = db.query(StatusPageChronologie).order_by(
+        StatusPageChronologie.timestamp.desc()).limit(20).all()
+    chrons_list = [
+        {"id": c.id, "ts": c.timestamp.isoformat(), "texte": c.texte, "publie_par": c.publie_par or ""}
+        for c in chrons
+    ]
+    etab = _load_etablissement()
+    result = []
+    for row in rows:
+        d = _row_to_dict(row, chrons_list)
+        d["etablissement"] = etab
+        d["site_id"] = row.site_id
+        d["faq"] = [f for f in d["faq"] if f.get("visible") and f.get("reponse")]
+        result.append(d)
+    return result

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCRIBE v6 | Crisis OS</title>
+<title>SCRIBE v1.1.0 | Crisis OS</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="/static/config.js"></script>
 <style>
@@ -653,7 +653,7 @@ body.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
 <body>
 
 <header>
-  <div class="brand"><div class="brand-dot"></div>SCRIBE <span style="color:var(--muted);font-weight:400">v6</span><span id="etab-sigle" style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:6px;letter-spacing:1px"></span></div>
+  <div class="brand"><div class="brand-dot"></div>SCRIBE <span style="color:var(--muted);font-weight:400">v1.1.0</span><span id="etab-sigle" style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:6px;letter-spacing:1px"></span></div>
   <nav class="tabs">
     <button class="tab-btn active" onclick="openTab('tab-veille',this)">🌐 VEILLE</button>
     <button class="tab-btn"        onclick="openTab('tab-soins',this)">🏥 SOINS</button>
@@ -667,8 +667,8 @@ body.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
   <div class="header-right">
     <div id="incident-level" class="green">VEILLE NORMALE</div>
     <div class="clock" id="clock">--:--:--</div>
-    <a href="https://lasuite.numerique.gouv.fr/produits/visio" target="_blank" class="visio-btn">📹 VISIO</a>
-    <a href="https://lasuite.numerique.gouv.fr/produits/pad" target="_blank" class="visio-btn" style="background:rgba(74,222,128,.1);color:#4ade80;border-color:#16a34a">📝 PAD</a>
+    <a href="https://resana.numerique.gouv.fr/" target="_blank" class="visio-btn" style="background:rgba(99,102,241,.12);color:#a5b4fc;border-color:#6366f1">🔒 RESANA</a>
+    <a href="https://lasuite.numerique.gouv.fr/" target="_blank" class="visio-btn" style="background:rgba(34,211,238,.1);color:#67e8f9;border-color:#0891b2">🇫🇷 LA SUITE</a>
     <button class="notif-btn" id="notif-toggle" onclick="toggleNotifPanel()">🔔 <span id="notif-count-txt">Inbox</span><span class="notif-badge" id="notif-badge">0</span></button>
     <button class="user-chip" id="user-chip" onclick="showAdminPanel()"><span class="role-dot" id="role-dot"></span><span id="current-user-name">...</span></button>
     <span id="ia-badge" style="display:none;font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;background:var(--surface2);color:var(--muted2);border:1px solid var(--border2);cursor:default;letter-spacing:.5px"></span>
@@ -972,7 +972,7 @@ body.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
 <!-- ══════════════════ LOGIN OVERLAY ══════════════════ -->
 <div id="login-overlay" style="display:flex">
   <div class="login-box">
-    <div class="login-logo">SCRIBE <span>v6</span></div>
+    <div class="login-logo">SCRIBE <span>v1.1.0</span></div>
     <div class="login-sub">Votre Établissement — Crisis OS</div>
     <div class="login-field"><label>Identifiant</label><input type="text" id="login-user" placeholder="dircrise" autocomplete="username"></div>
     <div class="login-field"><label>Mot de passe</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
@@ -999,7 +999,7 @@ body.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
 <div id="admin-panel">
   <div class="admin-box">
     <div class="admin-header">
-      <span class="admin-title">⚙️ Administration SCRIBE v6</span>
+      <span class="admin-title">⚙️ Administration SCRIBE v1.1.0</span>
       <button class="btn-sm blue" onclick="closeAdminPanel()">✕ Fermer</button>
     </div>
     <div class="admin-body">
@@ -1272,6 +1272,66 @@ const URG_LABELS = {1:'VEILLE',2:'ALERTE',3:'CRISE',4:'CRITIQUE'};
 const STATUSES   = ['SIGNALÉ','ANALYSE','RÉSOLUTION','RÉSOLU'];
 
 // ── ANNUAIRE DATA ─────────────────────────────────────
+// ════════════════════════════════════════════════════════
+//  i18n — Internationalisation
+//  Charge les traductions depuis /api/v1/i18n/{langue}
+//  La langue est définie dans config.js (clé "langue")
+// ════════════════════════════════════════════════════════
+let LANG = {};
+let LANG_CODE = 'fr';
+
+async function loadI18n() {
+  const code = (typeof SCRIBE_CONFIG !== 'undefined' && SCRIBE_CONFIG.langue)
+    ? SCRIBE_CONFIG.langue : 'fr';
+  LANG_CODE = code;
+  try {
+    const r = await fetch(`/api/v1/i18n/${code}`);
+    if (r.ok) {
+      LANG = await r.json();
+      // Mettre à jour l'attribut lang du document
+      document.documentElement.setAttribute('lang', code);
+      // Appliquer les traductions aux éléments statiques
+      applyI18nDOM();
+    }
+  } catch(e) {
+    console.warn('i18n: impossible de charger la langue', code, e);
+  }
+}
+
+// t(key) — récupère une traduction par chemin "section.cle"
+// ex: t('nav.veille') → 'VEILLE' ou 'WATCH'
+function t(path, fallback) {
+  const parts = path.split('.');
+  let val = LANG;
+  for (const p of parts) {
+    if (!val || typeof val !== 'object') return fallback || path;
+    val = val[p];
+  }
+  return (val !== undefined && val !== null) ? String(val) : (fallback || path);
+}
+
+// Appliquer les traductions aux éléments avec data-i18n="section.cle"
+function applyI18nDOM() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const translated = t(key);
+    if (translated && translated !== key) {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        if (el.hasAttribute('placeholder')) el.placeholder = translated;
+      } else {
+        el.textContent = translated;
+      }
+    }
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    const translated = t(key);
+    if (translated && translated !== key) el.placeholder = translated;
+  });
+}
+
+// ════════════════════════════════════════════════════════
+
 // Téléphonie nominale (interne 4 chiffres)
 // Annuaires chargés depuis config.js (généré par setup.py)
 const ANNUAIRE_NORMAL  = (typeof SCRIBE_CONFIG !== 'undefined') ? SCRIBE_CONFIG.annuaire_normal  : [];
@@ -1280,6 +1340,7 @@ const ANNUAIRE_SECOURS = (typeof SCRIBE_CONFIG !== 'undefined') ? SCRIBE_CONFIG.
 // ── INIT ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   startClock();
+  await loadI18n();      // charge les traductions selon config.js (langue)
   applyScribeConfig();   // charge directeurs + titre depuis config.js
   initMap();
   await loadSites();
@@ -1378,12 +1439,15 @@ function updateMap(bySite) {
   });
 }
 
+let allSites = [];  // stockage global des sites
+
 async function loadSites() {
   try {
     const sites = await (await fetch('/api/v1/cartographie/sites')).json();
+    allSites = sites;  // stocker globalement
     ['site_id','f-site'].forEach(id => {
       const sel = document.getElementById(id);
-      sites.forEach(s => sel.add(new Option(s.nom, s.nom)));
+      if(sel) sites.forEach(s => sel.add(new Option(s.nom, s.nom)));
     });
     sites.forEach(s => {
       const m = L.marker([s.latitude,s.longitude]).addTo(map).bindPopup(`<b>${s.nom}</b>`);
@@ -2994,7 +3058,7 @@ updateMap = function(bySite) {
 };
 
 
-/* ═══════════════════ SCRIBE v6 — NOUVEAUX JS ══════════════════ */
+/* ═══════════════════ SCRIBE v1.1.0 ══════════════════ */
 
 // ── THEME SWITCH ─────────────────────────────────────────────────────
 function toggleTheme() {
@@ -3164,14 +3228,69 @@ const NIVEAU_COLORS = {
 async function loadCommData() {
   try {
     const token = localStorage.getItem('scribe_token') || '';
-    const r = await fetch('/api/v1/status/current', {
-      headers: { 'Authorization': 'Bearer ' + token }
+    // Peupler le select avec les sites — fetch frais si nécessaire
+    const sel = document.getElementById('comm-etab-select');
+    if (sel) {
+      const etab  = (typeof SCRIBE_CONFIG !== 'undefined' && SCRIBE_CONFIG.etablissement) || {};
+      const nom   = etab.nom || 'Établissement';
+      const sigle = etab.sigle || '';
+      // Charger les sites si pas encore disponibles
+      if (!allSites || allSites.length === 0) {
+        try {
+          const token = localStorage.getItem('scribe_token') || '';
+          const r = await fetch('/api/v1/cartographie/sites', {headers:{'Authorization':'Bearer '+token}});
+          if (r.ok) allSites = await r.json();
+        } catch(e) {}
+      }
+      let opts = `<option value="global">${nom}${sigle?' — '+sigle:''} (tous les sites)</option>`;
+      if (allSites && allSites.length > 0) {
+        allSites.forEach(s => {
+          opts += `<option value="${s.id || s.nom}">${s.nom}</option>`;
+        });
+      }
+      sel.innerHTML = opts;
+      const info = document.getElementById('comm-etab-info');
+      if (info) info.textContent = allSites && allSites.length > 1
+        ? `${allSites.length} sites disponibles`
+        : '→ Couvre tous les sites';
+    }
+
+    const siteId  = (commSelectedSite && commSelectedSite !== 'global') ? commSelectedSite : '0';
+    const siteObj = allSites && allSites.find(s => String(s.id) === String(siteId));
+    const siteNom = siteObj ? encodeURIComponent(siteObj.nom) : '';
+    const r = await fetch(`/api/v1/status/current?site_id=${siteId}&site_nom=${siteNom}`, {
+      headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('scribe_token') || '') }
     });
     if (!r.ok) return;
     commData = await r.json();
     renderCommEditor();
     renderCommPreview();
   } catch(e) { console.warn('Status page:', e); }
+}
+
+let commSelectedSite = 'global';  // site sélectionné dans le menu
+
+function onCommEtabChange(val) {
+  commSelectedSite = val;
+  const info = document.getElementById('comm-etab-info');
+
+  const titleEl = document.getElementById('comm-site-context');
+  if (val === 'global') {
+    if (info) info.textContent = allSites && allSites.length > 1
+      ? `${allSites.length} sites disponibles — communiqué global`
+      : '→ Couvre tous les sites';
+    if (titleEl) titleEl.style.display = 'none';
+  } else {
+    const site = allSites && allSites.find(s => String(s.id || s.nom) === String(val));
+    const siteNom = site ? site.nom : val;
+    if (info) info.textContent = `📍 ${siteNom}`;
+    if (titleEl) {
+      titleEl.textContent = `📍 Communiqué pour : ${siteNom} — les modifications sont propres à ce site`;
+      titleEl.style.cssText = 'font-family:var(--mono);font-size:9px;color:var(--cyan);padding:6px 16px;background:rgba(0,207,255,.06);border-bottom:1px solid var(--border);display:block;flex-shrink:0';
+    }
+  }
+  // Recharger les données (même communiqué, contexte visuel différent)
+  loadCommData();
 }
 
 function renderCommEditor() {
@@ -3390,8 +3509,36 @@ async function togglePublish() {
   if (!commData) return;
   commData.published = !commData.published;
   updatePublishBar(commData.published);
-  await saveStatus();
+  // Sauvegarder IMMÉDIATEMENT sans debounce
+  await saveStatusNow();
   toast(commData.published ? '✓ Point de situation publié sur /status' : 'Dépublié', commData.published ? 'ok' : 'warn');
+}
+
+// Sauvegarde immédiate (sans timer) utilisée par togglePublish
+async function saveStatusNow() {
+  if (!commData) return;
+  const token = localStorage.getItem('scribe_token') || '';
+  try {
+    const msgEl = document.getElementById('comm-message');
+    if (msgEl) commData.message_public = msgEl.value;
+    const siteIdSave  = (commSelectedSite && commSelectedSite !== 'global') ? commSelectedSite : '0';
+    const siteObjSave = allSites && allSites.find(s => String(s.id) === String(siteIdSave));
+    const siteNomSave = siteObjSave ? encodeURIComponent(siteObjSave.nom) : '';
+    const resp = await fetch(`/api/v1/status/update?site_id=${siteIdSave}&site_nom=${siteNomSave}`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({
+        niveau_global:   commData.niveau_global,
+        message_public:  commData.message_public,
+        services_si:     commData.services_si,
+        prise_en_charge: commData.prise_en_charge,
+        faq:             commData.faq,
+        published:       commData.published,
+      })
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    renderCommPreview();
+  } catch(e) { console.warn('saveStatusNow:', e); toast('Erreur sauvegarde: ' + e.message, 'err'); }
 }
 
 let _saveTimer = null;
@@ -3403,7 +3550,10 @@ async function saveStatus() {
     try {
       const msgEl = document.getElementById('comm-message');
       if (msgEl) commData.message_public = msgEl.value;
-      await fetch('/api/v1/status/update', {
+      const siteIdSave  = (commSelectedSite && commSelectedSite !== 'global') ? commSelectedSite : '0';
+      const siteObjSave = allSites && allSites.find(s => String(s.id) === String(siteIdSave));
+      const siteNomSave = siteObjSave ? encodeURIComponent(siteObjSave.nom) : '';
+      await fetch(`/api/v1/status/update?site_id=${siteIdSave}&site_nom=${siteNomSave}`, {
         method:'PUT',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
         body: JSON.stringify({
@@ -3433,11 +3583,20 @@ applyUserState = function() {
 </script>
 
 <!-- ══════════════════ TAB COMMUNIQUÉ ══════════════════ -->
-<div id="tab-communique" class="tab-content">
-  <div class="communique-wrap">
+<div id="tab-communique" class="tab-content" style="flex-direction:column">
+  <!-- Sélecteur site — barre fine en haut -->
+  <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;font-family:var(--mono);font-size:9px;color:var(--muted)">
+    <span>📢 Communiqué pour :</span>
+    <select id="comm-etab-select" style="font-family:var(--mono);font-size:9px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:3px;padding:2px 6px;cursor:pointer;max-width:300px" onchange="onCommEtabChange(this.value)">
+      <option value="">-- chargement --</option>
+    </select>
+    <span id="comm-etab-info" style="color:var(--muted2);font-size:8px;font-style:italic"></span>
+  </div>
+  <div class="communique-wrap" style="flex:1;overflow:hidden">
 
     <!-- Éditeur gauche -->
     <div class="communique-editor" id="comm-editor">
+      <span id="comm-site-context" style="display:none"></span>
 
       <div class="communique-section">
         <h3>Niveau global</h3>

@@ -15,7 +15,7 @@ from app.database import engine, Base
 import app.models  # noqa
 import app.api.status_page  # noqa — enregistre les tables StatusPage
 
-from app.api import sitrep, cellule, releve, cartographie, albert, attachments
+from app.api import sitrep, cellule, releve, cartographie, albert, attachments, i18n
 from app.api import auth, tasks, rapport, federation, status_page
 
 logging.basicConfig(level=logging.INFO)
@@ -43,6 +43,7 @@ app.include_router(tasks.router,        prefix="/api/v1/tasks",        tags=["Ka
 app.include_router(rapport.router,      prefix="/api/v1/rapport",      tags=["Rapport"])
 app.include_router(federation.router,   prefix="/api/v1/federation",   tags=["Fédération"])
 app.include_router(status_page.router,  prefix="/api/v1/status",       tags=["Status Page"])
+app.include_router(i18n.router,         prefix="",                     tags=["i18n"])
 
 
 @app.on_event("startup")
@@ -63,7 +64,7 @@ async def public_status():
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "version": "6.0.0"}
+    return {"status": "ok", "version": "1.1.0"}
 
 
 if __name__ == "__main__":

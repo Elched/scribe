@@ -85,7 +85,7 @@ def save_data():
 
 # ── App FastAPI ───────────────────────────────────────────────────────────
 
-app = FastAPI(title="SCRIBE Collecteur territorial", version="1.0.0")
+app = FastAPI(title="SCRIBE Collecteur territorial", version="1.1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 security = HTTPBearer(auto_error=False)
@@ -124,9 +124,9 @@ async def receive_push(
   ║  curl -X POST http://localhost:9000/api/admin/tokens \
   ║    -H "Authorization: Bearer {ADMIN_TOKEN}" \
   ║    -H "Content-Type: application/json" \
-  ║    -d '{{"sigle":"MON_ETAB","token":"TOKEN_DU_CONFIG_XML"}}'
+  ║    -d '{{"sigle":"MON_ETAB","token":"TOKEN_QUE_VOUS_AVEZ_CHOISI"}}'
   ║
-  ║  TOKEN_DU_CONFIG_XML = valeur de <federation><token> dans config.xml
+  ║  TOKEN_QUE_VOUS_AVEZ_CHOISI = token choisi librement (16+ chars), identique dans config.xml <federation><token>
   ╚═══════════════════════════════════════════════════════════════╝
 """)
         logger.warning("Push refusé — token inconnu depuis %s", request.client.host)
@@ -166,11 +166,18 @@ async def receive_status_push(
     except Exception:
         raise HTTPException(status_code=400, detail="JSON invalide")
     payload["_received_at"] = datetime.now(timezone.utc).isoformat()
-    # Stocker le statut public séparément
+    # Stocker le statut public : global + sites individuels
     if sigle in etablissements:
         etablissements[sigle]["_status_page"] = payload
+        # Stocker les statuts par site s'ils existent
+        if payload.get("_statuts_sites"):
+            etablissements[sigle]["_statuts_sites"] = payload["_statuts_sites"]
     else:
-        etablissements[sigle] = {"_status_page": payload, "_received_at": payload["_received_at"]}
+        etablissements[sigle] = {
+            "_status_page": payload,
+            "_statuts_sites": payload.get("_statuts_sites", []),
+            "_received_at": payload["_received_at"]
+        }
     save_data()
     return {"ok": True, "sigle": sigle}
 
@@ -215,8 +222,10 @@ async def get_summary():
             "age_minutes":      age_minutes,
             "fresh":            fresh,
             "_status_page":     data.get("_status_page"),
+            "_statuts_sites":   data.get("_statuts_sites", []),
             "latitude":         data.get("latitude"),
             "longitude":        data.get("longitude"),
+            "sites":            data.get("sites", []),
         })
 
     # Trier par niveau de gravité décroissant
@@ -392,14 +401,14 @@ body::before{
 .tick-row{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--muted)}
 
 /* ── TABS CONTENT ── */
-#tabs-content{flex:1;overflow:hidden;display:flex;flex-direction:column}
-.tab-pane{display:none;flex:1;overflow:hidden}
-.tab-pane.active{display:flex;flex-direction:column}
+#tabs-content{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.tab-pane{display:none;flex:1;min-height:0;overflow:hidden}
+.tab-pane.active{display:flex;min-height:0;overflow:hidden}
 
 /* ══════════════════════════════════════════════
    TAB 1 — SUPERVISION
 ══════════════════════════════════════════════ */
-#pane-supervision{flex-direction:row;gap:0;overflow:hidden}
+#pane-supervision{flex-direction:row;gap:0;overflow:hidden;min-height:0}
 
 /* Panel gauche : liste établissements */
 #etab-list{
@@ -411,7 +420,7 @@ body::before{
 }
 #etab-list-header h3{font-family:var(--head);font-size:11px;font-weight:700;
   letter-spacing:3px;color:var(--muted2);text-transform:uppercase}
-#etab-scroll{flex:1;overflow-y:auto}
+#etab-scroll{flex:1;overflow-y:auto;min-height:0;height:0}
 #etab-scroll::-webkit-scrollbar{width:4px}
 #etab-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
@@ -450,9 +459,8 @@ body::before{
 #detail-panel{
   flex:1;overflow-y:auto;background:var(--bg);
   padding:16px 20px;display:flex;flex-direction:column;gap:12px;
+  min-height:0;
 }
-#detail-panel::-webkit-scrollbar{width:4px}
-#detail-panel::-webkit-scrollbar-thumb{background:var(--border2)}
 #detail-panel::-webkit-scrollbar{width:4px}
 #detail-panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
@@ -566,7 +574,7 @@ body::before{
 }
 #timeline-header h3{font-family:var(--head);font-size:11px;font-weight:700;
   letter-spacing:3px;color:var(--muted2);text-transform:uppercase}
-#timeline-scroll{flex:1;overflow-y:auto;padding:10px 0}
+#timeline-scroll{flex:1;overflow-y:auto;min-height:0;height:0;padding:10px 0}
 #timeline-scroll::-webkit-scrollbar{width:3px}
 #timeline-scroll::-webkit-scrollbar-thumb{background:var(--border2)}
 
@@ -1052,9 +1060,12 @@ function selectEtab(sigle){
 // ═══════════════════════════════════════════════════
 //  DETAIL PANEL
 // ═══════════════════════════════════════════════════
+function esc(s){ return String(s||'').replace(/`/g,'\`').replace(/\${/g,'\${'); }
+
 function renderDetail(e){
+  try {
   const panel = document.getElementById('detail-panel');
-  const lvl   = e.niveau_global;
+  const lvl   = e.niveau_global || 'INCONNU';
   const ts    = e.last_update ? new Date(e.last_update).toLocaleString('fr-FR') : '—';
   const k     = e.kpis || {};
 
@@ -1070,11 +1081,11 @@ function renderDetail(e){
     <div class="inc-row">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;flex-wrap:wrap">
         <span class="inc-urg-badge ${URG_CLS[i.urgency]||''}">${URG_LBL[i.urgency]||'U?'}</span>
-        <span class="inc-type">${i.type_crise||''}</span>
-        <span class="inc-status">${i.status||''}</span>
-        <span class="inc-site" style="margin-left:auto">${i.site||''}</span>
+        <span class="inc-type">${esc(i.type_crise)}</span>
+        <span class="inc-status">${esc(i.status)}</span>
+        <span class="inc-site" style="margin-left:auto">${esc(i.site)}</span>
       </div>
-      <div class="inc-fait" style="width:100%">${i.fait_resume||''}</div>
+      <div class="inc-fait" style="width:100%">${esc(i.fait_resume)}</div>
     </div>`).join('');
 
   // Pôles
@@ -1110,8 +1121,8 @@ function renderDetail(e){
         const incsLocaux = (e.incidents||[]).filter(i=>i.site===s.nom);
         return `<div class="site-row">
           <div class="site-dot" style="background:${col};${['CRITIQUE','CRISE'].includes(s.niveau)?'box-shadow:0 0 6px '+col:''}"></div>
-          <span class="site-nom">${s.nom}</span>
-          <span class="site-adresse">${s.adresse||''}</span>
+          <span class="site-nom">${esc(s.nom)}</span>
+          <span class="site-adresse">${esc(s.adresse)}</span>
           ${s.incidents_ouverts?`<span class="site-inc">${s.incidents_ouverts} incident(s)</span>`:''}
           <span class="site-badge" style="color:${col};border:1px solid ${col}20;background:${col}12">${s.niveau||'NOMINAL'}</span>
         </div>
@@ -1122,7 +1133,7 @@ function renderDetail(e){
               <span class="inc-type">${i.type_crise||''}</span>
               <span class="inc-status">${i.status||''}</span>
             </div>
-            <div class="inc-fait">${i.fait_resume||''}</div>
+            <div class="inc-fait">${esc(i.fait_resume)}</div>
           </div>`).join('')}
         </div>`:''}`;
       }).join('')}</div>
@@ -1138,6 +1149,14 @@ function renderDetail(e){
       <div class="poles-chips">${poles}</div>
     </div>`:''}
   `;
+  } catch(err) {
+    document.getElementById('detail-panel').innerHTML =
+      `<div style="padding:20px;font-family:var(--mono);font-size:10px;color:var(--red)">
+        ⚠ Erreur d'affichage : ${err.message}<br>
+        <span style="color:var(--muted)">Sigle: ${e.sigle||'?'}</span>
+      </div>`;
+    console.error('renderDetail error:', err, e);
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -1494,6 +1513,8 @@ function renderStatuts(){
     </div>`;
   } else {
     html += etabsAvecStatut.map(e => {
+      // Collecter tous les statuts : global + sites individuels
+      const statuts_sites = e._statuts_sites || [];
       const sp = e._status_page || {};
       const lvl = sp.niveau_global || 'OPERATIONNEL';
       const col = LVL_COL[lvl] || 'var(--muted)';
@@ -1506,20 +1527,34 @@ function renderStatuts(){
       const chrons  = (sp.chronologie||[]).slice(0,4);
       const faqs    = (sp.faq||[]).filter(f=>f.visible&&f.reponse).slice(0,2);
 
-      const svcRows = (list) => list.map(s =>
-        `<div class="sp-svc">
-          <div class="sp-svc-dot" style="background:${SVC_COL[s.statut]||'var(--muted)'}"></div>
-          <span>${(s.label||'').substring(0,22)}</span>
-        </div>`
-      ).join('');
+      const svcRows = (list) => {
+        const degraded = list.filter(s => s.statut && s.statut !== 'OK');
+        const ok_count = list.filter(s => !s.statut || s.statut === 'OK').length;
+        let rows = degraded.map(s =>
+          `<div class="sp-svc" style="background:${SVC_COL[s.statut]}18;border-radius:3px;padding:3px 6px">
+            <div class="sp-svc-dot" style="background:${SVC_COL[s.statut]||'var(--muted)'}"></div>
+            <span style="color:${SVC_COL[s.statut]||'var(--text)'};font-weight:600">${(s.label||'').substring(0,24)}</span>
+            <span style="margin-left:auto;font-size:8px;opacity:.8">${s.statut}</span>
+          </div>`
+        ).join('');
+        if(ok_count > 0) rows += `<div class="sp-svc" style="opacity:.5">
+          <div class="sp-svc-dot" style="background:var(--green)"></div>
+          <span>${ok_count} service(s) opérationnel(s)</span>
+        </div>`;
+        return rows || `<div class="sp-svc"><div class="sp-svc-dot" style="background:var(--green)"></div><span>Tous opérationnels</span></div>`;
+      };
 
+      const criseCol = COLORS[e.niveau_global]||'var(--muted)';
       return `<div class="sp-card">
         <div class="sp-card-hdr">
           <div>
             <div class="sp-card-nom">${etabNom}</div>
-            <div class="sp-card-sub">Mis à jour ${ts}</div>
+            <div class="sp-card-sub">Publié ${ts}</div>
           </div>
-          <span class="sp-level" style="color:${col};border-color:${col};background:${col}18">${LVL_LBL[lvl]||lvl}</span>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <span class="sp-level" style="color:${col};border-color:${col};background:${col}18">${LVL_LBL[lvl]||lvl}</span>
+            ${e.niveau_global && e.niveau_global!=='NOMINAL'?`<span style="font-family:var(--mono);font-size:8px;color:${criseCol};letter-spacing:1px">⚠ Crise : ${e.niveau_global}</span>`:''}
+          </div>
         </div>
         <div class="sp-body">
           ${sp.message_public?`<div class="sp-msg">${(sp.message_public||'').substring(0,140)}</div>`:''}
@@ -1550,7 +1585,32 @@ function renderStatuts(){
 
           <span class="sp-footer">↗ Accessible sur /status (sans authentification)</span>
         </div>
-      </div>`;
+      </div>
+      ${statuts_sites.length ? statuts_sites.map(ss => {
+        const ssLvl = ss.niveau_global || 'OPERATIONNEL';
+        const ssCol = LVL_COL[ssLvl] || 'var(--muted)';
+        const ssNom = ss.site_nom || `Site ${ss.site_id}`;
+        const ssSvcs = [...(ss.services_si||[]).filter(s=>s.statut!=='OK'),
+                        ...(ss.prise_en_charge||[]).filter(s=>s.statut!=='OK')];
+        return `<div class="sp-card" style="border-color:${ssCol}30;margin-top:4px">
+          <div class="sp-card-hdr" style="background:${ssCol}08">
+            <div>
+              <div class="sp-card-nom" style="font-size:11px">📍 ${ssNom}</div>
+              <div class="sp-card-sub">${etabNom} — site individuel</div>
+            </div>
+            <span class="sp-level" style="color:${ssCol};border-color:${ssCol};background:${ssCol}18">${LVL_LBL[ssLvl]||ssLvl}</span>
+          </div>
+          <div class="sp-body">
+            ${ss.message_public ? `<div class="sp-msg">${(ss.message_public||'').substring(0,120)}</div>` : ''}
+            ${ssSvcs.length ? `<div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin:4px 0 2px">Services impactés</div>
+              ${ssSvcs.map(s=>`<div class="sp-svc" style="background:${SVC_COL[s.statut]}18;border-radius:3px;padding:2px 6px">
+                <div class="sp-svc-dot" style="background:${SVC_COL[s.statut]}"></div>
+                <span style="color:${SVC_COL[s.statut]};font-size:9px">${s.label}</span>
+              </div>`).join('')}` : `<div class="sp-svc"><div class="sp-svc-dot" style="background:var(--green)"></div><span>Tous opérationnels</span></div>`}
+            <span class="sp-footer" style="margin-top:6px">↗ /status?site_id=${ss.site_id}</span>
+          </div>
+        </div>`;
+      }).join('') : ''}`;
     }).join('');
   }
 
@@ -1587,7 +1647,7 @@ if __name__ == "__main__":
     nb_data  = len(etablissements)
 
     print("\n  ╔══════════════════════════════════════════════╗")
-    print("  ║  SCRIBE Collecteur territorial               ║")
+    print("  ║  SCRIBE Collecteur territorial  v1.1.0       ║")
     print("  ╚══════════════════════════════════════════════╝")
     print(f"\n  Dashboard     : http://0.0.0.0:9000")
     print(f"  Etablissements: {nb_etab} token(s) / {nb_data} remontée(s)")
@@ -1600,7 +1660,7 @@ if __name__ == "__main__":
         print(f'  curl -X POST http://localhost:9000/api/admin/tokens \\')
         print(f'    -H "Authorization: Bearer {ADMIN_TOKEN}" \\')
         print( '    -H "Content-Type: application/json" \\')
-        print( '    -d \'{"sigle":"MON_ETAB","token":"TOKEN_DU_CONFIG_XML"}\'\n')
+        print( '    -d \'{"sigle":"MON_ETAB","token":"TOKEN_QUE_VOUS_AVEZ_CHOISI"}\'\n')
     else:
         etabs = list(set(tokens.values()))
         print(f"  ► Etablissements actifs : {', '.join(etabs)}\n")

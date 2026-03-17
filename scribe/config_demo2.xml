@@ -105,6 +105,9 @@
     <contact service="ANSSI" local="Signalement national" tel="www.cybermalveillance.gouv.fr" note="Incidents critiques"/>
   </annuaire_secours>
 
+  <!-- Langue interface : fr en de es it nl pl pt -->
+  <langue>fr</langue>
+
   <ia>
     <fournisseur>albert</fournisseur>
     <cle_api></cle_api>
@@ -115,7 +118,7 @@
   <federation>
     <enabled>false</enabled>
     <collecteur_url>http://ADRESSE_COLLECTEUR:9000/api/push</collecteur_url>
-    <token>REMPLACER_PAR_LE_TOKEN_FOURNI_PAR_LE_COLLECTEUR</token>
+    <token>CHOISIR_16_CARACTERES_MIN</token>
     <intervalle_secondes>30</intervalle_secondes>
     <share_details>true</share_details>
     <share_min_urgency>1</share_min_urgency>

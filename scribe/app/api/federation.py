@@ -264,35 +264,104 @@ async def push_to_collecteur(cfg: FederationConfig, payload: dict) -> bool:
 
 
 async def push_status_to_collecteur(cfg: "FederationConfig") -> bool:
-    """Push le statut public vers le collecteur (endpoint /api/push-status)."""
+    """Push tous les statuts publics publiés vers le collecteur."""
+    import json as _json
+    import datetime as _dt
+
+    def row_to_plain(row, chrons_list, etab, now):
+        """Convertit une ligne StatusPage en dict JSON pur sans référence SQLAlchemy."""
+        import json as j
+        return {
+            "site_id":         int(row.site_id or 0),
+            "site_nom":        str(row.site_nom or ""),
+            "niveau_global":   str(row.niveau_global or "OPERATIONNEL"),
+            "message_public":  str(row.message_public or ""),
+            "services_si":     j.loads(row.services_si or "[]"),
+            "prise_en_charge": j.loads(row.prise_en_charge or "[]"),
+            "faq":             [f for f in j.loads(row.faq or "[]") if f.get("visible") and f.get("reponse")],
+            "chronologie":     chrons_list,
+            "published":       bool(row.published),
+            "updated_at":      row.updated_at.isoformat() if row.updated_at else now,
+            "updated_by":      str(row.updated_by or ""),
+            "etablissement":   etab,
+            "_pushed_at":      now,
+        }
+
     try:
+        from app.api.status_page import _load_etablissement, StatusPage as SPModel
         db = SessionLocal()
-        row = _get_status(db)
-        if not row.published:
+        published_rows = db.query(SPModel).filter_by(published=True).all()
+        logger.info(f"push_status : {len(published_rows)} statut(s) publié(s)")
+        for row in published_rows:
+            logger.info(f"  → site_id={row.site_id} site_nom={row.site_nom!r}")
+        if not published_rows:
             db.close()
-            return True  # Pas publié → pas de push, c'est normal
+            return True
+
         chrons = db.query(StatusPageChronologie).order_by(
             StatusPageChronologie.timestamp.desc()).limit(10).all()
         chrons_list = [
             {"id": c.id, "ts": c.timestamp.isoformat(), "texte": c.texte, "publie_par": c.publie_par or ""}
             for c in chrons
         ]
-        from app.api.status_page import _load_etablissement
-        payload = _status_to_dict(row, chrons_list)
-        payload["etablissement"] = _load_etablissement()
-        payload["_pushed_at"] = __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat()
-        db.close()
+        etab    = _load_etablissement()
+        now     = _dt.datetime.now(_dt.timezone.utc).isoformat()
 
+        # Sérialiser chaque ligne en dict pur (évite circular reference)
+        global_dict = None
+        sites_list  = []
+        ORDRE_NIV   = {"INCIDENT_MAJEUR":3, "PERTURBE":2, "MAINTENANCE":1, "OPERATIONNEL":0}
+
+        for row in published_rows:
+            plain = row_to_plain(row, chrons_list, etab, now)
+            if row.site_id == 0:
+                global_dict = plain
+            else:
+                sites_list.append(plain)
+
+        if global_dict is None:
+            # Pas de statut global → synthèse automatique depuis le plus dégradé
+            worst = max(sites_list, key=lambda s: ORDRE_NIV.get(s["niveau_global"], 0))
+            global_dict = {
+                "site_id":         0,
+                "site_nom":        "",
+                "niveau_global":   worst["niveau_global"],
+                "message_public":  f"Point de situation — {len(sites_list)} site(s) concerné(s)",
+                "services_si":     [],
+                "prise_en_charge": [],
+                "faq":             [],
+                "chronologie":     worst["chronologie"],
+                "published":       True,
+                "updated_at":      now,
+                "updated_by":      worst.get("updated_by", ""),
+                "etablissement":   etab,
+                "_pushed_at":      now,
+            }
+
+        # Ajouter les statuts par site SÉPARÉMENT (pas imbriqués dans global_dict)
+        global_dict["_statuts_sites"] = sites_list
+
+        # Vérifier que c'est sérialisable avant d'envoyer
+        try:
+            _json.dumps(global_dict)
+        except (TypeError, ValueError) as e:
+            logger.error(f"push_status : payload non sérialisable : {e}")
+            db.close()
+            return False
+
+        db.close()
         push_url = cfg.collecteur_url.replace("/api/push", "/api/push-status")
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(
-                push_url, json=payload,
+                push_url, json=global_dict,
                 headers={"Authorization": f"Bearer {cfg.token}",
                          "Content-Type": "application/json"},
             )
-        return resp.status_code in (200, 201, 204)
+        ok = resp.status_code in (200, 201, 204)
+        logger.info(f"push_status {'OK' if ok else 'ERREUR'} → {push_url} ({resp.status_code})")
+        return ok
     except Exception as e:
-        logger.debug(f"push_status silencieux : {e}")
+        logger.warning(f"push_status erreur : {e}")
         return False
 
 

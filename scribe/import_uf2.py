@@ -30,9 +30,13 @@ from app.models import Hospital, UniteFonctionnelle
 #
 # Exemples pour le modèle générique (uf_modele.xlsx) :
 SITE_MAPPING = {
-    "SITE PRINCIPAL":   ["Site Principal"],
-    "SITE SECONDAIRE":  ["Site Secondaire"],
-    "BI SITE":          ["Site Principal", "Site Secondaire"],
+    # Mapping FICOM CHAG → noms des hôpitaux dans la base
+    "ANNECY":    ["Site hospitalier principal (Annecy)"],
+    "BI SITE":   ["Site hospitalier principal (Annecy)"],
+    "ST JULIEN": ["Hôpital de Saint-Julien"],
+    # Compatibilité démo générique
+    "SITE PRINCIPAL":  ["Site hospitalier principal (Annecy)"],
+    "SITE SECONDAIRE": ["Hôpital de Saint-Julien"],
 }
 # Exemple pour un export FICOM d'un établissement bi-sites (Site A / Site B) :
 # SITE_MAPPING = {

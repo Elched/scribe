@@ -149,8 +149,22 @@ function svcRow(s){
 async function load(){
   const app = document.getElementById('app');
   try{
-    const r = await fetch('/api/v1/status/public');
-    const d = await r.json();
+    const urlParams = new URLSearchParams(window.location.search);
+    const siteIdParam = urlParams.get('site_id') || '0';
+    // Essayer le site_id demandé, sinon fallback sur le premier statut publié
+    let r = await fetch(`/api/v1/status/public?site_id=${siteIdParam}`);
+    let d = await r.json();
+    // Si pas publié et qu'on cherche le global, tenter all-published pour trouver un publié
+    if (!d.published && siteIdParam === '0') {
+      try {
+        const allR = await fetch('/api/v1/status/all-published');
+        const allD = await allR.json();
+        if (Array.isArray(allD) && allD.length > 0) {
+          // Prendre le premier publié
+          d = allD[0];
+        }
+      } catch(e) {}
+    }
     const etab = d.etablissement || {};
 
     if(!d.published){
@@ -181,7 +195,7 @@ async function load(){
 <div class="hdr">
   <div class="hdr-inner">
     <div class="hdr-left">
-      <h1>${etab.nom||'Établissement de santé'}</h1>
+      <h1>${etab.nom||'Établissement de santé'}${d.site_nom && d.site_id ? ` <span style="font-size:13px;font-weight:400;color:#6b7494">— ${d.site_nom}</span>` : ''}</h1>
       <div class="sub">État du système d'information — Point de situation officiel</div>
     </div>
     <div class="hdr-ts">Mis à jour le ${fmt(d.updated_at)}</div>

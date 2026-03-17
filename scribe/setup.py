@@ -234,6 +234,9 @@ def generate_config_js(root, site_names):
     ann_secours = parse_annuaire("annuaire_secours")
 
     # Section IA
+    # Langue de l'interface
+    langue = (root.findtext("langue") or "fr").strip().lower()[:5]
+
     ia_el = root.find("ia")
     ia_cfg = {}
     if ia_el is not None:
@@ -249,6 +252,7 @@ def generate_config_js(root, site_names):
         "directeurs":     dirs,
         "annuaire_normal":  ann_normal,
         "annuaire_secours": ann_secours,
+        "langue":         langue,
         "ia":             ia_cfg,
         "federation":     _parse_federation(root),
     }
