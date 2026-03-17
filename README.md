@@ -186,7 +186,7 @@ curl -X POST http://IP-COLLECTEUR:9000/api/admin/tokens \
 
 ## Licence
 
-MIT — Centre Hospitalier Annecy-Genevois (CHAG) — RSSI
+MIT — Centre Hospitalier Annecy-Genevois (CHANGE) — RSSI
 
 ---
 ---
@@ -378,4 +378,4 @@ curl -X POST http://COLLECTOR-IP:9000/api/admin/tokens \
 
 ## Licence
 
-MIT — Centre Hospitalier Annecy-Genevois (CHAG)
+MIT — Centre Hospitalier Annecy-Genevois (CHANGE)
