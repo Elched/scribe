@@ -197,8 +197,8 @@ def build_payload(db: Session, cfg: FederationConfig) -> dict:
                         "VEILLE"   if any(i.urgency >= 1 for i in incs) else
                         "NOMINAL"
                     )
-                )([i for i in open_incidents if i.site_id == h.nom]),
-                "incidents_ouverts": len([i for i in open_incidents if i.site_id == h.nom]),
+                )([i for i in open_incidents if i.site_id == h.nom or i.site_id == str(h.id)]),
+                "incidents_ouverts": len([i for i in open_incidents if i.site_id == h.nom or i.site_id == str(h.id)]),
             }
             for h in sites_db
         ],

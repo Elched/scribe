@@ -24,6 +24,7 @@ class ConsigneOut(BaseModel):
     texte: str
     accuse: bool
     accuse_at: Optional[datetime]
+    accuse_par: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -42,17 +43,21 @@ def get_consignes(db: Session = Depends(get_db)):
     return db.query(Consigne).order_by(Consigne.timestamp.desc()).all()
 
 
+class AccuseRequest(BaseModel):
+    prenom: str = ""
+
 @router.put("/{consigne_id}/accuser")
-def accuser_reception(consigne_id: int, db: Session = Depends(get_db)):
+def accuser_reception(consigne_id: int, body: AccuseRequest = AccuseRequest(), db: Session = Depends(get_db)):
     c = db.query(Consigne).filter(Consigne.id == consigne_id).first()
     if not c:
         raise HTTPException(status_code=404, detail="Consigne non trouvée")
     if c.accuse:
-        return {"status": "already_acked", "accuse_at": c.accuse_at}
+        return {"status": "already_acked", "accuse_at": c.accuse_at, "accuse_par": c.accuse_par}
     c.accuse = True
     c.accuse_at = datetime.now(timezone.utc)
+    c.accuse_par = body.prenom.strip() or "Anonyme"
     db.commit()
-    return {"status": "acked", "accuse_at": c.accuse_at}
+    return {"status": "acked", "accuse_at": c.accuse_at, "accuse_par": c.accuse_par}
 
 
 @router.delete("/{consigne_id}")

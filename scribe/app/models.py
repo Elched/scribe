@@ -77,6 +77,7 @@ class Consigne(Base):
     texte     = Column(Text, nullable=False)
     accuse    = Column(Boolean, default=False)
     accuse_at = Column(DateTime, nullable=True)
+    accuse_par = Column(String, nullable=True)  # prénom de la personne qui a accusé réception
 
 class Attachment(Base):
     __tablename__ = "attachments"
