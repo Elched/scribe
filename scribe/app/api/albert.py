@@ -177,3 +177,26 @@ async def list_models():
             return resp.json()
     except Exception as e:
         raise HTTPException(status_code=503, detail=str(e))
+
+# ── Endpoint ANALYSE DE CRISE (debriefing) ───────────────────────────────
+
+class AnalyseCriseRequest(BaseModel):
+    question: str
+    mode: Optional[str] = "analyse_crise"
+
+@router.post("/analyse-crise")
+async def analyse_crise(req: AnalyseCriseRequest):
+    """Répond à une question libre sur une main courante de crise (debriefing)."""
+    system = (
+        "Tu es un expert en gestion de crise hospitalière et en analyse post-incident. "
+        "On te fournit une main courante chronologique de crise et une question. "
+        "Réponds de façon concise, structurée et opérationnelle. "
+        "Identifie les patterns, délais critiques, décisions manquées ou bonnes pratiques. "
+        "Réponds toujours en français sauf si la question est dans une autre langue."
+    )
+    try:
+        from app.api.ai_router import call_ia
+        reponse = await call_ia(system=system, user=req.question, max_tokens=600)
+        return {"analyse": reponse}
+    except Exception as e:
+        return {"analyse": f"Erreur IA : {str(e)}"}

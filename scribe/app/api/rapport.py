@@ -14,7 +14,8 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 
 from app.database import get_db
-from app.models import SitrepEntry, Decision, Presence, Consigne, RexEntry
+from app.api.auth import get_current_user
+from app.models import SitrepEntry, Decision, Presence, Consigne, RexEntry, Task
 
 router = APIRouter()
 
@@ -290,3 +291,389 @@ def rex_stats(db: Session = Depends(get_db)):
         "by_type": by_type,
         "avg_jalons_pct": int(sum(e.nb_jalons_done/(e.nb_jalons_total or 1)*100 for e in entries)/len(entries)),
     }
+
+# ── Export main courante complet ─────────────────────────────────────────
+
+@router.get("/export-main-courante")
+def export_main_courante(db: Session = Depends(get_db)):
+    """Export CSV chronologique complet : incidents, décisions, présences,
+    relève, kanban, communiqués, REX."""
+    import csv, io as _io
+    from app.api.status_page import StatusPageChronologie
+    from app.models import RexEntry
+
+    output = _io.StringIO()
+    w = csv.writer(output, delimiter=";", quotechar='"', quoting=csv.QUOTE_ALL)
+    w.writerow(["Horodatage", "Catégorie", "Sous-type", "Acteur", "Contenu", "Détail"])
+
+    def fmt(dt):
+        if dt is None: return ""
+        try: return dt.strftime("%d/%m/%Y %H:%M")
+        except Exception: return str(dt)
+
+    events = []  # (datetime_obj, row_tuple)
+
+    # ── Incidents ────────────────────────────────────────────────────────
+    for i in db.query(SitrepEntry).order_by(SitrepEntry.timestamp).all():
+        events.append((i.timestamp, [
+            fmt(i.timestamp), "INCIDENT", i.type_crise or "",
+            i.declarant_nom or "",
+            i.fait or "",
+            f"U{i.urgency or ''} | {i.status or ''} | {i.site_id or ''} | dir:{i.directeur_crise or ''}"
+        ]))
+        # Changement de statut via jalons
+        try:
+            for j in json.loads(i.jalons or "[]"):
+                if j.get("done") and j.get("done_at"):
+                    events.append((j["done_at"], [
+                        j["done_at"][:16].replace("T"," "), "INCIDENT — JALON",
+                        i.type_crise or "", f"Incident #{i.id}",
+                        j.get("label",""), ""
+                    ]))
+        except Exception:
+            pass
+
+    # ── Décisions cellule ────────────────────────────────────────────────
+    for d in db.query(Decision).order_by(Decision.timestamp).all():
+        events.append((d.timestamp, [
+            fmt(d.timestamp), "DÉCISION CELLULE", d.base_reglementaire or "",
+            d.responsable or "", d.contenu or "",
+            d.statut_validation or ""
+        ]))
+
+    # ── Entrées/sorties cellule ──────────────────────────────────────────
+    for p in db.query(Presence).order_by(Presence.timestamp).all():
+        events.append((p.timestamp, [
+            fmt(p.timestamp), "PRÉSENCE CELLULE", p.action or "",
+            p.nom or "", p.role or "", ""
+        ]))
+
+    # ── Relève / consignes ───────────────────────────────────────────────
+    for c in db.query(Consigne).order_by(Consigne.timestamp).all():
+        ack = f"Accusé par {c.accuse_par or '?'} à {fmt(c.accuse_at)}" if c.accuse else "Non accusé"
+        events.append((c.timestamp, [
+            fmt(c.timestamp), "RELÈVE — CONSIGNE", "TRANSMISE",
+            c.pour or "", c.texte or "", ack
+        ]))
+
+    # ── Kanban ───────────────────────────────────────────────────────────
+    for t in db.query(Task).order_by(Task.created_at).all():
+        prio = {1:"BASSE",2:"NORMALE",3:"HAUTE",4:"CRITIQUE"}.get(t.priorite,"?")
+        events.append((t.created_at, [
+            fmt(t.created_at), "KANBAN", t.colonne or "",
+            t.assignee or "", t.titre or "",
+            f"{prio} | {t.description or ''}"
+        ]))
+        if t.updated_at and t.updated_at != t.created_at:
+            events.append((t.updated_at, [
+                fmt(t.updated_at), "KANBAN — DÉPLACEMENT", t.colonne or "",
+                t.assignee or "", t.titre or "", ""
+            ]))
+
+    # ── REX ──────────────────────────────────────────────────────────────
+    for r in db.query(RexEntry).order_by(RexEntry.created_at).all():
+        events.append((r.created_at, [
+            fmt(r.created_at), "REX", r.type_crise or "",
+            r.redige_par or "", r.titre or "",
+            f"MTTD:{r.mttd_min or ''}min MTTR:{r.mttr_min or ''}min"
+        ]))
+
+    # ── Communiqués / chronologie publique ──────────────────────────────
+    try:
+        for c in db.query(StatusPageChronologie).order_by(StatusPageChronologie.timestamp).all():
+            events.append((c.timestamp, [
+                fmt(c.timestamp), "COMMUNIQUÉ PUBLIC", "CHRONOLOGIE",
+                c.publie_par or "", c.texte or "", ""
+            ]))
+    except Exception:
+        pass
+
+    # ── Trier et écrire ──────────────────────────────────────────────────
+    def sort_key(ev):
+        dt = ev[0]
+        if dt is None: return ""
+        if hasattr(dt, "isoformat"): return dt.isoformat()
+        return str(dt)
+
+    events.sort(key=sort_key)
+    for _, row in events:
+        w.writerow(row)
+
+    output.seek(0)
+    now_str = datetime.now().strftime("%Y%m%d_%H%M")
+    return StreamingResponse(
+        iter([output.getvalue().encode("utf-8-sig")]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=main_courante_{now_str}.csv"}
+    )
+
+# ── Nouvelle crise : archive ZIP + reset ─────────────────────────────────
+
+@router.post("/archiver-crise")
+def archiver_crise(db: Session = Depends(get_db), user=Depends(get_current_user)):
+    """Archive la crise courante en ZIP sans toucher au tableau de bord."""
+    """Archive la crise courante en ZIP et remet à zéro le tableau de bord."""
+    import zipfile, io as _io, csv
+    from app.api.status_page import StatusPage as SPModel, StatusPageChronologie
+    from app.models import Task, RexEntry
+
+    now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    zip_path = f"archives/crise_{now_str}.zip"
+
+    import os
+    os.makedirs("archives", exist_ok=True)
+
+    buf = _io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+
+        def to_csv(rows, headers):
+            out = _io.StringIO()
+            w = csv.writer(out, delimiter=';', quotechar='"', quoting=csv.QUOTE_ALL)
+            w.writerow(headers)
+            for r in rows: w.writerow(r)
+            return out.getvalue().encode('utf-8-sig')
+
+        # Incidents
+        incs = db.query(SitrepEntry).all()
+        zf.writestr("incidents.csv", to_csv(
+            [(i.id, i.timestamp, i.type_crise, i.urgency, i.fait, i.analyse,
+              i.status, i.site_id, i.declarant_nom, i.directeur_crise) for i in incs],
+            ["id","timestamp","type","urgency","fait","analyse","status","site","declarant","directeur"]
+        ))
+
+        # Décisions
+        decs = db.query(Decision).all()
+        zf.writestr("decisions.csv", to_csv(
+            [(d.id, d.timestamp, d.responsable, d.contenu, d.base_reglementaire, d.statut_validation) for d in decs],
+            ["id","timestamp","responsable","contenu","base_reglementaire","statut_validation"]
+        ))
+
+        # Présences
+        pres = db.query(Presence).all()
+        zf.writestr("presences.csv", to_csv(
+            [(p.id, p.timestamp, p.nom, p.role, p.action) for p in pres],
+            ["id","timestamp","nom","role","action"]
+        ))
+
+        # Relève
+        cons = db.query(Consigne).all()
+        zf.writestr("releve.csv", to_csv(
+            [(c.id, c.timestamp, c.pour, c.texte, c.accuse, c.accuse_at, c.accuse_par) for c in cons],
+            ["id","timestamp","pour","texte","accuse","accuse_at","accuse_par"]
+        ))
+
+        # Kanban
+        tasks = db.query(Task).all()
+        zf.writestr("kanban.csv", to_csv(
+            [(t.id, t.created_at, t.titre, t.colonne, t.priorite, t.assignee, t.description) for t in tasks],
+            ["id","created_at","titre","colonne","priorite","assignee","description"]
+        ))
+
+        # REX
+        rex = db.query(RexEntry).all()
+        zf.writestr("rex.csv", to_csv(
+            [(r.id, r.created_at, r.titre, r.type_crise, r.redacteur) for r in rex],
+            ["id","created_at","titre","type_crise","redacteur"]
+        ))
+
+        # Statuts publics / communiqués
+        try:
+            sps = db.query(SPModel).all()
+            zf.writestr("communiques.csv", to_csv(
+                [(s.id, s.site_id, s.site_nom, s.niveau_global, s.message_public, s.updated_at) for s in sps],
+                ["id","site_id","site_nom","niveau","message","updated_at"]
+            ))
+            chrons = db.query(StatusPageChronologie).all()
+            zf.writestr("chronologie_publique.csv", to_csv(
+                [(c.id, c.timestamp, c.texte, c.publie_par) for c in chrons],
+                ["id","timestamp","texte","publie_par"]
+            ))
+        except Exception:
+            pass
+
+        # Métadonnées de la crise
+        meta = (
+            f"SCRIBE — Archive de crise\n"
+            f"Date d'archivage : {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
+            f"Archivé par : {getattr(user,'display_name','') or getattr(user,'username','')}\n"
+            f"Incidents : {len(incs)}\n"
+            f"Décisions : {len(decs)}\n"
+            f"Tâches Kanban : {len(tasks)}\n"
+        )
+        zf.writestr("README.txt", meta)
+
+    # Sauvegarder l'archive
+    with open(zip_path, 'wb') as f:
+        f.write(buf.getvalue())
+
+    db.commit()
+
+    return {
+        "ok": True,
+        "archive": zip_path,
+        "message": f"Crise archivée dans {zip_path}."
+    }
+
+
+# ── Reset tableau de bord (séparé de l'archivage) ────────────────────────
+
+@router.post("/reset-tableau-de-bord")
+def reset_tableau_de_bord(db: Session = Depends(get_db), user=Depends(get_current_user)):
+    """Remet le tableau de bord à zéro sans archiver."""
+    from app.models import Task, RexEntry
+    db.query(SitrepEntry).delete()
+    db.query(Decision).delete()
+    db.query(Presence).delete()
+    db.query(Consigne).delete()
+    db.query(Task).delete()
+    try:
+        from app.api.status_page import StatusPage as SPModel2, StatusPageChronologie as SPC2
+        db.query(SPC2).delete()
+        for sp in db.query(SPModel2).all():
+            sp.published = False
+            sp.message_public = ""
+            sp.niveau_global = "OPERATIONNEL"
+    except Exception:
+        pass
+    db.commit()
+    return {"ok": True, "message": "Tableau de bord remis à zéro."}
+
+
+# ── Garde la route nouvelle-crise pour compatibilité (archive + reset) ───
+
+@router.post("/nouvelle-crise")
+def nouvelle_crise(db: Session = Depends(get_db), user=Depends(get_current_user)):
+    """Archive puis remet à zéro — appelle les deux routes en séquence."""
+    archiver_crise(db=db, user=user)
+    db.expunge_all()  # Rafraîchir la session
+    from sqlalchemy.orm import Session as S
+    reset_tableau_de_bord(db=db, user=user)
+    return {"ok": True, "message": "Crise archivée et tableau de bord réinitialisé."}
+
+# ── Rapport DOCX debriefing ───────────────────────────────────────────────
+
+class DebriefEvent(BaseModel):
+    ts: str = ""
+    cat: str = ""
+    acteur: str = ""
+    contenu: str = ""
+    note: str = ""
+
+class DebriefRequest(BaseModel):
+    metrics: dict = {}
+    events: list = []
+    annotations: dict = {}
+
+@router.post("/debrief-docx")
+def generate_debrief_docx(req: DebriefRequest, db: Session = Depends(get_db)):
+    """Génère un rapport DOCX de debriefing depuis les données d'analyse."""
+    try:
+        import json as _j, os as _o
+        _cfgp = _o.path.join(_o.path.dirname(__file__), "..", "static", "config.js")
+        _cfgt = open(_cfgp, encoding="utf-8").read() if _o.path.exists(_cfgp) else ""
+        _start = _cfgt.find("const SCRIBE_CONFIG = ") + len("const SCRIBE_CONFIG = ")
+        _cfg = _j.loads(_cfgt[_start:_cfgt.rfind(";")]) if _start > 20 else {}
+        nom_etab = _cfg.get("etablissement", {}).get("nom", "Établissement de santé")
+    except Exception:
+        nom_etab = "Établissement de santé"
+
+    doc = Document()
+    doc.core_properties.title = "Rapport de debriefing"
+
+    # ── Titre ──
+    p = doc.add_heading("RAPPORT DE DEBRIEFING DE CRISE", 0)
+    p.runs[0].font.color.rgb = RGBColor(0x1e, 0x40, 0xaf)
+
+    doc.add_heading(nom_etab, 1)
+    doc.add_paragraph(f"Document généré le {datetime.now().strftime('%d/%m/%Y à %H:%M')}")
+    doc.add_paragraph()
+
+    # ── Métriques ──
+    doc.add_heading("1. MÉTRIQUES CLÉS", 1)
+    table = doc.add_table(rows=1, cols=2)
+    table.style = "Table Grid"
+    hdr = table.rows[0].cells
+    hdr[0].text = "Indicateur"
+    hdr[1].text = "Valeur"
+    for k, v in req.metrics.items():
+        row = table.add_row().cells
+        labels = {
+            "incidents": "Nombre d'incidents",
+            "decisions": "Décisions prises",
+            "presences": "Participants cellule",
+            "kanban": "Tâches kanban",
+        }
+        row[0].text = labels.get(k, k)
+        row[1].text = str(v)
+    doc.add_paragraph()
+
+    # ── Chronologie ──
+    doc.add_heading("2. CHRONOLOGIE DES ÉVÉNEMENTS", 1)
+    cat_colors = {
+        "INCIDENT": RGBColor(0xef, 0x44, 0x44),
+        "DÉCISION": RGBColor(0xf5, 0x9e, 0x0b),
+        "PRÉSENCE": RGBColor(0x3d, 0x9e, 0xff),
+        "KANBAN":   RGBColor(0xa8, 0x55, 0xf7),
+        "RELÈVE":   RGBColor(0x6b, 0x74, 0x94),
+        "COMMUNIQUÉ": RGBColor(0x00, 0xe5, 0xa0),
+        "REX":      RGBColor(0x22, 0xd3, 0xee),
+    }
+
+    for ev in req.events[:60]:
+        p = doc.add_paragraph()
+        run_ts = p.add_run(f"[{ev.get('ts','')}] ")
+        run_ts.font.size = Pt(8)
+        run_ts.font.color.rgb = RGBColor(0x6b, 0x74, 0x94)
+
+        cat = ev.get("cat","")
+        color = next((v for k,v in cat_colors.items() if cat.startswith(k)), RGBColor(0x6b,0x74,0x94))
+        run_cat = p.add_run(f"{cat} ")
+        run_cat.font.size = Pt(8)
+        run_cat.font.bold = True
+        run_cat.font.color.rgb = color
+
+        run_txt = p.add_run(ev.get("contenu",""))
+        run_txt.font.size = Pt(9)
+
+        if ev.get("acteur"):
+            run_act = p.add_run(f"  — {ev['acteur']}")
+            run_act.font.size = Pt(8)
+            run_act.font.color.rgb = RGBColor(0x6b,0x74,0x94)
+
+        # Annotation
+        if ev.get("note"):
+            p2 = doc.add_paragraph()
+            r = p2.add_run(f"    📝 {ev['note']}")
+            r.font.size = Pt(8)
+            r.font.italic = True
+            r.font.color.rgb = RGBColor(0xf5, 0x9e, 0x0b)
+
+    doc.add_paragraph()
+
+    # ── Annotations ──
+    all_notes = [(k,v) for k,v in req.annotations.items() if v.strip()]
+    if all_notes:
+        doc.add_heading("3. ANNOTATIONS ET POINTS CLÉS", 1)
+        for ev_id, note in all_notes[:20]:
+            p = doc.add_paragraph()
+            p.add_run("• ").bold = True
+            p.add_run(note)
+
+    # ── Recommandations ──
+    doc.add_heading("4. PLAN D'AMÉLIORATION", 1)
+    doc.add_paragraph("À compléter par l'équipe lors du debriefing :")
+    for label in ["Points forts à capitaliser :", "Axes d'amélioration identifiés :", "Actions à mettre en place avant la prochaine crise :"]:
+        p = doc.add_paragraph(label)
+        p.runs[0].bold = True
+        for _ in range(3):
+            doc.add_paragraph("___________________________________________")
+
+    # ── Sauvegarde ──
+    buf = io.BytesIO()
+    doc.save(buf)
+    buf.seek(0)
+    return StreamingResponse(
+        iter([buf.getvalue()]),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": "attachment; filename=debrief_crise.docx"}
+    )

@@ -85,7 +85,7 @@ def save_data():
 
 # ── App FastAPI ───────────────────────────────────────────────────────────
 
-app = FastAPI(title="SCRIBE Collecteur territorial", version="1.1.0")
+app = FastAPI(title="SCRIBE Collecteur territorial", version="1.2.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 security = HTTPBearer(auto_error=False)
@@ -115,19 +115,19 @@ async def receive_push(
     if not sigle:
         tok_short = credentials.credentials[:12] if credentials and credentials.credentials else "?"
         print(f"""
-  ╔══ TOKEN INCONNU — ENREGISTREMENT REQUIS ══════════════════════╗
-  ║  IP source  : {request.client.host}
-  ║  Token reçu : {tok_short}...
-  ╟───────────────────────────────────────────────────────────────
-  ║  Exécutez cette commande pour enregistrer l'établissement :
-  ║
-  ║  curl -X POST http://localhost:9000/api/admin/tokens \
-  ║    -H "Authorization: Bearer {ADMIN_TOKEN}" \
-  ║    -H "Content-Type: application/json" \
-  ║    -d '{{"sigle":"MON_ETAB","token":"TOKEN_QUE_VOUS_AVEZ_CHOISI"}}'
-  ║
-  ║  TOKEN_QUE_VOUS_AVEZ_CHOISI = token choisi librement (16+ chars), identique dans config.xml <federation><token>
-  ╚═══════════════════════════════════════════════════════════════╝
+  TOKEN INCONNU - ENREGISTREMENT REQUIS
+  IP source  : {request.client.host}
+  Token recu : {tok_short}...
+
+  Executez cette commande pour enregistrer l'etablissement :
+
+  curl -X POST http://localhost:9000/api/admin/tokens \
+    -H "Authorization: Bearer {ADMIN_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d '{{"sigle":"MON_ETAB","token":"TOKEN_QUE_VOUS_AVEZ_CHOISI"}}'
+
+  TOKEN_QUE_VOUS_AVEZ_CHOISI = token choisi librement (16+ chars)
+  Ce token doit etre identique dans config.xml <federation><token>
 """)
         logger.warning("Push refusé — token inconnu depuis %s", request.client.host)
         raise HTTPException(status_code=401, detail="Token inconnu ou révoqué")
@@ -578,6 +578,9 @@ body::before{
 #timeline-scroll::-webkit-scrollbar{width:3px}
 #timeline-scroll::-webkit-scrollbar-thumb{background:var(--border2)}
 
+.tl-etab-group{border-bottom:1px solid var(--border);margin-bottom:2px}
+.tl-etab-header{display:flex;align-items:center;gap:6px;padding:8px 10px 4px;background:var(--surface2)}
+.tl-site-group{border-left:2px solid var(--border2);margin:2px 10px 4px 16px}
 .tl-item{
   display:flex;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);
   cursor:pointer;transition:background .15s;
@@ -911,11 +914,11 @@ let countdownTimer = null;
 
 const ORDRE = {CRITIQUE:4,CRISE:3,ALERTE:2,VEILLE:1,NOMINAL:0,INCONNU:-1};
 const COLORS = {
-  CRITIQUE: getComputedStyle(document.documentElement).getPropertyValue('--red').trim()   || '#ff2d55',
-  CRISE:    getComputedStyle(document.documentElement).getPropertyValue('--orange').trim()|| '#ff7b2c',
-  ALERTE:   getComputedStyle(document.documentElement).getPropertyValue('--yellow').trim()|| '#f5c518',
-  VEILLE:   getComputedStyle(document.documentElement).getPropertyValue('--blue').trim()  || '#3d9eff',
-  NOMINAL:  getComputedStyle(document.documentElement).getPropertyValue('--green').trim() || '#00e5a0',
+  CRITIQUE: '#ff2d55',
+  CRISE:    '#ff7b2c',
+  ALERTE:   '#f5c518',
+  VEILLE:   '#3d9eff',
+  NOMINAL:  '#00e5a0',
   INCONNU:  '#4a5070',
 };
 const URG_CLS = ['','inc-u1','inc-u2','inc-u3','inc-u4'];
@@ -1076,8 +1079,11 @@ function renderDetail(e){
       ${s.libelle||id}
     </div>`).join('');
 
-  // Incidents
-  const incs = (e.incidents||[]).map(i=>`
+  // Incidents — masquer les résolus par défaut
+  const allIncs = e.incidents || [];
+  const openIncs = allIncs.filter(i => i.status !== 'RÉSOLU');
+  const resolvedCount = allIncs.length - openIncs.length;
+  const incs = openIncs.map(i=>`
     <div class="inc-row">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;flex-wrap:wrap">
         <span class="inc-urg-badge ${URG_CLS[i.urgency]||''}">${URG_LBL[i.urgency]||'U?'}</span>
@@ -1139,10 +1145,24 @@ function renderDetail(e){
       }).join('')}</div>
     </div>`:''}
 
-    ${(!e.sites||e.sites.length<=1)?`${incs?`<div class="detail-section">
-      <div class="detail-section-header">⬡ Incidents en cours</div>
-      <div class="detail-section-body">${incs}</div>
-    </div>`:'<div class="detail-section"><div class="detail-section-body" style="color:var(--green);font-family:var(--mono);font-size:10px">✓ Aucun incident ouvert</div></div>'}`:``}
+    ${(!e.sites||e.sites.length<=1)?`<div class="detail-section">
+      <div class="detail-section-header" style="display:flex;align-items:center;gap:8px">
+        ⬡ Incidents en cours
+        ${resolvedCount>0?`<span style="font-family:var(--mono);font-size:8px;color:var(--muted);cursor:pointer;text-decoration:underline" onclick="toggleResolved(this,'resolved-${e.sigle}')">${resolvedCount} résolu(s) archivé(s)</span>`:''}
+      </div>
+      ${incs?`<div class="detail-section-body">${incs}</div>`:'<div class="detail-section-body" style="color:var(--green);font-family:var(--mono);font-size:10px">✓ Aucun incident ouvert</div>'}
+      ${resolvedCount>0?`<div id="resolved-${e.sigle}" style="display:none">
+        ${allIncs.filter(i=>i.status==='RÉSOLU').map(i=>`<div class="inc-row" style="opacity:.45">
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+            <span class="inc-urg-badge">${URG_LBL[i.urgency]||'U?'}</span>
+            <span class="inc-type">${esc(i.type_crise)}</span>
+            <span style="color:var(--green);font-family:var(--mono);font-size:9px">✓ RÉSOLU</span>
+            <span class="inc-site" style="margin-left:auto">${esc(i.site)}</span>
+          </div>
+          <div class="inc-fait">${esc(i.fait_resume)}</div>
+        </div>`).join('')}
+      </div>`:''}
+    </div>`:``}
 
     ${poles?`<div class="detail-section">
       <div class="detail-section-header">⊕ Pôles / services impactés</div>
@@ -1164,39 +1184,58 @@ function renderDetail(e){
 // ═══════════════════════════════════════════════════
 function renderTimeline(){
   const container = document.getElementById('timeline-scroll');
-  // Collecter tous les incidents + leur étab
   const all = [];
   allData.forEach(e => {
     (e.incidents||[]).forEach(i => {
       all.push({...i, _etab_nom:e.nom, _etab_sigle:e.sigle, _etab_niveau:e.niveau_global});
     });
   });
-  // Trier par urgence desc puis timestamp desc
   all.sort((a,b)=>(b.urgency-a.urgency)||((b.timestamp||'')>(a.timestamp||'')?1:-1));
-
   if(!all.length){
     container.innerHTML='<div style="padding:20px;font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center">Aucun incident actif</div>';
     return;
   }
-  container.innerHTML = all.slice(0,40).map((i,idx)=>{
-    const col = COLORS[['','VEILLE','ALERTE','CRISE','CRITIQUE'][i.urgency]||'INCONNU']||'#4a5070';
-    const ts  = i.timestamp ? new Date(i.timestamp).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
-    return `<div class="tl-item" onclick="selectEtab('${i._etab_sigle}');switchTab('supervision',document.querySelector('.h-tab'))">
-      <div class="tl-line">
-        <div class="tl-dot" style="background:${col};box-shadow:0 0 4px ${col}"></div>
-        ${idx<all.length-1?'<div class="tl-stem"></div>':''}
-      </div>
-      <div class="tl-content">
-        <div class="tl-etab">${i._etab_sigle}</div>
-        <div class="tl-fait">${(i.fait_resume||'').substring(0,60)}</div>
-        <div class="tl-meta">
-          <span class="tl-badge ${URG_CLS[i.urgency]||''}" style="color:${col}">${i.type_crise||''} ${URG_LBL[i.urgency]||''}</span>
-          <span>${ts}</span>
-          <span>${i.status||''}</span>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  // Grouper par établissement puis par site
+  const grouped = {};
+  all.forEach(i => {
+    const key = i._etab_sigle;
+    if(!grouped[key]) grouped[key] = {nom:i._etab_nom, sigle:i._etab_sigle, niveau:i._etab_niveau, bySite:{}};
+    const site = i.site || '—';
+    if(!grouped[key].bySite[site]) grouped[key].bySite[site] = [];
+    grouped[key].bySite[site].push(i);
+  });
+  let html = '';
+  Object.values(grouped).forEach(etab => {
+    const etabCol = COLORS[etab.niveau]||'#4a5070';
+    html += `<div class="tl-etab-group">
+      <div class="tl-etab-header" onclick="selectEtab('${etab.sigle}');switchTab('supervision',document.querySelector('.h-tab'))" style="cursor:pointer">
+        <div class="tl-dot" style="background:${etabCol};box-shadow:0 0 6px ${etabCol};width:10px;height:10px;border-radius:50%;flex-shrink:0"></div>
+        <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:${etabCol}">${etab.sigle}</span>
+        <span style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-left:4px">${etab.nom}</span>
+        <span style="font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:3px;background:${etabCol}20;color:${etabCol};margin-left:auto">${etab.niveau}</span>
+      </div>`;
+    Object.entries(etab.bySite).forEach(([site, incs]) => {
+      html += `<div class="tl-site-group">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted2);padding:3px 8px 3px 18px;letter-spacing:.5px">📍 ${site}</div>`;
+      incs.forEach(i => {
+        const col = COLORS[['','VEILLE','ALERTE','CRISE','CRITIQUE'][i.urgency]||'INCONNU']||'#4a5070';
+        const ts  = i.timestamp ? new Date(i.timestamp).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+        html += `<div class="tl-item" style="padding-left:18px" onclick="selectEtab('${etab.sigle}');switchTab('supervision',document.querySelector('.h-tab'))">
+          <div class="tl-content">
+            <div class="tl-fait" style="font-size:9px">${(i.fait_resume||'').substring(0,70)}</div>
+            <div class="tl-meta">
+              <span class="tl-badge ${URG_CLS[i.urgency]||''}" style="color:${col}">${i.type_crise||''} ${URG_LBL[i.urgency]||''}</span>
+              <span style="color:var(--muted);font-family:var(--mono);font-size:8px">${ts}</span>
+              <span style="color:var(--muted);font-family:var(--mono);font-size:8px">${i.status||''}</span>
+            </div>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  });
+  container.innerHTML = html;
 }
 
 // ═══════════════════════════════════════════════════
@@ -1298,6 +1337,16 @@ function renderMapMarkers(){
 
   if(bounds.length>1) map.fitBounds(bounds,{padding:[40,40]});
   else if(bounds.length===1) map.setView(bounds[0],12);
+}
+
+function toggleResolved(btn, divId) {
+  const div = document.getElementById(divId);
+  if (!div) return;
+  const visible = div.style.display !== 'none';
+  div.style.display = visible ? 'none' : 'block';
+  btn.textContent = visible
+    ? btn.textContent.replace('▲','').trim() + ''
+    : '▲ ' + btn.textContent;
 }
 
 // ═══════════════════════════════════════════════════
@@ -1621,8 +1670,53 @@ function renderStatuts(){
 // ═══════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════
-loadData();
-startCountdown();
+// ── Login UI (si collecteur_ui_auth.json configuré) ──
+async function checkLogin() {
+  const r = await fetch('/api/ui/auth-required');
+  const d = await r.json();
+  if (!d.required) { loadData(); startCountdown(); return; }
+  const stored = sessionStorage.getItem('coll_token');
+  if (stored) { loadData(); startCountdown(); return; }
+  showLoginModal(d.login);
+}
+
+function showLoginModal(hint) {
+  const modal = document.createElement('div');
+  modal.id = 'login-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:#0a0d14;display:flex;align-items:center;justify-content:center;z-index:9999';
+  modal.innerHTML = `
+    <div style="background:var(--s1);border:1px solid var(--border2);border-radius:8px;padding:32px 40px;min-width:320px;display:flex;flex-direction:column;gap:16px">
+      <div style="font-family:var(--head);font-size:22px;font-weight:700;color:var(--cyan);letter-spacing:2px">SCRIBE</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px">SUPERVISION TERRITORIALE</div>
+      <input id="login-user" type="text" value="${hint||''}" placeholder="Identifiant"
+        style="font-family:var(--mono);font-size:11px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:4px;outline:none">
+      <input id="login-pass" type="password" placeholder="Mot de passe"
+        style="font-family:var(--mono);font-size:11px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:4px;outline:none">
+      <div id="login-err" style="font-family:var(--mono);font-size:9px;color:var(--red);display:none">Identifiants incorrects</div>
+      <button onclick="doLogin()" style="font-family:var(--mono);font-size:11px;font-weight:700;padding:10px;background:var(--cyan);color:#0a0d14;border:none;border-radius:4px;cursor:pointer;letter-spacing:1px">CONNEXION</button>
+    </div>`;
+  document.body.appendChild(modal);
+  document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+}
+
+async function doLogin() {
+  const login = document.getElementById('login-user').value;
+  const pass  = document.getElementById('login-pass').value;
+  const r = await fetch('/api/ui/login', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({login, password: pass})
+  });
+  if (r.ok) {
+    const d = await r.json();
+    sessionStorage.setItem('coll_token', d.token);
+    document.getElementById('login-modal').remove();
+    loadData(); startCountdown();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+  }
+}
+
+checkLogin();
 </script>
 </body>
 </html>"""
@@ -1637,6 +1731,54 @@ def health():
     return {"status": "ok", "etablissements": len(etablissements)}
 
 
+# ── Auth interface web (optionnelle) ─────────────────────────────────────
+UI_AUTH_FILE = "collecteur_ui_auth.json"
+
+def load_ui_auth() -> dict:
+    """Charge la config login UI depuis le fichier JSON si présent."""
+    if Path(UI_AUTH_FILE).exists():
+        try:
+            return json.loads(Path(UI_AUTH_FILE).read_text())
+        except Exception:
+            pass
+    return {}  # Pas de protection si fichier absent
+
+def check_ui_credentials(login: str, password: str) -> bool:
+    """Vérifie login/mot de passe de l'interface web."""
+    auth = load_ui_auth()
+    if not auth:
+        return True  # Pas de protection configurée
+    import hashlib
+    h = hashlib.sha256(password.encode()).hexdigest()
+    return auth.get("login") == login and auth.get("password_hash") == h
+
+
+@app.post("/api/ui/login")
+async def ui_login(request: Request):
+    """Authentification interface web du collecteur."""
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(400, "JSON invalide")
+    login = body.get("login","")
+    password = body.get("password","")
+    auth = load_ui_auth()
+    if not auth:
+        return {"ok": True, "token": "no-auth"}  # Pas de protection
+    if check_ui_credentials(login, password):
+        # Token de session simple
+        session_token = secrets.token_hex(16)
+        return {"ok": True, "token": session_token}
+    raise HTTPException(status_code=401, detail="Identifiants invalides")
+
+
+@app.get("/api/ui/auth-required")
+def auth_required():
+    """Indique si l'interface nécessite une authentification."""
+    auth = load_ui_auth()
+    return {"required": bool(auth), "login": auth.get("login","") if auth else ""}
+
+
 # ── Démarrage ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -1647,7 +1789,7 @@ if __name__ == "__main__":
     nb_data  = len(etablissements)
 
     print("\n  ╔══════════════════════════════════════════════╗")
-    print("  ║  SCRIBE Collecteur territorial  v1.1.0       ║")
+    print("  ║  SCRIBE Collecteur territorial  v1.1.1       ║")
     print("  ╚══════════════════════════════════════════════╝")
     print(f"\n  Dashboard     : http://0.0.0.0:9000")
     print(f"  Etablissements: {nb_etab} token(s) / {nb_data} remontée(s)")

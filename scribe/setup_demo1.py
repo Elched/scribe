@@ -78,8 +78,11 @@ for s in SITES:
     print(f"      [+] {s['nom']}")
 
 db.commit()
-main_id = hospital_ids["Site Principal — Valmont"]
-sec_id  = hospital_ids["Site Secondaire — Crestval"]
+main_id  = hospital_ids["Site Principal — Valmont"]
+sec_id   = hospital_ids["Site Secondaire — Crestval"]
+psy_id   = hospital_ids["Unité Psychiatrique — Les Pins"]
+ehpad_id = hospital_ids["EHPAD — Résidence du Lac"]
+samu_id  = hospital_ids["SAMU — Centre 15"]
 
 # ── 3. UF (structure réelle, libellés génériques) ─────────────────────────
 print("\n[3/5] Création des unités fonctionnelles...")
@@ -203,6 +206,27 @@ UFS = [
     ("SUPPORT", "E013", "Qualité / Gestion des risques",main_id),
     ("SUPPORT", "E101", "DSI secondaire",               sec_id),
     ("SUPPORT", "E102", "Pharmacie secondaire",         sec_id),
+
+    # UNITÉ PSYCHIATRIQUE — Les Pins
+    ("SANTE MENTALE", "P001", "Hospitalisation adultes",        psy_id),
+    ("SANTE MENTALE", "P002", "Hospitalisation adolescents",    psy_id),
+    ("SANTE MENTALE", "P003", "Psychiatrie de liaison",         psy_id),
+    ("SANTE MENTALE", "P004", "Urgences psychiatriques",        psy_id),
+    ("SANTE MENTALE", "P005", "Réhabilitation psychosociale",   psy_id),
+    ("SUPPORT",       "P101", "Administration — Les Pins",      psy_id),
+
+    # EHPAD — Résidence du Lac
+    ("GERIATRIE",     "G001", "EHPAD — Unité A",                ehpad_id),
+    ("GERIATRIE",     "G002", "EHPAD — Unité B",                ehpad_id),
+    ("GERIATRIE",     "G003", "Unité Alzheimer",                ehpad_id),
+    ("GERIATRIE",     "G004", "Soins de suite gériatriques",    ehpad_id),
+    ("SUPPORT",       "G101", "Administration EHPAD",           ehpad_id),
+
+    # SAMU — Centre 15
+    ("URGENCES",      "S001", "Régulation médicale",            samu_id),
+    ("URGENCES",      "S002", "SMUR Valmont",                   samu_id),
+    ("URGENCES",      "S003", "SMUR secondaire",                samu_id),
+    ("SUPPORT",       "S101", "Administration SAMU",            samu_id),
 ]
 
 for pole, code, libelle, hid in UFS:

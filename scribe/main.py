@@ -53,7 +53,17 @@ async def startup():
 
 @app.get("/")
 async def root():
-    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+    from fastapi.responses import FileResponse
+    from starlette.responses import Response
+    resp = FileResponse(
+        os.path.join(STATIC_DIR, "index.html"),
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        }
+    )
+    return resp
 
 
 @app.get("/status", response_class=HTMLResponse)
@@ -64,7 +74,7 @@ async def public_status():
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "version": "1.1.0"}
+    return {"status": "ok", "version": "1.2.0"}
 
 
 if __name__ == "__main__":
