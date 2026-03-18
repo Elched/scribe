@@ -22,6 +22,10 @@ env/
 .env
 .env.*
 
+# ── Autres env ──
+*.bat
+
+
 # ── OS / IDE ──
 .DS_Store
 Thumbs.db
@@ -36,3 +40,6 @@ logs/
 # ── Tests ──
 tests/
 *.test.py
+config_demo1.xml
+config_demo2.xml
+
