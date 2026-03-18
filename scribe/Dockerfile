@@ -13,6 +13,7 @@ WORKDIR /app
 
 # Dépendances système minimales
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -23,18 +24,20 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Code applicatif
 COPY . .
 
-# S'assurer que config_demo1.xml est disponible comme fallback
-# (config.xml réel doit être monté via volume)
-RUN if [ ! -f /app/config.xml ] && [ -f /app/config_demo1.xml ]; then     echo "  [Dockerfile] config_demo1.xml disponible comme fallback";     fi
-
 # Dossier de données persistantes (base SQLite + uploads + config.js généré)
 RUN mkdir -p /data/uploads /data/db && \
     ln -sf /data/uploads /app/uploads && \
     ln -sf /data/db/scribe.db /app/scribe.db 2>/dev/null || true
 
-# Script d'entrée
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# Sécurisation : éviter l'exécution en tant que root
+RUN addgroup --system scribe && \
+    adduser --system --ingroup scribe --home /app --shell /usr/sbin/nologin scribe && \
+    chown -R scribe:scribe /app /data
+
+USER scribe
+
+# Script d'entrée (COPY --chmod avoids filesystem permission issues on some hosts)
+COPY --chmod=0755 docker-entrypoint.sh /docker-entrypoint.sh
 
 EXPOSE 8000
 
