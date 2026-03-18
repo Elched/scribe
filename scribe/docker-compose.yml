@@ -11,14 +11,19 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: scribe
-    restart: unless-stopped
+    restart: on-failure:3  # Évite la boucle infinie si config manquante
     ports:
       - "${SCRIBE_PORT:-8000}:8000"
     volumes:
       # Données persistantes : base SQLite, uploads, config générée
       - scribe_data:/data
-      # Monter votre config.xml personnalisée (optionnel)
+      # ── CONFIG PERSONNALISÉE ──────────────────────────────────────
+      # Décommentez et adaptez pour utiliser votre propre config.xml :
       # - ./config.xml:/data/config.xml:ro
+      #
+      # Sans ce volume, SCRIBE démarre en mode DEMO (config_demo1.xml).
+      # login: dircrise / password: voir config_demo1.xml
+      # ──────────────────────────────────────────────────────────────
     environment:
       # Fournisseur IA (surpasse config.xml si renseigné)
       - SCRIBE_IA_PROVIDER=${SCRIBE_IA_PROVIDER:-albert}
