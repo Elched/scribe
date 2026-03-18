@@ -23,6 +23,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Code applicatif
 COPY . .
 
+# S'assurer que config_demo1.xml est disponible comme fallback
+# (config.xml réel doit être monté via volume)
+RUN if [ ! -f /app/config.xml ] && [ -f /app/config_demo1.xml ]; then     echo "  [Dockerfile] config_demo1.xml disponible comme fallback";     fi
+
 # Dossier de données persistantes (base SQLite + uploads + config.js généré)
 RUN mkdir -p /data/uploads /data/db && \
     ln -sf /data/uploads /app/uploads && \
