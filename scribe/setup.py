@@ -259,7 +259,12 @@ def generate_config_js(root, site_names):
 
     out_dir = os.path.join(BASE_DIR, "app", "static")
     os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, "config.js")
+    # En mode Docker, config.js est persisté dans /data/ et lié symboliquement
+    data_dir = os.environ.get("SCRIBE_DATA_DIR", "")
+    if data_dir and os.path.isdir(data_dir):
+        out_path = os.path.join(data_dir, "config.js")
+    else:
+        out_path = os.path.join(out_dir, "config.js")
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("// Généré automatiquement par setup.py — ne pas éditer manuellement\n")
         f.write(f"// Établissement : {nom_etab} | Généré le : {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}\n")

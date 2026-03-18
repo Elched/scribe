@@ -18,13 +18,22 @@ if [ ! -L /app/uploads ]; then
     ln -sf /data/uploads /app/uploads
 fi
 
-# Config XML : priorité à /data/config.xml (monté par volume), sinon /app/config.xml
+# Config XML : priorité 1→ /data/config.xml (volume), 2→ /app/config.xml, 3→ demo
 if [ -f /data/config.xml ]; then
     CONFIG_PATH=/data/config.xml
-    echo "  [config] Utilisation de /data/config.xml"
-else
+    echo "  [config] Utilisation de /data/config.xml (volume monté)"
+elif [ -f /app/config.xml ]; then
     CONFIG_PATH=/app/config.xml
-    echo "  [config] Utilisation de /app/config.xml (valeurs par défaut)"
+    echo "  [config] Utilisation de /app/config.xml"
+elif [ -f /app/config_demo1.xml ]; then
+    CONFIG_PATH=/app/config_demo1.xml
+    echo "  [config] AVERTISSEMENT: aucun config.xml trouvé, démarrage en mode DEMO (config_demo1.xml)"
+    echo "  [config] Pour une config personnalisée, montez votre fichier:"
+    echo "  [config]   -v /chemin/vers/config.xml:/data/config.xml:ro"
+else
+    echo "  [config] ERREUR FATALE: aucun fichier de configuration trouvé !"
+    echo "  [config] Montez votre config.xml avec: -v ./config.xml:/data/config.xml:ro"
+    exit 1
 fi
 
 # Base SQLite : stocker dans /data/db/
@@ -48,7 +57,10 @@ print('  [init] Tables vérifiées.')
 "
 fi
 
-# Lien config.js généré vers /app/app/static/
+# config.js : déplacer vers /data/ pour persistance et créer le lien symbolique
+if [ -f /app/app/static/config.js ] && [ ! -L /app/app/static/config.js ]; then
+    mv /app/app/static/config.js /data/config.js
+fi
 if [ -f /data/config.js ]; then
     ln -sf /data/config.js /app/app/static/config.js
 fi
