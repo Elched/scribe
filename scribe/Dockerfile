@@ -39,6 +39,9 @@ USER scribe
 # Script d'entrée (COPY --chmod avoids filesystem permission issues on some hosts)
 COPY --chmod=0755 docker-entrypoint.sh /docker-entrypoint.sh
 
+# Ensure the entrypoint uses LF line endings (avoid "sh\r" shebang errors on Linux)
+RUN sed -i 's/\r$//' /docker-entrypoint.sh
+
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
