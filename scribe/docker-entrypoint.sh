@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env sh
+set -euo pipefail
 
 echo ""
 echo "  ██████╗  ██████╗██████╗ ██╗██████╗ ███████╗"
@@ -58,4 +58,5 @@ echo "  ✓ SCRIBE démarré sur http://0.0.0.0:8000"
 echo "  ✓ Données persistantes dans /data/"
 echo ""
 
-exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
+# SQLite is not designed for high-concurrency writes; keep a single worker to avoid "database is locked" errors
+exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
