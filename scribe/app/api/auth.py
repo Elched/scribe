@@ -86,7 +86,7 @@ class UserUpdate(BaseModel):
 # ── Initialisation compte admin ──────────────────────────
 
 def ensure_admin(db: Session):
-    """Crée le compte admin par défaut si inexistant."""
+    """Crée ou synchronise le compte admin avec ADMIN_PASS."""
     existing = db.query(User).filter(User.username == ADMIN_USER).first()
     if not existing:
         admin = User(
@@ -98,18 +98,30 @@ def ensure_admin(db: Session):
         )
         db.add(admin)
         db.commit()
+    else:
+        # Resynchroniser le hash si le mot de passe a changé dans auth.py
+        if existing.hashed_password != _hash(ADMIN_PASS):
+            existing.hashed_password = _hash(ADMIN_PASS)
+            db.commit()
 
 
 # ── Endpoints ────────────────────────────────────────────
 
 @router.post("/login")
 def login(body: LoginIn, db: Session = Depends(get_db)):
-    # Vérifier compte admin hardcodé (bootstrap)
-    if body.username == ADMIN_USER and body.password == ADMIN_PASS:
-        ensure_admin(db)
+    # S'assurer que le compte admin est à jour (mot de passe depuis auth.py)
+    ensure_admin(db)
     user = db.query(User).filter(User.username == body.username, User.active == True).first()
-    if not user or user.hashed_password != _hash(body.password):
+    if not user:
         raise HTTPException(status_code=401, detail="Identifiants incorrects")
+    # Vérifier le hash en base OU le mot de passe admin en clair (double fallback)
+    if user.hashed_password != _hash(body.password):
+        # Fallback : si c'est l'admin et que le mot de passe correspond à ADMIN_PASS
+        if not (body.username == ADMIN_USER and body.password == ADMIN_PASS):
+            raise HTTPException(status_code=401, detail="Identifiants incorrects")
+        # Mettre à jour le hash en base avec ADMIN_PASS
+        user.hashed_password = _hash(ADMIN_PASS)
+        db.commit()
     token = _make_token(user.id, user.username, user.role)
     return {"token": token, "user": {"id": user.id, "username": user.username,
             "display_name": user.display_name, "role": user.role, "perimetre": user.perimetre}}
