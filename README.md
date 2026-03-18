@@ -373,7 +373,102 @@ Set in `config.xml`:
 <langue>en</langue>
 ```
 
+<<<<<<< HEAD
 ### Quick Install
+=======
+### Séquence de démarrage
+
+1. Démarrer le collecteur **en premier**
+2. Configurer `<federation>` dans chaque `config.xml`
+3. `python setup.py` + `python main.py` sur chaque SCRIBE
+4. Enregistrer chaque établissement (curl ci-dessus)
+5. Vérifier dans les logs : `push_status OK`
+
+---
+
+## Changelog
+
+### v1.1.0
+- Internationalisation — 8 langues européennes
+- Marqueurs GPS distincts par site dans le collecteur
+- Statuts publics par site (COMMUNIQUÉ multi-sites)
+- Supervision collecteur : sites en sous-entités
+- Correctif : référence circulaire dans le push fédération
+- Correctif : scroll supervision collecteur
+- Boutons RESANA et LA SUITE dans le header
+- SITE_MAPPING `import_uf2.py` corrigé
+
+### v1.0.0 (RC)
+- Main courante complète (8 onglets)
+- Collecteur territorial multi-établissements
+- Module COMMUNIQUÉ / statut public
+- IA Albert + 6 fournisseurs
+- Export DOCX rapport / REX
+
+---
+
+## Licence
+
+MIT — Centre Hospitalier Annecy-Genevois (CHANGE) — RSSI
+
+---
+---
+
+# SCRIBE — Hospital Crisis Management Platform
+
+> **Version française ci-dessus**
+
+---
+
+**SCRIBE** is an open-source crisis management logbook for healthcare facilities.  
+Runs on an **isolated network** — no Internet, no LDAP, no cloud dependency.  
+MIT License — Repository: https://github.com/nocomp/scribe
+
+---
+
+## Screenshots
+
+| Watch & Incidents | Care Map |
+|---|---|
+| ![Watch](screenshots/acc.png) | ![Care](screenshots/soin.png) |
+
+| Crisis Cell | Kanban |
+|---|---|
+| ![Cell](screenshots/celulle.png) | ![Kanban](screenshots/kaban.png) |
+
+| AAR | Handover |
+|---|---|
+| ![AAR](screenshots/rex.png) | ![Handover](screenshots/releve.png) |
+
+| Directory | Collector — Supervision |
+|---|---|
+| ![Directory](screenshots/annuaire.png) | ![Collector](screenshots/collecteur_supervision.png) |
+
+| Collector — Public Status | Collector — Map |
+|---|---|
+| ![Status](screenshots/collecteur_statuts.png) | ![Map](screenshots/collecteur_carto.png) |
+
+---
+
+## Features
+
+- **Watch & Incidents** — Declaration, tracking, milestones, integrated AI
+- **Care** — Clinical department map, return-to-normal projection
+- **Crisis Cell** — Attendance register, decision timeline
+- **Kanban** — Operational dashboard, drag & drop
+- **AAR** — After-action review, DOCX export
+- **Handover** — Timestamped notes, acknowledgement receipts
+- **Directory** — Nominal and backup contacts, telephony toggle
+- **Bulletin** — Public status per site, push to territorial collector
+- **Territorial Supervision** — Multi-facility collector, GPS map, public statuses
+- **Internationalisation** — 8 European languages (fr, en, de, es, it, nl, pl, pt)
+
+---
+
+## Quick Start
+
+### 1. SCRIBE (facility)
+>>>>>>> c8b26ebcd50ddd3fcbd53b18d5ba1b324f08cd6c
 
 ```bash
 # Linux
@@ -439,5 +534,20 @@ Perfect for testing the **ANALYSIS** tab: archive the crisis (`📦 ARCHIVE`), t
 MIT — Développé par le RSSI du CHAG · Developed by the CISO of CHAG  
 Contributions bienvenues · Contributions welcome
 
+<<<<<<< HEAD
 **Dépôt / Repository**: https://github.com/nocomp/scribe  
 **Version**: 1.2.0 — Mars / March 2026
+=======
+### v1.0.0 (RC)
+- Full crisis logbook (8 tabs)
+- Multi-facility territorial collector
+- Bulletin / public status module
+- Albert AI + 6 other providers
+- DOCX closure report / AAR export
+
+---
+
+## Licence
+
+MIT — Centre Hospitalier Annecy-Genevois (CHANGE)
+>>>>>>> c8b26ebcd50ddd3fcbd53b18d5ba1b324f08cd6c
