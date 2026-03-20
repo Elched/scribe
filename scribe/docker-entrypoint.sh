@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env sh
+set -euo pipefail
 
 echo ""
 echo "  ██████╗  ██████╗██████╗ ██╗██████╗ ███████╗"
@@ -18,22 +18,13 @@ if [ ! -L /app/uploads ]; then
     ln -sf /data/uploads /app/uploads
 fi
 
-# Config XML : priorité 1→ /data/config.xml (volume), 2→ /app/config.xml, 3→ demo
+# Config XML : priorité à /data/config.xml (monté par volume), sinon /app/config.xml
 if [ -f /data/config.xml ]; then
     CONFIG_PATH=/data/config.xml
-    echo "  [config] Utilisation de /data/config.xml (volume monté)"
-elif [ -f /app/config.xml ]; then
-    CONFIG_PATH=/app/config.xml
-    echo "  [config] Utilisation de /app/config.xml"
-elif [ -f /app/config_demo1.xml ]; then
-    CONFIG_PATH=/app/config_demo1.xml
-    echo "  [config] AVERTISSEMENT: aucun config.xml trouvé, démarrage en mode DEMO (config_demo1.xml)"
-    echo "  [config] Pour une config personnalisée, montez votre fichier:"
-    echo "  [config]   -v /chemin/vers/config.xml:/data/config.xml:ro"
+    echo "  [config] Utilisation de /data/config.xml"
 else
-    echo "  [config] ERREUR FATALE: aucun fichier de configuration trouvé !"
-    echo "  [config] Montez votre config.xml avec: -v ./config.xml:/data/config.xml:ro"
-    exit 1
+    CONFIG_PATH=/app/config.xml
+    echo "  [config] Utilisation de /app/config.xml (valeurs par défaut)"
 fi
 
 # Base SQLite : stocker dans /data/db/
@@ -68,10 +59,7 @@ print('  [init] Tables vérifiées.')
 "
 fi
 
-# config.js : déplacer vers /data/ pour persistance et créer le lien symbolique
-if [ -f /app/app/static/config.js ] && [ ! -L /app/app/static/config.js ]; then
-    mv /app/app/static/config.js /data/config.js
-fi
+# Lien config.js généré vers /app/app/static/
 if [ -f /data/config.js ]; then
     ln -sf /data/config.js /app/app/static/config.js
 fi
@@ -81,4 +69,5 @@ echo "  ✓ SCRIBE démarré sur http://0.0.0.0:8000"
 echo "  ✓ Données persistantes dans /data/"
 echo ""
 
-exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
+# SQLite is not designed for high-concurrency writes; keep a single worker to avoid "database is locked" errors
+exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
