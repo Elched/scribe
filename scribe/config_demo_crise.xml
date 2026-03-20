@@ -142,8 +142,17 @@
     <collecteur_url>http://ADRESSE_COLLECTEUR:9000/api/push</collecteur_url>
     <token>CHOISIR_16_CARACTERES_MIN</token>
     <intervalle_secondes>30</intervalle_secondes>
+
+    <!-- Synchronisation état de crise (incidents, décisions, KPIs) -->
+    <!-- Destinataire typique : CERT Santé, ARS (route /api/push) -->
+    <sync_crise>true</sync_crise>
     <share_details>true</share_details>
     <share_min_urgency>1</share_min_urgency>
+
+    <!-- Synchronisation état sanitaire (gestion capacitaire lits/RH/matériel) -->
+    <!-- Destinataire typique : ARS, DT ARS, GHT (route /api/push-capacite) -->
+    <sync_sanitaire>true</sync_sanitaire>
+    <share_capacite_details>true</share_capacite_details>
   </federation>
 
 </scribe>

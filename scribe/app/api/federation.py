@@ -49,6 +49,9 @@ class FederationConfig:
         self.intervalle         = 120       # secondes
         self.share_details      = True
         self.share_min_urgency  = 1
+        self.sync_crise         = True    # synchroniser état de crise (incidents/KPIs)
+        self.sync_sanitaire     = True    # synchroniser état sanitaire (capacitaire)
+        self.share_capacite_details = True
         self.etablissement_nom  = "Établissement"
         self.etablissement_sigle = "ETB"
         self._load()
@@ -77,6 +80,9 @@ class FederationConfig:
             self.intervalle        = int(fed.get("intervalle_secondes", 120))
             self.share_details     = str(fed.get("share_details", "true")).lower() == "true"
             self.share_min_urgency = int(fed.get("share_min_urgency", 1))
+            self.sync_crise        = str(fed.get("sync_crise", "true")).lower() == "true"
+            self.sync_sanitaire    = str(fed.get("sync_sanitaire", "true")).lower() == "true"
+            self.share_capacite_details = str(fed.get("share_capacite_details", "true")).lower() == "true"
         except Exception as e:
             logger.warning(f"Federation config non chargée : {e}")
 
@@ -383,11 +389,18 @@ async def federation_loop():
     while True:
         try:
             db = SessionLocal()
-            payload = build_payload(db, cfg)
+            # Push état de crise (incidents, KPIs) — si sync_crise activé
+            if cfg.sync_crise:
+                payload = build_payload(db, cfg)
+                ok = await push_to_collecteur(cfg, payload)
+                if ok:
+                    await push_status_to_collecteur(cfg)
+            # Push état sanitaire (capacitaire lits/RH/matériel) — si sync_sanitaire activé
+            if cfg.sync_sanitaire:
+                cap_payload = build_capacite_payload(db, cfg)
+                if cap_payload:
+                    await push_capacite_to_collecteur(cfg, cap_payload)
             db.close()
-            ok = await push_to_collecteur(cfg, payload)
-            if ok:
-                await push_status_to_collecteur(cfg)
         except Exception as e:
             logger.warning(f"Federation loop erreur : {e}")
         await asyncio.sleep(cfg.intervalle)
@@ -446,3 +459,119 @@ async def federation_status():
         "intervalle":     cfg.intervalle,
         "share_details":  cfg.share_details,
     }
+def build_capacite_payload(db, cfg: FederationConfig) -> dict:
+    """Construit le payload capacitaire pour le collecteur territorial."""
+    try:
+        from app.models import CapaciteReferentiel, CapaciteDeclaration
+        refs = db.query(CapaciteReferentiel).filter(CapaciteReferentiel.actif == True).all()
+        if not refs:
+            return {}
+
+        STATUT_POIDS = {
+            "normal": 0, "complet": 0, "ok": 0,
+            "tension": 1, "degrade": 1,
+            "critique": 2, "insuffisant": 2,
+            "ferme": 3, "hs": 3,
+        }
+
+        synthese = {}
+        alertes = []
+        nb_alertes = 0
+
+        for ref in refs:
+            last = (db.query(CapaciteDeclaration)
+                      .filter(CapaciteDeclaration.referentiel_id == ref.id)
+                      .order_by(CapaciteDeclaration.horodatage.desc())
+                      .first())
+
+            site = ref.site or "Autre"
+            pole = ref.pole or "Autre"
+            key = f"{site}|{pole}"
+
+            if key not in synthese:
+                synthese[key] = {
+                    "site": site, "pole": pole,
+                    "lits_total": 0, "lits_vides_h": 0,
+                    "lits_vides_f": 0, "lits_vides_i": 0,
+                    "nb_alertes": 0, "statut": "normal"
+                }
+
+            synthese[key]["lits_total"] += ref.capacite_totale or 0
+
+            if last:
+                synthese[key]["lits_vides_h"] += last.lits_vides_h or 0
+                synthese[key]["lits_vides_f"] += last.lits_vides_f or 0
+                synthese[key]["lits_vides_i"] += last.lits_vides_i or 0
+                if last.alerte_lits or last.alerte_rh or last.alerte_materiel:
+                    nb_alertes += 1
+                    synthese[key]["nb_alertes"] += 1
+                    alertes.append({
+                        "service": ref.service_nom,
+                        "site": site, "pole": pole,
+                        "alerte_lits": last.alerte_lits,
+                        "alerte_rh": last.alerte_rh,
+                        "alerte_materiel": last.alerte_materiel,
+                        "commentaire": last.commentaire_general or "",
+                        "horodatage": last.horodatage.isoformat() if last.horodatage else None,
+                    })
+                # Statut global du groupe
+                poids = max(
+                    STATUT_POIDS.get(last.statut_lits, 0),
+                    STATUT_POIDS.get(last.statut_rh, 0),
+                    STATUT_POIDS.get(last.statut_materiel, 0),
+                )
+                statut_actuel = {3:"ferme",2:"critique",1:"tension",0:"normal"}.get(poids,"normal")
+                poids_actuel = STATUT_POIDS.get(synthese[key]["statut"], 0)
+                if poids > poids_actuel:
+                    synthese[key]["statut"] = statut_actuel
+
+        return {
+            "etablissement": {
+                "nom":   cfg.etablissement_nom,
+                "sigle": cfg.etablissement_sigle,
+            },
+            "synthese":    list(synthese.values()),
+            "alertes":     alertes,
+            "nb_services": len(refs),
+            "nb_alertes":  nb_alertes,
+            "timestamp":   __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+        }
+    except Exception as e:
+        logger.warning(f"build_capacite_payload erreur : {e}")
+        return {}
+
+
+async def push_capacite_to_collecteur(cfg: FederationConfig, payload: dict) -> bool:
+    """Envoie le payload capacitaire vers /api/push-capacite du collecteur."""
+    if not cfg.is_ready or not payload:
+        return False
+    # URL dérivée de collecteur_url : remplacer /api/push par /api/push-capacite
+    cap_url = cfg.collecteur_url.replace("/api/push-status", "").rstrip("/")
+    if "/api/push" in cap_url:
+        cap_url = cap_url.replace("/api/push", "/api/push-capacite")
+    else:
+        cap_url = cap_url.rstrip("/") + "/api/push-capacite"
+
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                cap_url,
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {cfg.token}",
+                    "Content-Type": "application/json",
+                }
+            )
+        if resp.status_code == 200:
+            logger.debug(f"Push capacité OK → {cap_url}")
+            return True
+        else:
+            logger.warning(f"Push capacité HTTP {resp.status_code} → {cap_url}")
+            return False
+    except Exception as e:
+        logger.warning(f"Push capacité erreur : {e}")
+        return False
+
+
+

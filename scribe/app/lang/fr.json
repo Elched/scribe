@@ -305,5 +305,89 @@
     "met_participants": "Participants max",
     "archive_a_badge": "Archive A",
     "archive_b_badge": "Archive B"
+  },
+  "capacite": {
+    "titre": "Gestion Capacitaire",
+    "nav": "CAPACITÉ",
+    "filtres": {
+      "tous": "Tous les sites",
+      "synthese": "Synthèse",
+      "cartes": "Cartes"
+    },
+    "statuts": {
+      "normal": "Normal",
+      "tension": "Tension",
+      "critique": "Critique",
+      "ferme": "Fermé",
+      "inconnu": "Non déclaré"
+    },
+    "statuts_lits": {
+      "normal": "✓ Disponibilité normale",
+      "tension": "⚠ Tension (<20% lits libres)",
+      "critique": "🔴 Critique (<5% ou fermetures)",
+      "ferme": "⛔ Fermé / hors service"
+    },
+    "statuts_rh": {
+      "complet": "✓ Effectif complet",
+      "tension": "⚠ Tension (renforts en cours)",
+      "critique": "🔴 Critique (postes non couverts)",
+      "insuffisant": "⛔ Effectif insuffisant"
+    },
+    "statuts_mat": {
+      "ok": "✓ Opérationnel",
+      "degrade": "⚠ Dégradé (équipement en panne)",
+      "critique": "🔴 Critique (équipement vital HS)",
+      "hs": "⛔ Hors service"
+    },
+    "points": {
+      "matin": "🌅 Matin",
+      "aprem": "☀ Après-midi",
+      "soir": "🌙 Soir / Relève"
+    },
+    "popup": {
+      "point_titre": "POINT DE DÉCLARATION",
+      "declarant": "CADRE DÉCLARANT",
+      "declarant_placeholder": "Prénom Nom du cadre",
+      "section_lits": "🛏 DISPONIBILITÉ DES LITS",
+      "section_rh": "👥 RESSOURCES HUMAINES",
+      "section_mat": "🔧 MATÉRIEL / ÉQUIPEMENTS",
+      "section_comment": "📝 COMMENTAIRE GÉNÉRAL",
+      "tension": "Tension activée :",
+      "statut_lits": "Statut global lits :",
+      "statut_rh": "Statut RH :",
+      "statut_mat": "Statut matériel :",
+      "alerte": "Seuil d'alerte atteint — je le déclare à la cellule",
+      "comment_placeholder_lits": "Commentaire lits (optionnel)...",
+      "comment_placeholder_rh": "Commentaire RH (optionnel)...",
+      "comment_placeholder_mat": "Commentaire matériel (optionnel)...",
+      "comment_placeholder_gen": "Situation générale du service, contexte...",
+      "valider": "✓ Valider et transmettre à la cellule",
+      "annuler": "Annuler",
+      "tension_aucune": "Aucune tension",
+      "tension_1": "Tension niveau 1",
+      "tension_2": "Tension niveau 2",
+      "ref_capacite": "Capacité nominale",
+      "ref_tel": "Tél. cadre"
+    },
+    "synthese": {
+      "service": "Service",
+      "pole": "Pôle",
+      "site": "Site",
+      "capacite": "Capacité",
+      "lits_h": "♂ H",
+      "lits_f": "♀ F",
+      "lits_i": "⬡ I",
+      "statut": "Statut",
+      "alerte": "Alerte",
+      "declare": "Déclaré"
+    },
+    "silence": "service(s) n'ont pas encore déclaré leur situation",
+    "maj": "Mis à jour",
+    "alerte_transmise": "Alerte transmise à la cellule — Incident créé",
+    "declaration_ok": "✓ Déclaration enregistrée",
+    "declarant_requis": "Veuillez indiquer le cadre déclarant",
+    "sexe_h": "Lits hommes",
+    "sexe_f": "Lits femmes",
+    "sexe_i": "Lits indiff."
   }
 }

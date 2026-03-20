@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCRIBE v1.2.0 | Crisis OS</title>
+<title>SCRIBE v1.3.0 | Crisis OS</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="/static/config.js"></script>
 <style>
@@ -802,6 +802,269 @@ body.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
 .status-dot.NOMINAL,.status-dot.OPERATIONNEL{background:#4ade80}
 .status-dot.INCONNU{background:#6b7280}
 
+
+/* ═══════════════════ CAPACITÉ — v1.3.0 ═══════════════════ */
+#tab-capacite{flex-direction:column;overflow:hidden}
+.cap-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* Barre de filtres */
+.cap-filters{
+  display:flex;align-items:center;gap:10px;padding:10px 16px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  flex-shrink:0;flex-wrap:wrap;
+}
+.cap-site-btn{
+  font-family:var(--mono);font-size:9px;font-weight:700;
+  padding:4px 10px;border-radius:4px;cursor:pointer;
+  border:1px solid var(--border2);background:var(--surface2);
+  color:var(--muted2);letter-spacing:.5px;transition:all .15s;
+}
+.cap-site-btn.active{
+  border-color:var(--suite-blue-lt);color:var(--suite-blue-lt);
+  background:rgba(30,80,200,.1);
+}
+.cap-synthese-btn{
+  margin-left:auto;font-family:var(--head);font-size:11px;font-weight:600;
+  padding:5px 14px;border-radius:6px;cursor:pointer;
+  background:var(--suite-blue-lt);color:#fff;border:none;
+}
+
+/* Grille de cartes */
+.cap-grid{
+  flex:1;overflow-y:auto;padding:14px 16px;
+  display:flex;flex-direction:column;gap:16px;
+}
+.cap-pole-section{}
+.cap-pole-title{
+  font-family:var(--mono);font-size:9px;font-weight:700;
+  letter-spacing:2px;color:var(--muted);text-transform:uppercase;
+  padding:6px 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px;
+  display:flex;align-items:center;gap:8px;
+}
+.cap-cards{
+  display:grid;gap:10px;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+}
+
+/* Carte unité */
+.cap-card{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:8px;padding:12px 14px;cursor:pointer;
+  transition:all .15s;position:relative;
+  border-left:3px solid var(--border2);
+}
+.cap-card:hover{background:var(--surface2);border-color:var(--suite-blue-lt)}
+.cap-card.statut-normal  {border-left-color:#22c55e}
+.cap-card.statut-tension {border-left-color:#f59e0b}
+.cap-card.statut-critique{border-left-color:#ef4444;background:rgba(239,68,68,.04)}
+.cap-card.statut-ferme   {border-left-color:#6b7280;opacity:.7}
+.cap-card.statut-inconnu {border-left-color:#374151}
+.cap-card.has-alerte::after{
+  content:"⚡";position:absolute;top:8px;right:10px;font-size:12px;
+}
+
+.cap-card-title{
+  font-family:var(--head);font-size:12px;font-weight:700;
+  color:var(--text);margin-bottom:4px;padding-right:20px;
+}
+.cap-card-sub{
+  font-family:var(--mono);font-size:8px;color:var(--muted);
+  letter-spacing:.5px;margin-bottom:8px;
+}
+.cap-lits-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:4px;margin-bottom:8px;
+}
+.cap-lit-cell{
+  background:var(--surface2);border-radius:4px;
+  padding:4px 6px;text-align:center;
+}
+.cap-lit-label{font-family:var(--mono);font-size:7px;color:var(--muted);letter-spacing:.5px}
+.cap-lit-val{
+  font-family:var(--head);font-size:18px;font-weight:700;
+  color:var(--cyan);line-height:1.1;
+}
+.cap-lit-val.zero{color:var(--muted)}
+.cap-lit-val.positive{color:#22c55e}
+.cap-card-meta{
+  font-family:var(--mono);font-size:8px;color:var(--muted);
+  display:flex;align-items:center;gap:6px;
+}
+.cap-statut-badge{
+  font-family:var(--mono);font-size:9px;font-weight:700;
+  padding:3px 8px;border-radius:4px;
+}
+.cap-statut-badge.normal  {background:rgba(34,197,94,.2);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.cap-statut-badge.tension {background:rgba(245,158,11,.2);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.cap-statut-badge.critique{background:rgba(239,68,68,.2);color:#ef4444;border:1px solid rgba(239,68,68,.4);font-size:10px}
+.cap-statut-badge.ferme   {background:rgba(107,114,128,.2);color:#6b7280;border:1px solid rgba(107,114,128,.3)}
+.cap-statut-badge.inconnu {background:rgba(55,65,81,.15);color:#9ca3af}
+
+/* Tableau de synthèse */
+.cap-synthese{
+  flex:1;overflow-y:auto;padding:16px;
+}
+.cap-synth-table{
+  width:100%;border-collapse:collapse;
+  font-family:var(--mono);font-size:10px;
+}
+.cap-synth-table th{
+  background:var(--surface2);padding:8px 10px;
+  text-align:left;font-size:8px;letter-spacing:1px;
+  color:var(--muted);border-bottom:1px solid var(--border2);
+}
+.cap-synth-table td{
+  padding:8px 10px;border-bottom:1px solid var(--border);
+}
+.cap-synth-table tr:hover td{background:var(--surface2)}
+
+/* Popup déclaration */
+.cap-popup-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:2000;display:flex;align-items:center;justify-content:center;
+  padding:20px;
+}
+.cap-popup{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:10px;width:100%;max-width:580px;
+  max-height:90vh;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.cap-popup-header{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;background:var(--surface);z-index:1;
+}
+.cap-popup-title{
+  font-family:var(--head);font-size:15px;font-weight:700;color:var(--text);
+}
+.cap-popup-close{
+  background:none;border:none;color:var(--muted);cursor:pointer;
+  font-size:18px;padding:4px;border-radius:4px;
+}
+.cap-popup-close:hover{color:var(--text);background:var(--surface2)}
+.cap-popup-body{padding:16px 20px;display:flex;flex-direction:column;gap:16px}
+.cap-popup-footer{
+  padding:12px 20px;border-top:1px solid var(--border);
+  display:flex;gap:10px;justify-content:flex-end;
+  position:sticky;bottom:0;background:var(--surface);
+}
+
+/* Sections popup */
+.cap-section{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:6px;padding:12px 14px;
+}
+.cap-section-title{
+  font-family:var(--mono);font-size:9px;font-weight:700;
+  letter-spacing:1px;color:var(--muted2);text-transform:uppercase;
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.cap-lits-input-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;
+}
+.cap-input-group{display:flex;flex-direction:column;gap:4px}
+.cap-input-label{
+  font-family:var(--mono);font-size:8px;color:var(--muted);
+  letter-spacing:.5px;display:flex;align-items:center;gap:4px;
+}
+.cap-input-label .sexe-badge{
+  font-size:7px;font-weight:700;padding:1px 4px;border-radius:2px;
+}
+.sexe-h{background:rgba(59,130,246,.2);color:#60a5fa}
+.sexe-f{background:rgba(236,72,153,.2);color:#f472b6}
+.sexe-i{background:rgba(168,85,247,.2);color:#c084fc}
+.cap-num-input{
+  width:100%;background:var(--surface);border:1px solid var(--border2);
+  color:var(--text);font-family:var(--head);font-size:20px;font-weight:700;
+  padding:8px 10px;border-radius:6px;text-align:center;
+}
+.cap-num-input:focus{outline:none;border-color:var(--suite-blue-lt)}
+.cap-select{
+  width:100%;background:var(--surface);border:1px solid var(--border2);
+  color:var(--text);font-family:var(--head);font-size:12px;
+  padding:8px 10px;border-radius:6px;cursor:pointer;
+}
+.cap-select:focus{outline:none;border-color:var(--suite-blue-lt)}
+.cap-textarea{
+  width:100%;background:var(--surface);border:1px solid var(--border2);
+  color:var(--text);font-family:var(--head);font-size:11px;
+  padding:8px 10px;border-radius:6px;resize:vertical;min-height:50px;
+  margin-top:6px;
+}
+.cap-textarea:focus{outline:none;border-color:var(--suite-blue-lt)}
+.cap-alerte-check{
+  display:flex;align-items:center;gap:8px;margin-top:8px;
+  padding:8px 10px;border-radius:6px;cursor:pointer;
+  border:1px solid var(--border2);transition:all .15s;
+}
+.cap-alerte-check:hover{border-color:#ef4444;background:rgba(239,68,68,.05)}
+.cap-alerte-check.checked{border-color:#ef4444;background:rgba(239,68,68,.1)}
+.cap-alerte-check input{accent-color:#ef4444}
+.cap-alerte-text{font-family:var(--head);font-size:11px;color:var(--muted)}
+.cap-alerte-text strong{color:#ef4444}
+
+/* Point de déclaration */
+.cap-point-select{
+  display:flex;gap:8px;
+}
+.cap-point-btn{
+  flex:1;padding:8px 6px;border-radius:6px;cursor:pointer;
+  font-family:var(--head);font-size:11px;font-weight:600;text-align:center;
+  border:1.5px solid var(--border2);background:var(--surface2);
+  color:var(--muted2);transition:all .15s;
+}
+.cap-point-btn.active{
+  border-color:var(--suite-blue-lt);color:var(--suite-blue-lt);
+  background:rgba(30,80,200,.1);
+}
+
+/* Info capacité de référence */
+.cap-ref-info{
+  display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;
+  padding:8px 10px;background:var(--bg);border-radius:6px;
+  font-family:var(--mono);font-size:9px;color:var(--muted);
+}
+.cap-ref-info span{display:flex;align-items:center;gap:4px}
+
+/* Boutons action popup */
+.cap-btn-valider{
+  background:var(--suite-blue-lt);color:#fff;border:none;
+  font-family:var(--head);font-size:12px;font-weight:700;
+  padding:10px 20px;border-radius:7px;cursor:pointer;
+  transition:all .15s;
+}
+.cap-btn-valider:hover{background:var(--suite-blue-hover)}
+.cap-btn-cancel{
+  background:transparent;color:var(--muted);
+  border:1px solid var(--border2);
+  font-family:var(--head);font-size:12px;
+  padding:10px 16px;border-radius:7px;cursor:pointer;
+}
+
+/* Alerte silence */
+.cap-silence-banner{
+  margin:8px 16px;padding:8px 14px;
+  background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);
+  border-radius:6px;font-family:var(--mono);font-size:9px;color:#f59e0b;
+}
+
+/* Mode light — préserver les couleurs de statut */
+body.light .cap-card{background:#fff;border-color:#e2e8f0}
+body.light .cap-card:hover{background:#f8faff;border-color:#3d6fd4}
+body.light .cap-card.statut-critique{background:rgba(239,68,68,.07);border-color:#fca5a5}
+body.light .cap-card.statut-tension {background:rgba(245,158,11,.07);border-color:#fcd34d}
+body.light .cap-card.statut-ferme   {background:#f1f5f9;border-color:#cbd5e1;opacity:.7}
+body.light .cap-section{background:#f8fafc;border-color:#e2e8f0}
+body.light .cap-popup{background:#fff}
+body.light .cap-popup-header{background:#fff}
+body.light .cap-popup-footer{background:#fff}
+body.light .cap-num-input{background:#fff;border-color:#e2e8f0;color:#1a1a2e}
+body.light .cap-select{background:#fff;border-color:#e2e8f0;color:#1a1a2e}
+body.light .cap-textarea{background:#fff;border-color:#e2e8f0;color:#1a1a2e}
+body.light .cap-filters{background:#fff;border-color:#e2e8f0}
+body.light .cap-lit-cell{background:#f1f5f9}
+
 </style>
 </head>
 <body>
@@ -830,7 +1093,7 @@ window.addEventListener('load', function(){
 </script>
 
 <header>
-  <div class="brand"><div class="brand-dot"></div>SCRIBE <span style="color:var(--muted);font-weight:400">v1.2.0</span><span id="etab-sigle" style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:6px;letter-spacing:1px"></span></div>
+  <div class="brand"><div class="brand-dot"></div>SCRIBE <span style="color:var(--muted);font-weight:400">v1.3.0</span><span id="etab-sigle" style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:6px;letter-spacing:1px"></span></div>
   <nav class="tabs">
     <button class="tab-btn active" onclick="openTab('tab-veille',this)">🌐 VEILLE</button>
     <button class="tab-btn"        onclick="openTab('tab-soins',this)">🏥 SOINS</button>
@@ -841,6 +1104,7 @@ window.addEventListener('load', function(){
     <button class="tab-btn"        onclick="openTab('tab-annuaire',this)">📞 ANNUAIRE</button>
     <button class="tab-btn"        onclick="openTab('tab-communique',this)" id="tab-btn-communique">📢 COMMUNIQUÉ</button>
     <button class="tab-btn"        onclick="openTab('tab-analyse',this)" id="tab-btn-analyse">🔬 ANALYSE</button>
+    <button class="tab-btn"        onclick="openTab('tab-capacite',this)" id="tab-btn-capacite">🛏 CAPACITÉ</button>
   </nav>
   <div class="header-right">
     <div id="incident-level" class="green">VEILLE NORMALE</div>
@@ -1152,7 +1416,7 @@ window.addEventListener('load', function(){
 <!-- ══════════════════ LOGIN OVERLAY ══════════════════ -->
 <div id="login-overlay" style="display:flex">
   <div class="login-box">
-    <div class="login-logo">SCRIBE <span>v1.2.0</span></div>
+    <div class="login-logo">SCRIBE <span>v1.3.0</span></div>
     <div class="login-sub">Votre Établissement — Crisis OS</div>
     <div class="login-field"><label>Identifiant</label><input type="text" id="login-user" placeholder="dircrise" autocomplete="username"></div>
     <div class="login-field"><label>Mot de passe</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
@@ -1179,7 +1443,7 @@ window.addEventListener('load', function(){
 <div id="admin-panel">
   <div class="admin-box">
     <div class="admin-header">
-      <span class="admin-title">⚙️ Administration SCRIBE v1.2.0</span>
+      <span class="admin-title">⚙️ Administration SCRIBE v1.3.0</span>
       <button class="btn-sm blue" onclick="closeAdminPanel()">✕ Fermer</button>
     </div>
     <div class="admin-body">
@@ -1737,6 +2001,10 @@ async function refreshAll() {
     updateLevel(stats);
     updateMap(stats.by_site||[]);
     applyFilters();
+    // Mettre à jour SOINS en temps réel si l'onglet est actif
+    if (document.getElementById('tab-soins').classList.contains('active')) {
+      renderSoins();
+    }
   } catch(e) { console.error('refreshAll error:', e); }
 }
 
@@ -2002,18 +2270,42 @@ const POLES_LIST = [
 ];
 
 function _getPoleForIncident(incident) {
-  // Priorité 1 : code UF exact déclaré sur l'incident
-  if (incident.unite_fonctionnelle && ufToPoleMap[incident.unite_fonctionnelle]) {
-    return ufToPoleMap[incident.unite_fonctionnelle];
-  }
+  const uf = (incident.unite_fonctionnelle || '').trim();
+  // Priorité 0 : unite_fonctionnelle contient déjà un nom de pôle exact
+  if (uf && POLES_LIST.includes(uf)) return uf;
+  // Priorité 1 : code UF exact → map vers pôle
+  if (uf && ufToPoleMap[uf]) return ufToPoleMap[uf];
   // Priorité 2 : chercher un code UF numérique dans le texte libre
-  const hay = (incident.fait + ' ' + (incident.analyse||''));
+  const hay = ((incident.fait||'') + ' ' + (incident.analyse||'')).toUpperCase();
   const ufMatch = hay.match(/\b(\d{3,5})\b/g);
   if (ufMatch) {
     for (const m of ufMatch) {
       if (ufToPoleMap[m]) return ufToPoleMap[m];
     }
   }
+  // Priorité 3 : mots-clés dans le texte de l'incident (fallback robuste)
+  const POLE_KW = {
+    'CHIRURGIE ANESTHESIE': ['BLOC','CHIR','ANESTHES','ORTHO','TRAUMA','ORL','OPHTALMOL','VISCERAL','NEUROCHIR'],
+    'SOINS CRITIQUES':      ['REANIMATION','RÉANIMATION','REA ','USI','USIP','SIPO','SOINS CRITIQUES','SOINS INTENSIF'],
+    'URGENCES':             ['URGENCE','SMUR','SAMU','UHCD','UPUM','SAUV'],
+    'MEDECINE':             ['CARDIOL','PNEUMOL','NEUROLOG','HEPATO','GASTRO','NEPHRO','HEMATO','INFECTI','RHUMATO','DERMATO','MEDECINE INTERNE'],
+    'CARDIOVASCULAIRE':     ['CARDIO','CORONAR','USIC'],
+    'FME':                  ['MATERNIT','GYNECO','NEONAT','OBSTET','SAGE-FEMME','PÉDIATR','PEDIATR'],
+    'CANCEROLOGIE':         ['CANCERO','ONCOLOG','RADIOTHER','CHIMIO'],
+    'GERIATRIE':            ['GERIATR','EHPAD','USLD','PALLIAT','GÉRIATR'],
+    'SANTE MENTALE':        ['PSYCHIATR','ADDICTOL','PSY ','UPUP'],
+    'MEDICO-TECHNIQUE ET REEDUCATION': ['LABORATOIR','IMAGERIE','SCANNER','PHARMA','REEDUCATION','KINÉ','KINE'],
+    'SUPPORT':              ['INFORMATIQUE','DSI','LOGISTIQUE','CUISINE','BLANCHISS','DIRECTION'],
+    'URGENCES':             ['SAU ','SAU,','URGENCES'],
+  };
+  for (const [pole, kws] of Object.entries(POLE_KW)) {
+    if (kws.some(kw => hay.includes(kw))) return pole;
+  }
+  // Priorité 4 : site_id → rattacher au pôle le plus probable du site
+  // (dernier recours — affiche au moins quelque chose dans SOINS)
+  const site = (incident.site_id || '').toUpperCase();
+  if (site.includes('JULIEN')) return 'MEDECINE';
+  if (site.includes('RUMILLY')) return 'MEDECINE';
   return null;
 }
 
@@ -2066,6 +2358,10 @@ function renderSoins() {
   // Redessiner la timeline si le tab soins est actif (après rendu du DOM)
   if (document.getElementById('tab-soins').classList.contains('active')) {
     requestAnimationFrame(() => renderSoinsTimeline(allIncidents));
+  }
+  // Appliquer les statuts capacitaires sur les cartes fraîchement rendues
+  if (capData && capData.length > 0) {
+    requestAnimationFrame(() => capUpdateSoinsStatuts());
   }
 }
 
@@ -4116,8 +4412,191 @@ applyUserState = function() {
     </div>
   </div>
 </div>
-</body>
-</html/* ═══════════════════ ANALYSE — charte La Suite Numérique ═══════════════════ */
+
+<!-- ══ ONGLET CAPACITÉ ══════════════════════════════════════════════════ -->
+<div id="tab-capacite" class="tab-content">
+  <div class="cap-wrap">
+
+    <!-- Filtres par site -->
+    <div class="cap-filters">
+      <button class="cap-site-btn active" data-site="all" onclick="capFilterSite(this)">Tous les sites</button>
+      <button class="cap-site-btn" data-site="Annecy" onclick="capFilterSite(this)">Annecy</button>
+      <button class="cap-site-btn" data-site="Saint-Julien" onclick="capFilterSite(this)">Saint-Julien</button>
+      <button class="cap-site-btn" data-site="Rumilly" onclick="capFilterSite(this)">Rumilly</button>
+      <button class="cap-site-btn" data-site="USLD/EHPAD" onclick="capFilterSite(this)">USLD/EHPAD</button>
+      <span id="cap-last-update" style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:8px"></span>
+      <button class="cap-synthese-btn" onclick="capToggleSynthese()">📊 Synthèse</button>
+      <button class="cap-synthese-btn" style="background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.3)" onclick="capAlbertAnalyse()">◈ Albert</button>
+    </div>
+
+    <!-- Bandeau silences -->
+    <div id="cap-silence-banner" class="cap-silence-banner" style="display:none"></div>
+
+    <!-- Vue GRILLE (défaut) -->
+    <div class="cap-grid" id="cap-grid"></div>
+
+    <!-- Panneau Albert CAPACITÉ -->
+    <div id="cap-albert-panel" style="display:none;flex-shrink:0;border-top:1px solid var(--border);padding:14px 16px;background:var(--surface)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:#c084fc;letter-spacing:1px">◈ ANALYSE ALBERT — CAPACITÉ</span>
+        <button onclick="document.getElementById('cap-albert-panel').style.display='none'" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px">✕</button>
+      </div>
+      <div id="cap-albert-result" style="font-family:var(--head);font-size:12px;color:var(--muted2);line-height:1.7;white-space:pre-line;min-height:40px">
+        Cliquez sur Albert pour analyser la situation capacitaire actuelle…
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="cap-synthese-btn" style="background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.3);font-size:11px" onclick="capAlbertQuestion('Quels services sont en tension ou en situation critique ? Que préconises-tu ?')">Tensions critiques</button>
+        <button class="cap-synthese-btn" style="background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.3);font-size:11px" onclick="capAlbertQuestion('Y a-t-il des lits disponibles pour accueillir des patients supplémentaires ? Où ?')">Lits disponibles</button>
+        <button class="cap-synthese-btn" style="background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.3);font-size:11px" onclick="capAlbertQuestion('Quelles actions RH urgentes recommandes-tu au vu des tensions de personnel ?')">RH urgentes</button>
+        <button class="cap-synthese-btn" style="background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.3);font-size:11px" onclick="capAlbertQuestion('Fais une synthèse globale de la situation capacitaire et donne les recommandations prioritaires pour la cellule de crise.')">Synthèse globale</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input id="cap-albert-input" type="text" class="cap-textarea" style="min-height:unset;padding:6px 10px;flex:1"
+          placeholder="Question libre sur la capacité..." 
+          onkeydown="if(event.key==='Enter')capAlbertQuestion(this.value)">
+        <button class="cap-btn-valider" style="padding:6px 14px;white-space:nowrap" onclick="capAlbertQuestion(document.getElementById('cap-albert-input').value)">▶</button>
+      </div>
+    </div>
+
+    <!-- Vue SYNTHÈSE (toggle) -->
+    <div class="cap-synthese" id="cap-synthese-view" style="display:none">
+      <table class="cap-synth-table" id="cap-synth-table">
+        <thead>
+          <tr>
+            <th>Service</th><th>Pôle</th><th>Site</th>
+            <th>Capacité</th>
+            <th style="color:#60a5fa">♂ H</th>
+            <th style="color:#f472b6">♀ F</th>
+            <th style="color:#c084fc">⬡ I</th>
+            <th>Statut</th><th>Alerte</th><th>Déclaré</th>
+          </tr>
+        </thead>
+        <tbody id="cap-synth-body"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- Popup déclaration capacitaire -->
+<div class="cap-popup-overlay" id="cap-popup" style="display:none" onclick="capPopupClose(event)">
+  <div class="cap-popup" onclick="event.stopPropagation()">
+    <div class="cap-popup-header">
+      <div>
+        <div class="cap-popup-title" id="cap-popup-title">Déclaration</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px" id="cap-popup-sub"></div>
+      </div>
+      <button class="cap-popup-close" onclick="capPopupClose()">✕</button>
+    </div>
+    <div class="cap-popup-body">
+
+      <!-- Info référence -->
+      <div class="cap-ref-info" id="cap-ref-info"></div>
+
+      <!-- Point de déclaration -->
+      <div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:6px;letter-spacing:.5px">POINT DE DÉCLARATION</div>
+        <div class="cap-point-select">
+          <button class="cap-point-btn active" data-point="matin" onclick="capSelectPoint(this)">🌅 Matin</button>
+          <button class="cap-point-btn" data-point="aprem" onclick="capSelectPoint(this)">☀ Après-midi</button>
+          <button class="cap-point-btn" data-point="soir" onclick="capSelectPoint(this)">🌙 Soir / Relève</button>
+        </div>
+      </div>
+
+      <!-- Déclarant -->
+      <div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:6px;letter-spacing:.5px">CADRE DÉCLARANT</div>
+        <input id="cap-redacteur" type="text" class="cap-num-input" style="font-size:14px;text-align:left;padding:8px 12px"
+          placeholder="Prénom Nom du cadre">
+      </div>
+
+      <!-- SECTION LITS -->
+      <div class="cap-section">
+        <div class="cap-section-title">🛏 DISPONIBILITÉ DES LITS</div>
+        <div class="cap-lits-input-grid" id="cap-lits-grid">
+          <!-- Généré dynamiquement selon accept_H/F/I -->
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted)">Tension activée :</div>
+          <select id="cap-tension" class="cap-select" style="max-width:200px">
+            <option value="0">Aucune tension</option>
+            <option value="1">Tension niveau 1</option>
+            <option value="2">Tension niveau 2</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);white-space:nowrap">Statut global lits :</div>
+          <select id="cap-statut-lits" class="cap-select">
+            <option value="normal">✓ Disponibilité normale</option>
+            <option value="tension">⚠ Tension (&lt;20% lits libres)</option>
+            <option value="critique">🔴 Critique (&lt;5% ou fermetures)</option>
+            <option value="ferme">⛔ Fermé / hors service</option>
+          </select>
+        </div>
+        <label class="cap-alerte-check" id="cap-alerte-lits-lbl" onclick="capToggleAlerte('lits')">
+          <input type="checkbox" id="cap-alerte-lits">
+          <span class="cap-alerte-text">☐ <strong>Seuil d'alerte atteint</strong> — je le déclare à la cellule</span>
+        </label>
+        <textarea id="cap-comment-lits" class="cap-textarea" placeholder="Commentaire lits (optionnel)..."></textarea>
+      </div>
+
+      <!-- SECTION RH -->
+      <div class="cap-section">
+        <div class="cap-section-title">👥 RESSOURCES HUMAINES</div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);white-space:nowrap">Statut RH :</div>
+          <select id="cap-statut-rh" class="cap-select">
+            <option value="complet">✓ Effectif complet</option>
+            <option value="tension">⚠ Tension (renforts en cours)</option>
+            <option value="critique">🔴 Critique (postes non couverts)</option>
+            <option value="insuffisant">⛔ Effectif insuffisant</option>
+          </select>
+        </div>
+        <label class="cap-alerte-check" id="cap-alerte-rh-lbl" onclick="capToggleAlerte('rh')">
+          <input type="checkbox" id="cap-alerte-rh">
+          <span class="cap-alerte-text">☐ <strong>Seuil d'alerte atteint</strong> — je le déclare à la cellule</span>
+        </label>
+        <textarea id="cap-comment-rh" class="cap-textarea" placeholder="Commentaire RH (optionnel)..."></textarea>
+      </div>
+
+      <!-- SECTION MATÉRIEL -->
+      <div class="cap-section">
+        <div class="cap-section-title">🔧 MATÉRIEL / ÉQUIPEMENTS</div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);white-space:nowrap">Statut matériel :</div>
+          <select id="cap-statut-mat" class="cap-select">
+            <option value="ok">✓ Opérationnel</option>
+            <option value="degrade">⚠ Dégradé (équipement en panne)</option>
+            <option value="critique">🔴 Critique (équipement vital HS)</option>
+            <option value="hs">⛔ Hors service</option>
+          </select>
+        </div>
+        <label class="cap-alerte-check" id="cap-alerte-mat-lbl" onclick="capToggleAlerte('mat')">
+          <input type="checkbox" id="cap-alerte-mat">
+          <span class="cap-alerte-text">☐ <strong>Seuil d'alerte atteint</strong> — je le déclare à la cellule</span>
+        </label>
+        <textarea id="cap-comment-mat" class="cap-textarea" placeholder="Commentaire matériel (optionnel)..."></textarea>
+      </div>
+
+      <!-- Commentaire général -->
+      <div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:6px;letter-spacing:.5px">📝 COMMENTAIRE GÉNÉRAL</div>
+        <textarea id="cap-comment-general" class="cap-textarea" style="min-height:60px"
+          placeholder="Situation générale du service, contexte, signalement particulier..."></textarea>
+      </div>
+
+    </div>
+    <div class="cap-popup-footer">
+      <button class="cap-btn-cancel" onclick="capPopupClose()">Annuler</button>
+      <button class="cap-btn-valider" onclick="capSubmitDeclaration()">✓ Valider et transmettre à la cellule</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ JS CAPACITÉ ══════════════════════════════════════════════════════ -->
+
+<style>
+ ═══════════════════ ANALYSE — charte La Suite Numérique ═══════════════════ */
 
 /* Onglet général */
 #tab-analyse{flex-direction:column;overflow:hidden}
@@ -4328,6 +4807,9 @@ applyUserState = function() {
 
 
 <!-- ══ JS ANALYSE ═══════════════════════════════════════════════════ -->
+
+</style>
+
 <script>/* JSZip 3.10.1 embarqué — fonctionne hors-ligne */
 /*!
 
@@ -4691,6 +5173,514 @@ async function exportDebriefDocx(){
   const a=document.createElement("a");a.href=url;a.download="debrief_crise.docx";a.click();
   URL.revokeObjectURL(url);toast("Rapport téléchargé !","ok");
 }
+</script>
+<script>
+// ════ SCRIBE CAPACITÉ v1.3.0 ═══════════════════════════════════════════
+
+let capData = [];          // référentiel complet
+let capCurrentSite = 'all';
+let capCurrentRef = null;  // référentiel en cours d'édition dans le popup
+let capSyntheseMode = false;
+
+const CAP_STATUT_LABELS = {
+  normal:'Normal', tension:'Tension', critique:'Critique',
+  ferme:'Fermé', inconnu:'Non déclaré'
+};
+const CAP_STATUT_COLORS = {
+  normal:'#22c55e', tension:'#f59e0b', critique:'#ef4444',
+  ferme:'#6b7280', inconnu:'#374151'
+};
+
+// ── Chargement ──────────────────────────────────────────────────────────
+async function loadCapacite() {
+  try {
+    const tok = localStorage.getItem('scribe_token') || '';
+    const r = await fetch('/api/v1/capacite/referentiel', {
+      headers: {'Authorization': 'Bearer ' + tok}
+    });
+    const data = await r.json();
+    capData = Array.isArray(data) ? data : [];
+    if (!Array.isArray(data)) {
+      console.warn('loadCapacite: réponse inattendue', data);
+    }
+    capRenderGrid();
+    capCheckSilences();
+    document.getElementById('cap-last-update').textContent =
+      'Mis à jour ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+  } catch(e) {
+    console.error('loadCapacite:', e);
+  }
+}
+
+// ── Filtre par site ─────────────────────────────────────────────────────
+function capFilterSite(btn) {
+  document.querySelectorAll('.cap-site-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  capCurrentSite = btn.dataset.site;
+  capRenderGrid();
+  capRenderSynthese();
+}
+
+function capToggleSynthese() {
+  capSyntheseMode = !capSyntheseMode;
+  document.getElementById('cap-grid').style.display = capSyntheseMode ? 'none' : '';
+  document.getElementById('cap-synthese-view').style.display = capSyntheseMode ? '' : 'none';
+  document.querySelector('.cap-synthese-btn').textContent = capSyntheseMode ? '🃏 Cartes' : '📊 Synthèse';
+  if (capSyntheseMode) capRenderSynthese();
+}
+
+// ── Rendu de la grille ──────────────────────────────────────────────────
+function capRenderGrid() {
+  const grid = document.getElementById('cap-grid');
+  const filtered = capCurrentSite === 'all'
+    ? capData
+    : capData.filter(r => r.site === capCurrentSite);
+
+  // Grouper par pôle
+  const byPole = {};
+  filtered.forEach(r => {
+    const p = r.pole || 'Autre';
+    if (!byPole[p]) byPole[p] = [];
+    byPole[p].push(r);
+  });
+
+  let html = '';
+  Object.entries(byPole).forEach(([pole, units]) => {
+    const nAlertes = units.filter(u =>
+      u.derniere_declaration &&
+      (u.derniere_declaration.alerte_lits || u.derniere_declaration.alerte_rh || u.derniere_declaration.alerte_materiel)
+    ).length;
+    const nCritiques = units.filter(u => u.statut_global === 'critique' || u.statut_global === 'ferme').length;
+
+    let poleColor = '#6b7280';
+    if (nAlertes > 0 || nCritiques > 0) poleColor = '#ef4444';
+    else if (units.some(u => u.statut_global === 'tension')) poleColor = '#f59e0b';
+    else if (units.some(u => u.statut_global === 'normal')) poleColor = '#22c55e';
+
+    html += `<div class="cap-pole-section">
+      <div class="cap-pole-title">
+        <span style="width:8px;height:8px;border-radius:50%;background:${poleColor};display:inline-block"></span>
+        ${pole}
+        ${nAlertes > 0 ? `<span style="color:#ef4444;font-size:8px">⚡ ${nAlertes} alerte(s)</span>` : ''}
+        <span style="margin-left:auto;font-weight:400;color:var(--muted)">${units.length} services</span>
+      </div>
+      <div class="cap-cards">`;
+
+    units.forEach(ref => {
+      html += capRenderCard(ref);
+    });
+    html += `</div></div>`;
+  });
+
+  grid.innerHTML = html || '<div style="padding:40px;text-align:center;font-family:var(--head);color:var(--muted)">Aucune unité pour ce site</div>';
+}
+
+function capRenderCard(ref) {
+  const d = ref.derniere_declaration;
+  const statut = ref.statut_global || 'inconnu';
+  const hasAlerte = d && (d.alerte_lits || d.alerte_rh || d.alerte_materiel);
+  const color = CAP_STATUT_COLORS[statut] || '#6b7280';
+
+  // Lits vides
+  let litsHtml = '';
+  if (d) {
+    if (ref.accept_homme) {
+      const v = d.lits_vides_h || 0;
+      litsHtml += `<div class="cap-lit-cell">
+        <div class="cap-input-label" style="justify-content:center"><span class="sexe-badge sexe-h">H</span></div>
+        <div class="cap-lit-val ${v === 0 ? 'zero' : 'positive'}">${v}</div>
+      </div>`;
+    }
+    if (ref.accept_femme) {
+      const v = d.lits_vides_f || 0;
+      litsHtml += `<div class="cap-lit-cell">
+        <div class="cap-input-label" style="justify-content:center"><span class="sexe-badge sexe-f">F</span></div>
+        <div class="cap-lit-val ${v === 0 ? 'zero' : 'positive'}">${v}</div>
+      </div>`;
+    }
+    if (ref.accept_indiffer) {
+      const v = d.lits_vides_i || 0;
+      litsHtml += `<div class="cap-lit-cell">
+        <div class="cap-input-label" style="justify-content:center"><span class="sexe-badge sexe-i">I</span></div>
+        <div class="cap-lit-val ${v === 0 ? 'zero' : 'positive'}">${v}</div>
+      </div>`;
+    }
+  } else {
+    litsHtml = `<div class="cap-lit-cell" style="grid-column:1/-1;text-align:center">
+      <div class="cap-lit-label">PAS DE DÉCLARATION</div>
+    </div>`;
+  }
+
+  // Horodatage
+  let metaTxt = '';
+  if (d && d.horodatage) {
+    const dt = new Date(d.horodatage);
+    const heure = dt.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+    const point = {matin:'🌅',aprem:'☀',soir:'🌙'}[d.point] || '';
+    metaTxt = `${point} ${heure} — ${d.redacteur || '?'}`;
+  }
+
+  // Statuts RH/Mat
+  let statutsHtml = '';
+  if (d) {
+    const rhCol = {complet:'#22c55e',tension:'#f59e0b',critique:'#ef4444',insuffisant:'#ef4444'}[d.statut_rh] || '#6b7280';
+    const matCol = {ok:'#22c55e',degrade:'#f59e0b',critique:'#ef4444',hs:'#6b7280'}[d.statut_materiel] || '#6b7280';
+    statutsHtml = `<span style="color:${rhCol};font-size:8px">👥 ${d.statut_rh || '?'}</span>
+    <span style="color:${matCol};font-size:8px">🔧 ${d.statut_materiel || '?'}</span>`;
+  }
+
+  // Couleur de fond selon statut pour renforcer la visibilité
+  const cardBg = statut === 'critique' ? 'rgba(239,68,68,.06)'
+    : statut === 'tension' ? 'rgba(245,158,11,.06)'
+    : statut === 'ferme' ? 'rgba(107,114,128,.06)'
+    : '';
+  const cardBorder = statut === 'critique' ? '#ef4444'
+    : statut === 'tension' ? '#f59e0b'
+    : statut === 'normal' ? '#22c55e'
+    : statut === 'ferme' ? '#6b7280'
+    : 'var(--border2)';
+
+  return `<div class="cap-card statut-${statut} ${hasAlerte ? 'has-alerte' : ''}"
+    style="background:${cardBg || ''};border-left:3px solid ${cardBorder}"
+    onclick="capOpenPopup(${ref.id})" title="Cliquer pour déclarer">
+    <div class="cap-card-title">${ref.service_nom}</div>
+    <div class="cap-card-sub">${ref.uf_code ? 'UF ' + ref.uf_code + ' · ' : ''}Réf: ${ref.capacite_totale} lits</div>
+    <div class="cap-lits-grid" style="grid-template-columns:${
+      [ref.accept_homme, ref.accept_femme, ref.accept_indiffer].filter(Boolean).length === 1 ? '1fr' :
+      [ref.accept_homme, ref.accept_femme, ref.accept_indiffer].filter(Boolean).length === 2 ? '1fr 1fr' : '1fr 1fr 1fr'
+    }">${litsHtml}</div>
+    <div class="cap-card-meta">
+      <span class="cap-statut-badge ${statut}" style="color:${color}">${CAP_STATUT_LABELS[statut] || statut}</span>
+      ${statutsHtml}
+    </div>
+    ${metaTxt ? `<div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:4px">${metaTxt}</div>` : ''}
+  </div>`;
+}
+
+// ── Rendu tableau de synthèse ───────────────────────────────────────────
+function capRenderSynthese() {
+  const tbody = document.getElementById('cap-synth-body');
+  const filtered = capCurrentSite === 'all'
+    ? capData
+    : capData.filter(r => r.site === capCurrentSite);
+
+  tbody.innerHTML = filtered.map(ref => {
+    const d = ref.derniere_declaration;
+    const statut = ref.statut_global || 'inconnu';
+    const color = CAP_STATUT_COLORS[statut];
+    const hasAlerte = d && (d.alerte_lits || d.alerte_rh || d.alerte_materiel);
+    const heure = d && d.horodatage
+      ? new Date(d.horodatage).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})
+      : '—';
+    return `<tr onclick="capOpenPopup(${ref.id})" style="cursor:pointer">
+      <td style="font-weight:600">${ref.service_nom}</td>
+      <td style="color:var(--muted)">${ref.pole || '—'}</td>
+      <td style="color:var(--muted)">${ref.site || '—'}</td>
+      <td style="text-align:center">${ref.capacite_totale}</td>
+      <td style="text-align:center;color:#60a5fa;font-weight:700">${d ? (d.lits_vides_h ?? '—') : '—'}</td>
+      <td style="text-align:center;color:#f472b6;font-weight:700">${d ? (d.lits_vides_f ?? '—') : '—'}</td>
+      <td style="text-align:center;color:#c084fc;font-weight:700">${d ? (d.lits_vides_i ?? '—') : '—'}</td>
+      <td><span class="cap-statut-badge ${statut}" style="color:${color}">${CAP_STATUT_LABELS[statut]}</span></td>
+      <td style="text-align:center">${hasAlerte ? '⚡' : '—'}</td>
+      <td style="color:var(--muted)">${d ? heure + (d.redacteur ? ' · ' + d.redacteur : '') : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Alertes silence ─────────────────────────────────────────────────────
+function capCheckSilences() {
+  const banner = document.getElementById('cap-silence-banner');
+  const nonDeclares = capData.filter(r => !r.derniere_declaration);
+  if (nonDeclares.length > 0) {
+    banner.textContent = `⚠ ${nonDeclares.length} service(s) n'ont pas encore déclaré leur situation : ${nonDeclares.slice(0,3).map(r => r.service_nom).join(', ')}${nonDeclares.length > 3 ? '...' : ''}`;
+    banner.style.display = '';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+// ── Popup déclaration ───────────────────────────────────────────────────
+function capOpenPopup(refId) {
+  capCurrentRef = capData.find(r => r.id === refId);
+  if (!capCurrentRef) return;
+  const ref = capCurrentRef;
+  const d = ref.derniere_declaration;
+
+  // Titre
+  document.getElementById('cap-popup-title').textContent = ref.service_nom;
+  document.getElementById('cap-popup-sub').textContent =
+    (ref.pole || '') + (ref.site ? ' · ' + ref.site : '') + (ref.uf_code ? ' · UF ' + ref.uf_code : '');
+
+  // Info référence
+  document.getElementById('cap-ref-info').innerHTML =
+    `<span>🛏 Capacité nominale : <strong>${ref.capacite_totale}</strong></span>` +
+    (ref.tension_1 > 0 ? `<span>⚡ Tension 1 : +${ref.tension_1}</span>` : '') +
+    (ref.tension_2 > 0 ? `<span>⚡ Tension 2 : +${ref.tension_2}</span>` : '') +
+    (ref.telephone_cadre ? `<span>📞 ${ref.telephone_cadre}</span>` : '');
+
+  // Grille lits H/F/I selon accept_*
+  const litsGrid = document.getElementById('cap-lits-grid');
+  let litsHtml = '';
+  if (ref.accept_homme) {
+    litsHtml += `<div class="cap-input-group">
+      <label class="cap-input-label"><span class="sexe-badge sexe-h">H</span> Lits hommes</label>
+      <input type="number" id="cap-h" class="cap-num-input" min="0" max="${ref.capacite_totale}" value="${d ? (d.lits_vides_h || 0) : 0}">
+    </div>`;
+  }
+  if (ref.accept_femme) {
+    litsHtml += `<div class="cap-input-group">
+      <label class="cap-input-label"><span class="sexe-badge sexe-f">F</span> Lits femmes</label>
+      <input type="number" id="cap-f" class="cap-num-input" min="0" max="${ref.capacite_totale}" value="${d ? (d.lits_vides_f || 0) : 0}">
+    </div>`;
+  }
+  if (ref.accept_indiffer) {
+    litsHtml += `<div class="cap-input-group">
+      <label class="cap-input-label"><span class="sexe-badge sexe-i">I</span> Lits indiff.</label>
+      <input type="number" id="cap-i" class="cap-num-input" min="0" max="${ref.capacite_totale}" value="${d ? (d.lits_vides_i || 0) : 0}">
+    </div>`;
+  }
+  litsGrid.innerHTML = litsHtml;
+  litsGrid.style.gridTemplateColumns = [ref.accept_homme, ref.accept_femme, ref.accept_indiffer].filter(Boolean).length < 3 ? 'repeat(2,1fr)' : '1fr 1fr 1fr';
+
+  // Pré-remplir depuis dernière déclaration
+  if (d) {
+    document.getElementById('cap-statut-lits').value = d.statut_lits || 'normal';
+    document.getElementById('cap-statut-rh').value = d.statut_rh || 'complet';
+    document.getElementById('cap-statut-mat').value = d.statut_materiel || 'ok';
+    document.getElementById('cap-tension').value = d.tension_activee || 0;
+    document.getElementById('cap-comment-lits').value = d.commentaire_lits || '';
+    document.getElementById('cap-comment-rh').value = d.commentaire_rh || '';
+    document.getElementById('cap-comment-mat').value = d.commentaire_materiel || '';
+    document.getElementById('cap-comment-general').value = d.commentaire_general || '';
+    // Alertes — toujours reset à false (nouvelle déclaration)
+    ['lits','rh','mat'].forEach(k => {
+      document.getElementById('cap-alerte-'+k).checked = false;
+      document.getElementById('cap-alerte-'+k+'-lbl').classList.remove('checked');
+    });
+    // Redacteur
+    if (d.redacteur) document.getElementById('cap-redacteur').value = d.redacteur;
+  } else {
+    ['statut-lits','statut-rh','statut-mat'].forEach(id => {
+      const el = document.getElementById('cap-' + id);
+      if (el) el.selectedIndex = 0;
+    });
+    document.getElementById('cap-tension').value = 0;
+    ['lits','rh','mat'].forEach(k => {
+      document.getElementById('cap-comment-'+k).value = '';
+      document.getElementById('cap-alerte-'+k).checked = false;
+      document.getElementById('cap-alerte-'+k+'-lbl').classList.remove('checked');
+    });
+    document.getElementById('cap-comment-general').value = '';
+  }
+
+  // Détecter le point selon l'heure
+  const h = new Date().getHours();
+  const autoPoint = h < 13 ? 'matin' : h < 20 ? 'aprem' : 'soir';
+  document.querySelectorAll('.cap-point-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.point === autoPoint);
+  });
+
+  document.getElementById('cap-popup').style.display = '';
+}
+
+function capPopupClose(e) {
+  if (e && e.target !== document.getElementById('cap-popup')) return;
+  document.getElementById('cap-popup').style.display = 'none';
+  capCurrentRef = null;
+}
+
+function capSelectPoint(btn) {
+  document.querySelectorAll('.cap-point-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function capToggleAlerte(type) {
+  const cb = document.getElementById('cap-alerte-' + type);
+  const lbl = document.getElementById('cap-alerte-' + type + '-lbl');
+  cb.checked = !cb.checked;
+  lbl.classList.toggle('checked', cb.checked);
+}
+
+// ── Soumission ───────────────────────────────────────────────────────────
+async function capSubmitDeclaration() {
+  if (!capCurrentRef) return;
+  const ref = capCurrentRef;
+  const redacteur = document.getElementById('cap-redacteur').value.trim();
+  if (!redacteur) { toast('Veuillez indiquer le cadre déclarant', 'warn'); return; }
+
+  const point = document.querySelector('.cap-point-btn.active')?.dataset?.point || 'matin';
+  const payload = {
+    referentiel_id:  ref.id,
+    redacteur:       redacteur,
+    point:           point,
+    lits_vides_h:    ref.accept_homme  ? parseInt(document.getElementById('cap-h')?.value || 0) : 0,
+    lits_vides_f:    ref.accept_femme  ? parseInt(document.getElementById('cap-f')?.value || 0) : 0,
+    lits_vides_i:    ref.accept_indiffer ? parseInt(document.getElementById('cap-i')?.value || 0) : 0,
+    tension_activee: parseInt(document.getElementById('cap-tension').value || 0),
+    statut_lits:     document.getElementById('cap-statut-lits').value,
+    statut_rh:       document.getElementById('cap-statut-rh').value,
+    statut_materiel: document.getElementById('cap-statut-mat').value,
+    alerte_lits:     document.getElementById('cap-alerte-lits').checked,
+    alerte_rh:       document.getElementById('cap-alerte-rh').checked,
+    alerte_materiel: document.getElementById('cap-alerte-mat').checked,
+    commentaire_lits:     document.getElementById('cap-comment-lits').value,
+    commentaire_rh:       document.getElementById('cap-comment-rh').value,
+    commentaire_materiel: document.getElementById('cap-comment-mat').value,
+    commentaire_general:  document.getElementById('cap-comment-general').value,
+  };
+
+  const tok = localStorage.getItem('scribe_token') || '';
+  try {
+    const r = await fetch('/api/v1/capacite/declaration', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+tok},
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) { toast('Erreur déclaration : ' + r.status, 'err'); return; }
+    const res = await r.json();
+
+    document.getElementById('cap-popup').style.display = 'none';
+    capCurrentRef = null;
+
+    if (res.incident_id) {
+      toast(`⚡ Alerte transmise à la cellule — Incident #${res.incident_id} créé`, 'warn');
+    } else {
+      toast('✓ Déclaration enregistrée', 'ok');
+    }
+    await loadCapacite();
+    // Mettre à jour les cartes de l'onglet SOINS
+    if (document.getElementById('tab-soins').classList.contains('active')) {
+      renderSoins();
+    } else {
+      capUpdateSoinsStatuts();
+    }
+  } catch(e) {
+    toast('Erreur : ' + e.message, 'err');
+  }
+}
+
+// ── Mise à jour des cartes SOINS selon statut capacitaire ───────────────
+function capUpdateSoinsStatuts() {
+  // Calculer le statut capacitaire le plus grave par pôle
+  const POIDS = {ferme:3, critique:2, tension:1, normal:0, inconnu:-1};
+  const polesCapStatut = {};
+  capData.forEach(ref => {
+    const pole = ref.pole || 'Autre';
+    const poids = POIDS[ref.statut_global] ?? -1;
+    if (polesCapStatut[pole] === undefined || poids > polesCapStatut[pole]) {
+      polesCapStatut[pole] = poids;
+    }
+  });
+
+  // Mettre à jour les badges dans les cartes SOINS (.soins-card)
+  document.querySelectorAll('.soins-card').forEach(card => {
+    const poleName = card.querySelector('.soins-pole-name')?.textContent?.trim();
+    if (!poleName) return;
+
+    const capPoids = polesCapStatut[poleName] ?? -1;
+    if (capPoids < 1) return; // pas de statut capacitaire dégradé → rien à faire
+
+    const badge = card.querySelector('.soins-status-badge');
+    if (!badge) return;
+
+    // Seulement dégrader si le statut incidents actuel est moins grave
+    const isCritique = badge.classList.contains('soins-critique');
+    const isDegrade  = badge.classList.contains('soins-degrade');
+
+    if (capPoids >= 2 && !isCritique) {
+      // Capacité critique → forcer critique
+      badge.className = 'soins-status-badge soins-critique';
+      badge.textContent = '⚠ CRITIQUE CAPA';
+    } else if (capPoids >= 1 && !isCritique && !isDegrade) {
+      // Capacité en tension → forcer dégradé
+      badge.className = 'soins-status-badge soins-degrade';
+      badge.textContent = '⚡ TENSION CAPA';
+    }
+    // Ajouter indicateur visuel sur la carte
+    card.style.borderColor = capPoids >= 2 ? '#f87171' : '#fbbf24';
+  });
+}
+
+
+// ── Albert CAPACITÉ ──────────────────────────────────────────────────────
+function capAlbertAnalyse() {
+  const panel = document.getElementById('cap-albert-panel');
+  panel.style.display = panel.style.display === 'none' ? '' : 'none';
+  if (panel.style.display !== 'none' && capData.length) {
+    capAlbertQuestion('Analyse la situation capacitaire globale. Quels services sont en difficulté ?');
+  }
+}
+
+async function capAlbertQuestion(question) {
+  if (!question || !question.trim()) return;
+  const resultEl = document.getElementById('cap-albert-result');
+  const inputEl  = document.getElementById('cap-albert-input');
+  if (inputEl) inputEl.value = '';
+
+  resultEl.innerHTML = '<span style="color:var(--muted);font-style:italic">\u25c8 Analyse en cours\u2026</span>';
+
+  const alertes  = capData.filter(r => r.derniere_declaration &&
+    (r.derniere_declaration.alerte_lits || r.derniere_declaration.alerte_rh || r.derniere_declaration.alerte_materiel));
+  const critiques = capData.filter(r => r.statut_global === 'critique' || r.statut_global === 'ferme');
+  const tensions  = capData.filter(r => r.statut_global === 'tension');
+  const nonDecl   = capData.filter(r => !r.derniere_declaration);
+
+  const lignes = capData
+    .filter(r => r.derniere_declaration)
+    .map(r => {
+      const d = r.derniere_declaration;
+      const vides = (d.lits_vides_h||0)+(d.lits_vides_f||0)+(d.lits_vides_i||0);
+      const alerteTxt = [
+        d.alerte_lits ? 'ALERTE LITS' : '',
+        d.alerte_rh   ? 'ALERTE RH'   : '',
+        d.alerte_materiel ? 'ALERTE MATERIEL' : ''
+      ].filter(Boolean).join(', ');
+      const note = d.commentaire_general ? ' Note:' + d.commentaire_general : '';
+      const al   = alerteTxt ? ' [' + alerteTxt + ']' : '';
+      return '- ' + r.service_nom + ' (' + r.pole + ', ' + r.site + '): lits=' + r.capacite_totale +
+             ' vides=' + vides + ' lits=' + d.statut_lits + ' RH=' + d.statut_rh +
+             ' mat=' + d.statut_materiel + al + note;
+    }).join('\n');
+
+  const now = new Date().toLocaleString('fr-FR');
+  const context = 'SITUATION CAPACITAIRE — ' + now + '\n' +
+    'Services declares: ' + capData.filter(r=>r.derniere_declaration).length + '/' + capData.length + '\n' +
+    'Alertes: ' + alertes.length + ' | Critiques: ' + critiques.length +
+    ' | Tensions: ' + tensions.length + ' | Non declares: ' + nonDecl.length + '\n\n' +
+    'DETAIL PAR SERVICE:\n' + (lignes || 'Aucune declaration disponible');
+
+  try {
+    const tok = localStorage.getItem('scribe_token') || '';
+    const resp = await fetch('/api/v1/albert/analyse-crise', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+tok},
+      body: JSON.stringify({
+        main_courante: context,
+        question: question,
+        type_analyse: 'capacitaire'
+      })
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const text = data.analyse || data.reponse || data.text || JSON.stringify(data);
+    resultEl.textContent = text;
+  } catch(e) {
+    resultEl.innerHTML = '<span style="color:#f87171">Erreur : ' + e.message + '</span>';
+  }
+}
+
+(function() {
+  const _prevOpenTab = openTab;
+  openTab = function(id, btn) {
+    _prevOpenTab(id, btn);
+    if (id === 'tab-capacite') {
+      loadCapacite();
+      if (!window._capInterval) {
+        window._capInterval = setInterval(loadCapacite, 60000);
+      }
+    }
+  };
+})();
 </script>
 </body>
 </html>

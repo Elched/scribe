@@ -374,9 +374,34 @@ def export_main_courante(db: Session = Depends(get_db)):
     for r in db.query(RexEntry).order_by(RexEntry.created_at).all():
         events.append((r.created_at, [
             fmt(r.created_at), "REX", r.type_crise or "",
-            r.redige_par or "", r.titre or "",
-            f"MTTD:{r.mttd_min or ''}min MTTR:{r.mttr_min or ''}min"
+            r.redacteur or "", r.titre or "",
+            f"MTTD:{r.mttd_minutes or ''}min MTTR:{r.mttr_minutes or ''}min"
         ]))
+
+    # ── Déclarations capacitaires ────────────────────────────────────────
+    try:
+        refs_cap = {r.id: r for r in db.query(CapaciteReferentiel).all()}
+        for d in db.query(CapaciteDeclaration).order_by(CapaciteDeclaration.horodatage).all():
+            ref_cap = refs_cap.get(d.referentiel_id)
+            service = ref_cap.service_nom if ref_cap else f"Service #{d.referentiel_id}"
+            alertes = []
+            if d.alerte_lits:     alertes.append("Alerte lits")
+            if d.alerte_rh:       alertes.append("Alerte RH")
+            if d.alerte_materiel: alertes.append("Alerte matériel")
+            detail = (
+                f"Lits: {d.statut_lits} (H:{d.lits_vides_h} F:{d.lits_vides_f} I:{d.lits_vides_i}) | "
+                f"RH:{d.statut_rh} | Mat:{d.statut_materiel}"
+                + (f" | {'/ '.join(alertes)}" if alertes else "")
+            )
+            events.append((d.horodatage, [
+                fmt(d.horodatage), "CAPACITÉ — DÉCLARATION",
+                d.point or "",
+                d.redacteur or "",
+                service,
+                detail + (f" | {d.commentaire_general}" if d.commentaire_general else "")
+            ]))
+    except Exception:
+        pass
 
     # ── Communiqués / chronologie publique ──────────────────────────────
     try:
@@ -415,7 +440,7 @@ def archiver_crise(db: Session = Depends(get_db), user=Depends(get_current_user)
     """Archive la crise courante en ZIP et remet à zéro le tableau de bord."""
     import zipfile, io as _io, csv
     from app.api.status_page import StatusPage as SPModel, StatusPageChronologie
-    from app.models import Task, RexEntry
+    from app.models import Task, RexEntry, CapaciteDeclaration, CapaciteReferentiel
 
     now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     zip_path = f"archives/crise_{now_str}.zip"
@@ -520,7 +545,7 @@ def archiver_crise(db: Session = Depends(get_db), user=Depends(get_current_user)
 @router.post("/reset-tableau-de-bord")
 def reset_tableau_de_bord(db: Session = Depends(get_db), user=Depends(get_current_user)):
     """Remet le tableau de bord à zéro sans archiver."""
-    from app.models import Task, RexEntry
+    from app.models import Task, RexEntry, CapaciteDeclaration, CapaciteReferentiel
     db.query(SitrepEntry).delete()
     db.query(Decision).delete()
     db.query(Presence).delete()

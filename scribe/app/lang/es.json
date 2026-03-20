@@ -304,5 +304,89 @@
     "met_participants": "Participants max",
     "archive_a_badge": "Archive A",
     "archive_b_badge": "Archive B"
+  },
+  "capacite": {
+    "titre": "Gestión de Capacidad",
+    "nav": "CAPACIDAD",
+    "filtres": {
+      "tous": "Todos los sitios",
+      "synthese": "Resumen",
+      "cartes": "Tarjetas"
+    },
+    "statuts": {
+      "normal": "Normal",
+      "tension": "Tensión",
+      "critique": "Crítico",
+      "ferme": "Cerrado",
+      "inconnu": "No declarado"
+    },
+    "statuts_lits": {
+      "normal": "✓ Disponibilidad normal",
+      "tension": "⚠ Tensión",
+      "critique": "🔴 Crítico",
+      "ferme": "⛔ Cerrado"
+    },
+    "statuts_rh": {
+      "complet": "✓ Plantilla completa",
+      "tension": "⚠ Tensión",
+      "critique": "🔴 Crítico",
+      "insuffisant": "⛔ Insuficiente"
+    },
+    "statuts_mat": {
+      "ok": "✓ Operativo",
+      "degrade": "⚠ Degradado",
+      "critique": "🔴 Crítico",
+      "hs": "⛔ Fuera de servicio"
+    },
+    "points": {
+      "matin": "🌅 Mañana",
+      "aprem": "☀ Tarde",
+      "soir": "🌙 Noche / Relevo"
+    },
+    "popup": {
+      "point_titre": "PUNTO DE DECLARACIÓN",
+      "declarant": "ENFERMERO/A JEFE DECLARANTE",
+      "declarant_placeholder": "Nombre y apellido",
+      "section_lits": "🛏 DISPONIBILIDAD DE CAMAS",
+      "section_rh": "👥 RECURSOS HUMANOS",
+      "section_mat": "🔧 MATERIAL / EQUIPOS",
+      "section_comment": "📝 COMENTARIO GENERAL",
+      "tension": "Tensión activada:",
+      "statut_lits": "Estado global camas:",
+      "statut_rh": "Estado RRHH:",
+      "statut_mat": "Estado material:",
+      "alerte": "Umbral de alerta alcanzado — notificar al equipo de crisis",
+      "comment_placeholder_lits": "Comentario camas...",
+      "comment_placeholder_rh": "Comentario RRHH...",
+      "comment_placeholder_mat": "Comentario material...",
+      "comment_placeholder_gen": "Situación general...",
+      "valider": "✓ Validar y enviar al equipo de crisis",
+      "annuler": "Cancelar",
+      "tension_aucune": "Sin tensión",
+      "tension_1": "Tensión nivel 1",
+      "tension_2": "Tensión nivel 2",
+      "ref_capacite": "Capacidad nominal",
+      "ref_tel": "Tel. jefe"
+    },
+    "synthese": {
+      "service": "Servicio",
+      "pole": "Polo",
+      "site": "Sitio",
+      "capacite": "Capacidad",
+      "lits_h": "♂ H",
+      "lits_f": "♀ M",
+      "lits_i": "⬡ I",
+      "statut": "Estado",
+      "alerte": "Alerta",
+      "declare": "Declarado"
+    },
+    "silence": "servicio(s) aún no han declarado su situación",
+    "maj": "Actualizado",
+    "alerte_transmise": "Alerta enviada al equipo de crisis — Incidente creado",
+    "declaration_ok": "✓ Declaración registrada",
+    "declarant_requis": "Indique el nombre del jefe de enfermería",
+    "sexe_h": "Camas hombres",
+    "sexe_f": "Camas mujeres",
+    "sexe_i": "Camas neutras"
   }
 }

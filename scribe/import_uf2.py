@@ -30,13 +30,18 @@ from app.models import Hospital, UniteFonctionnelle
 #
 # Exemples pour le modèle générique (uf_modele.xlsx) :
 SITE_MAPPING = {
-    # Mapping FICOM CHAG → noms des hôpitaux dans la base
-    "ANNECY":    ["Site hospitalier principal (Annecy)"],
-    "BI SITE":   ["Site hospitalier principal (Annecy)"],
-    "ST JULIEN": ["Hôpital de Saint-Julien"],
-    # Compatibilité démo générique
-    "SITE PRINCIPAL":  ["Site hospitalier principal (Annecy)"],
-    "SITE SECONDAIRE": ["Hôpital de Saint-Julien"],
+    # Mapping FICOM CHAG → noms EXACTS des sites tels que dans config.xml CHAG
+    # Valeurs colonne 'Site' dans uf.xlsx CHAG : ANNECY, BI SITE, ST JULIEN
+    # Les noms ici doivent correspondre aux <nom> dans config.xml <sites>
+    "ANNECY":       ["Site hospitalier principal Annecy"],
+    "BI SITE":      ["Site hospitalier principal Annecy", "Hopital Saint-Julien"],
+    "ST JULIEN":    ["Hopital Saint-Julien"],
+    # Variantes avec accent (selon la version du config.xml)
+    "SAINT-JULIEN": ["Hopital Saint-Julien", "Hôpital Saint-Julien"],
+    "ST-JULIEN":    ["Hopital Saint-Julien", "Hôpital Saint-Julien"],
+    # Compatibilité démo générique (config_demo1.xml)
+    "SITE PRINCIPAL":  ["Site Principal — Valmont", "Site hospitalier principal Annecy"],
+    "SITE SECONDAIRE": ["Site Secondaire — Crestval", "Hopital Saint-Julien"],
 }
 # Exemple pour un export FICOM d'un établissement bi-sites (Site A / Site B) :
 # SITE_MAPPING = {
@@ -122,11 +127,37 @@ def import_uf(file_path: str):
                 pole = pole_courant
 
             for nom_hosp in site_map_upper[site_excel]:
+                # Recherche exacte d'abord, puis insensible à la casse/accents
                 hospital = hospitals_cache.get(nom_hosp)
                 if not hospital:
-                    print(f"  [?] Hôpital '{nom_hosp}' absent de la base "
-                          f"(vérifiez seed.py et SITE_MAPPING)")
-                    continue
+                    # Fallback 1 : insensible à la casse
+                    nom_hosp_lower = nom_hosp.lower()
+                    for nom_db, h in hospitals_cache.items():
+                        if nom_db.lower() == nom_hosp_lower:
+                            hospital = h
+                            break
+                if not hospital:
+                    # Fallback 2 : mot-clé géographique dans le nom du site
+                    # ex: "Annecy" matche "Site hospitalier principal Annecy"
+                    # et aussi "Site Principal — Valmont" si config CHAG le nomme ainsi
+                    mots_cles = [m for m in nom_hosp.lower().split() if len(m) > 3]
+                    for nom_db, h in hospitals_cache.items():
+                        nom_db_lower = nom_db.lower()
+                        if all(m in nom_db_lower for m in mots_cles):
+                            hospital = h
+                            break
+                if not hospital:
+                    # Fallback 3 : chercher par ordre (ANNECY → premier site, ST JULIEN → second)
+                    sites_list = list(hospitals_cache.values())
+                    idx_map = {"ANNECY": 0, "BI SITE": 0, "ST JULIEN": 1, "SAINT-JULIEN": 1}
+                    site_excel_key = site_excel.upper()
+                    if site_excel_key in idx_map and idx_map[site_excel_key] < len(sites_list):
+                        hospital = sites_list[idx_map[site_excel_key]]
+                        # Silencieux — pas d'avertissement pour ce fallback
+                    else:
+                        print(f"  [?] Hopital '{nom_hosp}' absent de la base "
+                              f"(sites disponibles: {list(hospitals_cache.keys())})")
+                        continue
                 db.add(UniteFonctionnelle(
                     code_uf=code_uf,
                     libelle=libelle,

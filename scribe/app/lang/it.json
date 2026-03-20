@@ -304,5 +304,89 @@
     "met_participants": "Participants max",
     "archive_a_badge": "Archive A",
     "archive_b_badge": "Archive B"
+  },
+  "capacite": {
+    "titre": "Gestione Capacità",
+    "nav": "CAPACITÀ",
+    "filtres": {
+      "tous": "Tutti i siti",
+      "synthese": "Sintesi",
+      "cartes": "Schede"
+    },
+    "statuts": {
+      "normal": "Normale",
+      "tension": "Tensione",
+      "critique": "Critico",
+      "ferme": "Chiuso",
+      "inconnu": "Non dichiarato"
+    },
+    "statuts_lits": {
+      "normal": "✓ Disponibilità normale",
+      "tension": "⚠ Tensione",
+      "critique": "🔴 Critico",
+      "ferme": "⛔ Chiuso"
+    },
+    "statuts_rh": {
+      "complet": "✓ Organico completo",
+      "tension": "⚠ Tensione",
+      "critique": "🔴 Critico",
+      "insuffisant": "⛔ Insufficiente"
+    },
+    "statuts_mat": {
+      "ok": "✓ Operativo",
+      "degrade": "⚠ Degradato",
+      "critique": "🔴 Critico",
+      "hs": "⛔ Fuori servizio"
+    },
+    "points": {
+      "matin": "🌅 Mattina",
+      "aprem": "☀ Pomeriggio",
+      "soir": "🌙 Sera / Turno"
+    },
+    "popup": {
+      "point_titre": "PUNTO DI DICHIARAZIONE",
+      "declarant": "CAPOSALA DICHIARANTE",
+      "declarant_placeholder": "Nome e cognome",
+      "section_lits": "🛏 DISPONIBILITÀ LETTI",
+      "section_rh": "👥 RISORSE UMANE",
+      "section_mat": "🔧 MATERIALE",
+      "section_comment": "📝 COMMENTO GENERALE",
+      "tension": "Tensione attivata:",
+      "statut_lits": "Stato globale letti:",
+      "statut_rh": "Stato RU:",
+      "statut_mat": "Stato materiale:",
+      "alerte": "Soglia di allarme raggiunta — notificare la cellula di crisi",
+      "comment_placeholder_lits": "Commento letti...",
+      "comment_placeholder_rh": "Commento RU...",
+      "comment_placeholder_mat": "Commento materiale...",
+      "comment_placeholder_gen": "Situazione generale...",
+      "valider": "✓ Convalida e trasmetti alla cellula di crisi",
+      "annuler": "Annulla",
+      "tension_aucune": "Nessuna tensione",
+      "tension_1": "Tensione livello 1",
+      "tension_2": "Tensione livello 2",
+      "ref_capacite": "Capacità nominale",
+      "ref_tel": "Tel. caposala"
+    },
+    "synthese": {
+      "service": "Servizio",
+      "pole": "Polo",
+      "site": "Sito",
+      "capacite": "Capacità",
+      "lits_h": "♂ U",
+      "lits_f": "♀ D",
+      "lits_i": "⬡ I",
+      "statut": "Stato",
+      "alerte": "Allarme",
+      "declare": "Dichiarato"
+    },
+    "silence": "servizio/i non hanno ancora dichiarato la loro situazione",
+    "maj": "Aggiornato",
+    "alerte_transmise": "Allarme inviato alla cellula di crisi — Incidente creato",
+    "declaration_ok": "✓ Dichiarazione registrata",
+    "declarant_requis": "Indicare il nome del caposala",
+    "sexe_h": "Letti uomini",
+    "sexe_f": "Letti donne",
+    "sexe_i": "Letti neutri"
   }
 }

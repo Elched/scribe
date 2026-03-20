@@ -304,5 +304,89 @@
     "met_participants": "Peak participants",
     "archive_a_badge": "Archive A",
     "archive_b_badge": "Archive B"
+  },
+  "capacite": {
+    "titre": "Bed Capacity Management",
+    "nav": "CAPACITY",
+    "filtres": {
+      "tous": "All sites",
+      "synthese": "Summary",
+      "cartes": "Cards"
+    },
+    "statuts": {
+      "normal": "Normal",
+      "tension": "Tension",
+      "critique": "Critical",
+      "ferme": "Closed",
+      "inconnu": "Not declared"
+    },
+    "statuts_lits": {
+      "normal": "✓ Normal availability",
+      "tension": "⚠ Tension (<20% beds free)",
+      "critique": "🔴 Critical (<5% or closures)",
+      "ferme": "⛔ Closed / out of service"
+    },
+    "statuts_rh": {
+      "complet": "✓ Full staff",
+      "tension": "⚠ Tension (reinforcements pending)",
+      "critique": "🔴 Critical (uncovered positions)",
+      "insuffisant": "⛔ Insufficient staff"
+    },
+    "statuts_mat": {
+      "ok": "✓ Operational",
+      "degrade": "⚠ Degraded (equipment failure)",
+      "critique": "🔴 Critical (vital equipment down)",
+      "hs": "⛔ Out of service"
+    },
+    "points": {
+      "matin": "🌅 Morning",
+      "aprem": "☀ Afternoon",
+      "soir": "🌙 Evening / Handover"
+    },
+    "popup": {
+      "point_titre": "DECLARATION POINT",
+      "declarant": "DECLARING NURSE MANAGER",
+      "declarant_placeholder": "First Last name",
+      "section_lits": "🛏 BED AVAILABILITY",
+      "section_rh": "👥 HUMAN RESOURCES",
+      "section_mat": "🔧 EQUIPMENT",
+      "section_comment": "📝 GENERAL COMMENT",
+      "tension": "Tension activated:",
+      "statut_lits": "Overall bed status:",
+      "statut_rh": "HR status:",
+      "statut_mat": "Equipment status:",
+      "alerte": "Alert threshold reached — notify crisis cell",
+      "comment_placeholder_lits": "Bed comment (optional)...",
+      "comment_placeholder_rh": "HR comment (optional)...",
+      "comment_placeholder_mat": "Equipment comment (optional)...",
+      "comment_placeholder_gen": "General situation, context...",
+      "valider": "✓ Validate and send to crisis cell",
+      "annuler": "Cancel",
+      "tension_aucune": "No tension",
+      "tension_1": "Tension level 1",
+      "tension_2": "Tension level 2",
+      "ref_capacite": "Nominal capacity",
+      "ref_tel": "Manager phone"
+    },
+    "synthese": {
+      "service": "Service",
+      "pole": "Pole",
+      "site": "Site",
+      "capacite": "Capacity",
+      "lits_h": "♂ M",
+      "lits_f": "♀ F",
+      "lits_i": "⬡ N",
+      "statut": "Status",
+      "alerte": "Alert",
+      "declare": "Declared"
+    },
+    "silence": "service(s) have not yet declared their situation",
+    "maj": "Updated",
+    "alerte_transmise": "Alert sent to crisis cell — Incident created",
+    "declaration_ok": "✓ Declaration recorded",
+    "declarant_requis": "Please enter the nurse manager name",
+    "sexe_h": "Male beds",
+    "sexe_f": "Female beds",
+    "sexe_i": "Neutral beds"
   }
 }

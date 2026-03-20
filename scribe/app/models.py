@@ -156,3 +156,61 @@ class RexEntry(Base):
     actions_futures = Column(Text, nullable=True)
     lecons          = Column(Text, nullable=True)
     redacteur       = Column(String, nullable=True)
+
+
+# ══════════════════════════════════════════════════════════════
+#  SCRIBE v1.3.0 — Gestion capacitaire des lits
+# ══════════════════════════════════════════════════════════════
+
+class CapaciteReferentiel(Base):
+    """Capacité nominale d'une unité — données fixes, saisies par la direction des soins."""
+    __tablename__ = "capacite_referentiel"
+    id              = Column(Integer, primary_key=True, index=True)
+    service_nom     = Column(String, nullable=False, index=True)
+    uf_code         = Column(String, nullable=True)
+    pole            = Column(String, nullable=True)
+    site            = Column(String, nullable=True)       # Annecy / Saint-Julien / Rumilly / USLD
+    capacite_totale = Column(Integer, default=0)          # capacité nominale totale
+    tension_1       = Column(Integer, default=0)          # lits ouverts en tension niveau 1
+    tension_2       = Column(Integer, default=0)          # lits ouverts en tension niveau 2
+    accept_homme    = Column(Boolean, default=True)       # accepte patients H
+    accept_femme    = Column(Boolean, default=True)       # accepte patients F
+    accept_indiffer = Column(Boolean, default=True)       # chambre indifférente
+    telephone_cadre = Column(String, nullable=True)
+    ordre_affichage = Column(Integer, default=99)
+    actif           = Column(Boolean, default=True)
+    declarations    = relationship("CapaciteDeclaration", back_populates="referentiel",
+                                   cascade="all, delete-orphan")
+
+
+class CapaciteDeclaration(Base):
+    """Déclaration capacitaire d'un cadre — conservée pour historique et REX."""
+    __tablename__ = "capacite_declarations"
+    id              = Column(Integer, primary_key=True, index=True)
+    referentiel_id  = Column(Integer, ForeignKey("capacite_referentiel.id"), nullable=False)
+    referentiel     = relationship("CapaciteReferentiel", back_populates="declarations")
+    horodatage      = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    redacteur       = Column(String, nullable=False)       # prénom+nom du cadre déclarant
+    point           = Column(String, default="matin")      # matin | aprem | soir
+    # Disponibilité lits par genre
+    lits_vides_h    = Column(Integer, default=0)           # lits disponibles hommes
+    lits_vides_f    = Column(Integer, default=0)           # lits disponibles femmes
+    lits_vides_i    = Column(Integer, default=0)           # lits disponibles indifférent
+    # Tensions
+    tension_activee = Column(Integer, default=0)           # 0=non / 1=tension1 / 2=tension2
+    lits_sup        = Column(Integer, default=0)           # lits supplémentaires
+    # Statuts globaux (menus déroulants)
+    statut_lits     = Column(String, default="normal")     # normal|tension|critique|ferme
+    statut_rh       = Column(String, default="complet")    # complet|tension|critique|insuffisant
+    statut_materiel = Column(String, default="ok")         # ok|degrade|critique|hs
+    # Alertes déclarées par le cadre
+    alerte_lits     = Column(Boolean, default=False)
+    alerte_rh       = Column(Boolean, default=False)
+    alerte_materiel = Column(Boolean, default=False)
+    # Textes libres
+    commentaire_lits     = Column(Text, nullable=True)
+    commentaire_rh       = Column(Text, nullable=True)
+    commentaire_materiel = Column(Text, nullable=True)
+    commentaire_general  = Column(Text, nullable=True)
+    # Lien incident créé automatiquement si alerte
+    incident_id     = Column(Integer, ForeignKey("sitrep_entries.id"), nullable=True)

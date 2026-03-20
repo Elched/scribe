@@ -46,7 +46,6 @@ PROVIDER_DEFAULTS = {
         "model": "claude-haiku-4-5-20251001",
     },
     "gemini": {
-        # URL construite dynamiquement avec le modèle
         "url":   "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
         "model": "gemini-2.0-flash",
     },
@@ -76,10 +75,8 @@ class AIConfig:
         self.model    = os.getenv("SCRIBE_IA_MODEL", "")
         self.base_url = os.getenv("SCRIBE_IA_URL", "")
 
-        # Charger depuis config.js si les env vars sont absentes
         self._load_from_config_js()
 
-        # Appliquer les defaults du fournisseur
         defaults = PROVIDER_DEFAULTS.get(self.provider, PROVIDER_DEFAULTS["albert"])
         if not self.model:
             self.model = defaults["model"]
@@ -96,7 +93,6 @@ class AIConfig:
             return
         try:
             raw = open(config_js_path, encoding="utf-8").read()
-            # Extraire le JSON entre "const SCRIBE_CONFIG = " et ";"
             start = raw.find("const SCRIBE_CONFIG = ") + len("const SCRIBE_CONFIG = ")
             end   = raw.rfind(";")
             cfg   = json.loads(raw[start:end])
@@ -110,17 +106,17 @@ class AIConfig:
             if ia.get("url_base") and not os.getenv("SCRIBE_IA_URL"):
                 self.base_url = ia["url_base"]
         except Exception:
-            pass  # config.js absent ou mal formé → on utilise les defaults
+            pass
 
     @property
     def display_name(self) -> str:
         names = {
-            "albert":       "Albert AI (DINUM)",
-            "openai":       f"OpenAI / ChatGPT ({self.model})",
-            "anthropic":    f"Anthropic / Claude ({self.model})",
-            "gemini":       f"Google Gemini ({self.model})",
-            "mistral":      f"Mistral AI ({self.model})",
-            "ollama":       f"Ollama local ({self.model})",
+            "albert":        "Albert AI (DINUM)",
+            "openai":        f"OpenAI / ChatGPT ({self.model})",
+            "anthropic":     f"Anthropic / Claude ({self.model})",
+            "gemini":        f"Google Gemini ({self.model})",
+            "mistral":       f"Mistral AI ({self.model})",
+            "ollama":        f"Ollama local ({self.model})",
             "openai_compat": f"IA locale compatible OpenAI ({self.model})",
         }
         return names.get(self.provider, f"{self.provider} ({self.model})")
@@ -130,7 +126,6 @@ class AIConfig:
         return self.provider in ("ollama", "openai_compat")
 
 
-# Instance globale — chargée au démarrage du serveur
 _ai_config: Optional[AIConfig] = None
 
 
@@ -151,10 +146,7 @@ def reload_ai_config():
 # ── Adaptateurs par fournisseur ─────────────────────────────────────────────
 
 async def _call_openai_compat(cfg: AIConfig, system: str, prompt: str, max_tokens: int) -> str:
-    """
-    Format OpenAI Chat Completions.
-    Utilisé par : OpenAI, Albert, Mistral, Ollama, OpenAI-compat, vLLM, LM Studio...
-    """
+    """Format OpenAI Chat Completions."""
     payload = {
         "model":       cfg.model,
         "messages":    [
@@ -179,7 +171,7 @@ async def _call_openai_compat(cfg: AIConfig, system: str, prompt: str, max_token
     data = resp.json()
     choices = data.get("choices", [])
     if not choices:
-        raise HTTPException(status_code=502, detail=f"IA : réponse vide — {data}")
+        raise HTTPException(status_code=502, detail=f"IA : reponse vide — {data}")
     return choices[0]["message"]["content"]
 
 
@@ -206,7 +198,7 @@ async def _call_anthropic(cfg: AIConfig, system: str, prompt: str, max_tokens: i
     data = resp.json()
     content = data.get("content", [])
     if not content:
-        raise HTTPException(status_code=502, detail="Claude : réponse vide")
+        raise HTTPException(status_code=502, detail="Claude : reponse vide")
     return content[0]["text"]
 
 
@@ -236,7 +228,7 @@ async def _call_gemini(cfg: AIConfig, system: str, prompt: str, max_tokens: int)
     try:
         return data["candidates"][0]["content"]["parts"][0]["text"]
     except (KeyError, IndexError):
-        raise HTTPException(status_code=502, detail=f"Gemini : réponse inattendue — {data}")
+        raise HTTPException(status_code=502, detail=f"Gemini : reponse inattendue — {data}")
 
 
 # ── Point d'entrée universel ────────────────────────────────────────────────
@@ -244,7 +236,7 @@ async def _call_gemini(cfg: AIConfig, system: str, prompt: str, max_tokens: int)
 async def call_ai(system: str, prompt: str, max_tokens: int = 700) -> tuple[str, str]:
     """
     Appelle le fournisseur IA configuré.
-    Retourne (texte_réponse, nom_source).
+    Retourne (texte_reponse, nom_source).
     """
     cfg = get_ai_config()
 
@@ -254,7 +246,6 @@ async def call_ai(system: str, prompt: str, max_tokens: int = 700) -> tuple[str,
         elif cfg.provider == "gemini":
             text = await _call_gemini(cfg, system, prompt, max_tokens)
         else:
-            # albert, openai, mistral, ollama, openai_compat → même format
             text = await _call_openai_compat(cfg, system, prompt, max_tokens)
 
         return text, cfg.display_name
@@ -263,9 +254,16 @@ async def call_ai(system: str, prompt: str, max_tokens: int = 700) -> tuple[str,
         raise
     except httpx.ConnectError:
         provider_label = "serveur local" if cfg.is_local else cfg.provider
+<<<<<<< HEAD
+        if cfg.provider == "ollama":
+            extra = "Verifiez qu'Ollama est demarre."
+        else:
+            extra = "Verifiez votre connexion et la cle API."
+=======
         extra = "Vérifiez votre connexion et la clé API."
         if cfg.provider == "ollama":
             extra = "Vérifiez qu'Ollama est démarré."
+>>>>>>> 5f9caa7b898d2463a4358beffeb5a14af4b016f5
         raise HTTPException(
             status_code=503,
             detail=f"Impossible de joindre {provider_label} ({cfg.base_url}). {extra}"
@@ -273,7 +271,7 @@ async def call_ai(system: str, prompt: str, max_tokens: int = 700) -> tuple[str,
     except httpx.TimeoutException:
         raise HTTPException(
             status_code=504,
-            detail=f"Délai dépassé ({cfg.provider}) — le modèle met trop de temps à répondre."
+            detail=f"Delai depasse ({cfg.provider}) — le modele met trop de temps a repondre."
         )
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"IA indisponible ({cfg.provider}) : {str(e)}")
