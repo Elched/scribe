@@ -1,5 +1,4 @@
 # ── Données sensibles — ne JAMAIS inclure dans l'image ──
-config.xml
 scribe.db
 *.db
 *.sqlite
@@ -40,6 +39,4 @@ logs/
 # ── Tests ──
 tests/
 *.test.py
-config_demo1.xml
-config_demo2.xml
 
