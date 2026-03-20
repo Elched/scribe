@@ -61,7 +61,8 @@ SCRIBE est une plateforme open-source de **gestion de crise et de pilotage capac
 
 | Gestion capacitaire des lits et RH |
 |---|
-| ![Gestion capacitaire ](screenshots/capa.png) | | ![Gestion capacitaire ](screenshots/capad.png) |
+| ![Gestion capacitaire ](screenshots/capa.png) | 
+| ![Gestion capacitaire ](screenshots/capad.png) |
 ---
 
 ### Démarrage rapide
