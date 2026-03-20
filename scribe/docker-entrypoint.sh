@@ -43,6 +43,17 @@ export DATABASE_URL="sqlite:////data/db/scribe.db"
 if [ ! -f /data/db/scribe.db ]; then
     echo "  [init] Premier démarrage — initialisation..."
     python setup.py "$CONFIG_PATH"
+    # Référentiel capacitaire (selon le mode)
+    if echo "$CONFIG_PATH" | grep -q "demo1\|demo"; then
+        python setup_capacite_demo.py 2>/dev/null || true
+        python seed_demo_crise.py 2>/dev/null || true
+        echo "  [init] Mode démo : référentiel capacitaire + scénario crise chargés."
+    else
+        python setup_capacite_demo.py 2>/dev/null || true
+        echo "  [init] Référentiel capacitaire générique chargé."
+        echo "  [init] Pour votre référentiel : python setup_capacite_chag.py (CHAG)"
+        echo "  [init]                          python import_config_xlsx.py (Excel)"
+    fi
     python seed.py
     echo "  [init] Base initialisée."
 else

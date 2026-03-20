@@ -304,5 +304,89 @@
     "met_participants": "Participants max",
     "archive_a_badge": "Archive A",
     "archive_b_badge": "Archive B"
+  },
+  "capacite": {
+    "titre": "Zarządzanie pojemnością",
+    "nav": "POJEMNOŚĆ",
+    "filtres": {
+      "tous": "Wszystkie lokalizacje",
+      "synthese": "Podsumowanie",
+      "cartes": "Karty"
+    },
+    "statuts": {
+      "normal": "Normalny",
+      "tension": "Napięcie",
+      "critique": "Krytyczny",
+      "ferme": "Zamknięty",
+      "inconnu": "Nie zgłoszono"
+    },
+    "statuts_lits": {
+      "normal": "✓ Normalna dostępność",
+      "tension": "⚠ Napięcie",
+      "critique": "🔴 Krytyczny",
+      "ferme": "⛔ Zamknięty"
+    },
+    "statuts_rh": {
+      "complet": "✓ Pełna obsada",
+      "tension": "⚠ Napięcie",
+      "critique": "🔴 Krytyczny",
+      "insuffisant": "⛔ Niewystarczający"
+    },
+    "statuts_mat": {
+      "ok": "✓ Sprawny",
+      "degrade": "⚠ Zdegradowany",
+      "critique": "🔴 Krytyczny",
+      "hs": "⛔ Niesprawny"
+    },
+    "points": {
+      "matin": "🌅 Rano",
+      "aprem": "☀ Popołudnie",
+      "soir": "🌙 Wieczór / Zmiana"
+    },
+    "popup": {
+      "point_titre": "PUNKT ZGŁOSZENIA",
+      "declarant": "ZGŁASZAJĄCA PIELĘGNIARKA ODDZIAŁOWA",
+      "declarant_placeholder": "Imię i nazwisko",
+      "section_lits": "🛏 DOSTĘPNOŚĆ ŁÓŻEK",
+      "section_rh": "👥 ZASOBY LUDZKIE",
+      "section_mat": "🔧 SPRZĘT",
+      "section_comment": "📝 OGÓLNY KOMENTARZ",
+      "tension": "Aktywowane napięcie:",
+      "statut_lits": "Ogólny status łóżek:",
+      "statut_rh": "Status ZL:",
+      "statut_mat": "Status sprzętu:",
+      "alerte": "Próg alarmowy osiągnięty — powiadom komórkę kryzysową",
+      "comment_placeholder_lits": "Komentarz łóżka...",
+      "comment_placeholder_rh": "Komentarz ZL...",
+      "comment_placeholder_mat": "Komentarz sprzęt...",
+      "comment_placeholder_gen": "Ogólna sytuacja...",
+      "valider": "✓ Zatwierdź i wyślij do komórki kryzysowej",
+      "annuler": "Anuluj",
+      "tension_aucune": "Brak napięcia",
+      "tension_1": "Napięcie poziom 1",
+      "tension_2": "Napięcie poziom 2",
+      "ref_capacite": "Pojemność nominalna",
+      "ref_tel": "Tel. pielęgniarki"
+    },
+    "synthese": {
+      "service": "Oddział",
+      "pole": "Pol",
+      "site": "Lokalizacja",
+      "capacite": "Pojemność",
+      "lits_h": "♂ M",
+      "lits_f": "♀ K",
+      "lits_i": "⬡ N",
+      "statut": "Status",
+      "alerte": "Alarm",
+      "declare": "Zgłoszono"
+    },
+    "silence": "oddział(y) nie zgłosił(y) jeszcze swojej sytuacji",
+    "maj": "Zaktualizowano",
+    "alerte_transmise": "Alarm wysłany do komórki kryzysowej — Zdarzenie utworzone",
+    "declaration_ok": "✓ Zgłoszenie zarejestrowane",
+    "declarant_requis": "Podaj nazwisko pielęgniarki oddziałowej",
+    "sexe_h": "Łóżka męskie",
+    "sexe_f": "Łóżka żeńskie",
+    "sexe_i": "Łóżka neutralne"
   }
 }

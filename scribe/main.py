@@ -16,7 +16,7 @@ import app.models  # noqa
 import app.api.status_page  # noqa — enregistre les tables StatusPage
 
 from app.api import sitrep, cellule, releve, cartographie, albert, attachments, i18n
-from app.api import auth, tasks, rapport, federation, status_page
+from app.api import auth, tasks, rapport, federation, status_page, capacite
 
 logging.basicConfig(level=logging.INFO)
 
@@ -43,6 +43,7 @@ app.include_router(tasks.router,        prefix="/api/v1/tasks",        tags=["Ka
 app.include_router(rapport.router,      prefix="/api/v1/rapport",      tags=["Rapport"])
 app.include_router(federation.router,   prefix="/api/v1/federation",   tags=["Fédération"])
 app.include_router(status_page.router,  prefix="/api/v1/status",       tags=["Status Page"])
+app.include_router(capacite.router,     prefix="/api/v1/capacite",     tags=["Capacité"])
 app.include_router(i18n.router,         prefix="",                     tags=["i18n"])
 
 

@@ -77,30 +77,42 @@ def get_uf_to_pole(db: Session = Depends(get_db)):
     POLE_KEYWORDS = {
         'CANCEROLOGIE':                   ['CANCERO','ONCOL','RADIOTHER','HDJ CANC','3C 74'],
         'CARDIOVASCULAIRE':               ['CARDIO','CORONAR','USIC','VASCU','AORTIQUE'],
-        'CHIRURGIE ANESTHESIE':           ['CHIRUR','ANESTHES','BLOC OP','ORTHO','TRAUMA','VISCERAL','ORL','OPHTAL'],
+        'CHIRURGIE ANESTHESIE':           ['CHIRUR','ANESTHES','BLOC','ORTHO','TRAUMA','VISCERAL','ORL','OPHTALMOL','OPHTAL','NEUROCHIR','PLASTIQUE','UROLOG','THORAC'],
         'DNA':                            ['DNA','DPI','ARCHIV'],
-        'FME':                            ['MATERNIT','GYNECO','NEONATO','OBSTETR','SAGE FEMME','ACCOUCHEMENT','FME'],
-        'GERIATRIE':                       ['GERIATR','EHPAD','USLD','SOINS PALLIAT','GERONTOL'],
-        'MEDECINE':                       ['ALLERGO','PNEUMOL','NEUROLOG','HEPATO','GASTRO','ENDOCRIN','DIABETOL','RHUMATO','DERMATO','INFECTIOL','NEPHROL','HEMODIALYS','HEMATO'],
-        'MEDICO-TECHNIQUE ET REEDUCATION':['LABORATOIR','BIOCHIM','MICROBIOL','IMAGERIE','SCANNER','PHARMA','REEDUCATION','KINESITH','ORTHOPH'],
-        'SANTE MENTALE':                  ['PSYCHIATR','SANTE MENTALE','ADDICTOL','UPUP','MONET','PICASSO','GAUGUIN'],
+        'FME':                            ['MATERNIT','GYNECO','NEONAT','OBSTETR','SAGE FEMME','ACCOUCHEMENT','FME','PEDIATR','NOURRISSON','GRAND ENFANT','KANGOUROU'],
+        'GERIATRIE':                      ['GERIATR','EHPAD','USLD','SOINS PALLIAT','GERONTOL','UHR','UCC','SMR'],
+        'MEDECINE':                       ['ALLERGO','PNEUMOL','NEUROLOG','HEPATO','GASTRO','ENDOCRIN','DIABETOL','RHUMATO','DERMATO','INFECTI','NEPHROL','HEMODIALYS','HEMATO','MEDECINE INTERNE','MEDECINE POLYV','MEDECINE SOINS'],
+        'MEDICO-TECHNIQUE ET REEDUCATION':['LABORATOIR','BIOCHIM','MICROBIOL','IMAGERIE','SCANNER','IRM','PHARMA','REEDUCATION','KINESITH','ORTHOPH','ERGOTHER','RADIOLOG'],
+        'SANTE MENTALE':                  ['PSYCHIATR','SANTE MENTALE','ADDICTOL','UPUP','MONET','PICASSO','GAUGUIN','PSY ','UNITE PSY'],
         'SANTE PUBLIQUE ET COMMUNAUTAIRE':['HAD ','PMSI','PREVENTION','HYGIENE','EPIDEMIO','SANTE PUBLIQUE'],
-        'SOINS CRITIQUES':                ['REANIM','USIP','SOINS CRITIQUES','SIPO'],
-        'URGENCES':                       ['URGENCE','SMUR','SAMU','UHCD','UPUM'],
+        'SOINS CRITIQUES':                ['REANIM','REA ','USIP','SOINS CRITIQUES','SIPO','USC ','USI ','SOINS INTENSIF'],
+        'URGENCES':                       ['URGENCE','SAU ','SMUR','SAMU','UHCD','UPUM','ACCUEIL URGENCE','SOINS URGENTS'],
         'IFSI':                           ['IFSI','FORMATION INFIRM'],
-        'SUPPORT':                        ['DIRECTION','DSI','INFORMATIQ','LOGISTIQ','BRANCARDIER','CUISINE','RESTAUR','BLANCHISS','STANDARD','SECURITE','DRH','DAF'],
+        'SUPPORT':                        ['DIRECTION','DSI','INFORMATIQ','LOGISTIQ','BRANCARDIER','CUISINE','RESTAUR','BLANCHISS','STANDARD','SECURITE','DRH','DAF','ADMINIST'],
+    }
+
+    # Pôles valides — correspondent exactement aux cartes de l'onglet SOINS
+    VALID_POLES = {
+        'CANCEROLOGIE','CARDIOVASCULAIRE','CHIRURGIE ANESTHESIE','DNA','FME',
+        'GERIATRIE','MEDECINE','MEDICO-TECHNIQUE ET REEDUCATION','SANTE MENTALE',
+        'SANTE PUBLIQUE ET COMMUNAUTAIRE','SOINS CRITIQUES','URGENCES','IFSI','SUPPORT'
     }
 
     uf_to_pole = {}
     for uf in all_ufs:
-        if uf.pole and not uf.pole.startswith('RAPPEL'):
-            uf_to_pole[uf.code_uf] = uf.pole
-            continue
         lib = (uf.libelle or '').upper()
+        # Priorité 1 : détection par mots-clés dans le libellé (plus fiable que FICOM)
+        matched = None
         for pole, kws in POLE_KEYWORDS.items():
             if any(kw in lib for kw in kws):
-                uf_to_pole[uf.code_uf] = pole
+                matched = pole
                 break
+        if matched:
+            uf_to_pole[uf.code_uf] = matched
+            continue
+        # Priorité 2 : pôle de la base s'il est valide (pas de "Total...", "RAPPEL...")
+        if uf.pole and uf.pole in VALID_POLES:
+            uf_to_pole[uf.code_uf] = uf.pole
 
     return uf_to_pole
 

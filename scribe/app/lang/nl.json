@@ -304,5 +304,89 @@
     "met_participants": "Participants max",
     "archive_a_badge": "Archive A",
     "archive_b_badge": "Archive B"
+  },
+  "capacite": {
+    "titre": "Capaciteitsmanagement",
+    "nav": "CAPACITEIT",
+    "filtres": {
+      "tous": "Alle locaties",
+      "synthese": "Overzicht",
+      "cartes": "Kaarten"
+    },
+    "statuts": {
+      "normal": "Normaal",
+      "tension": "Spanning",
+      "critique": "Kritiek",
+      "ferme": "Gesloten",
+      "inconnu": "Niet opgegeven"
+    },
+    "statuts_lits": {
+      "normal": "✓ Normale beschikbaarheid",
+      "tension": "⚠ Spanning",
+      "critique": "🔴 Kritiek",
+      "ferme": "⛔ Gesloten"
+    },
+    "statuts_rh": {
+      "complet": "✓ Volledig bezet",
+      "tension": "⚠ Spanning",
+      "critique": "🔴 Kritiek",
+      "insuffisant": "⛔ Onvoldoende"
+    },
+    "statuts_mat": {
+      "ok": "✓ Operationeel",
+      "degrade": "⚠ Gedegradeerd",
+      "critique": "🔴 Kritiek",
+      "hs": "⛔ Buiten dienst"
+    },
+    "points": {
+      "matin": "🌅 Ochtend",
+      "aprem": "☀ Middag",
+      "soir": "🌙 Avond / Overdracht"
+    },
+    "popup": {
+      "point_titre": "MELDINGSMOMENT",
+      "declarant": "MELDENDE AFDELINGSMANAGER",
+      "declarant_placeholder": "Voor- en achternaam",
+      "section_lits": "🛏 BEDDENBESCHIKBAARHEID",
+      "section_rh": "👥 HUMAN RESOURCES",
+      "section_mat": "🔧 MATERIAAL",
+      "section_comment": "📝 ALGEMEEN COMMENTAAR",
+      "tension": "Activeerde spanning:",
+      "statut_lits": "Algehele beddenstatus:",
+      "statut_rh": "HR-status:",
+      "statut_mat": "Materiaelstatus:",
+      "alerte": "Drempelwaarde bereikt — meld aan crisiscel",
+      "comment_placeholder_lits": "Commentaar bedden...",
+      "comment_placeholder_rh": "Commentaar HR...",
+      "comment_placeholder_mat": "Commentaar materiaal...",
+      "comment_placeholder_gen": "Algemene situatie...",
+      "valider": "✓ Bevestigen en sturen naar crisiscel",
+      "annuler": "Annuleren",
+      "tension_aucune": "Geen spanning",
+      "tension_1": "Spanning niveau 1",
+      "tension_2": "Spanning niveau 2",
+      "ref_capacite": "Nominale capaciteit",
+      "ref_tel": "Tel. manager"
+    },
+    "synthese": {
+      "service": "Dienst",
+      "pole": "Pool",
+      "site": "Locatie",
+      "capacite": "Capaciteit",
+      "lits_h": "♂ M",
+      "lits_f": "♀ V",
+      "lits_i": "⬡ N",
+      "statut": "Status",
+      "alerte": "Alarm",
+      "declare": "Gemeld"
+    },
+    "silence": "dienst(en) hebben hun situatie nog niet gemeld",
+    "maj": "Bijgewerkt",
+    "alerte_transmise": "Alarm verzonden naar crisiscel — Incident aangemaakt",
+    "declaration_ok": "✓ Melding geregistreerd",
+    "declarant_requis": "Voer de naam van de afdelingsmanager in",
+    "sexe_h": "Mannenbedden",
+    "sexe_f": "Vrouwenbedden",
+    "sexe_i": "Neutrale bedden"
   }
 }

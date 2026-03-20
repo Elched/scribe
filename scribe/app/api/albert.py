@@ -182,21 +182,37 @@ async def list_models():
 
 class AnalyseCriseRequest(BaseModel):
     question: str
+    main_courante: Optional[str] = None   # contexte main courante ou capacitaire
+    type_analyse: Optional[str] = "crise" # "crise" | "capacitaire"
     mode: Optional[str] = "analyse_crise"
 
 @router.post("/analyse-crise")
 async def analyse_crise(req: AnalyseCriseRequest):
-    """Répond à une question libre sur une main courante de crise (debriefing)."""
-    system = (
-        "Tu es un expert en gestion de crise hospitalière et en analyse post-incident. "
-        "On te fournit une main courante chronologique de crise et une question. "
-        "Réponds de façon concise, structurée et opérationnelle. "
-        "Identifie les patterns, délais critiques, décisions manquées ou bonnes pratiques. "
-        "Réponds toujours en français sauf si la question est dans une autre langue."
-    )
+    """Répond à une question libre sur une main courante ou situation capacitaire."""
+    if req.type_analyse == "capacitaire":
+        system = (
+            "Tu es un expert en gestion capacitaire hospitalière. "
+            "On te fournit l'état capacitaire actuel d'un établissement (lits disponibles, "
+            "tensions RH, statut matériel) et une question de la cellule de crise. "
+            "Réponds de façon concise, opérationnelle et priorisée. "
+            "Identifie les risques immédiats, propose des actions concrètes. "
+            "Réponds toujours en français."
+        )
+    else:
+        system = (
+            "Tu es un expert en gestion de crise hospitalière et en analyse post-incident. "
+            "On te fournit une main courante chronologique de crise et une question. "
+            "Réponds de façon concise, structurée et opérationnelle. "
+            "Identifie les patterns, délais critiques, décisions manquées ou bonnes pratiques. "
+            "Réponds toujours en français sauf si la question est dans une autre langue."
+        )
+    # Injecter le contexte dans la question si fourni
+    full_prompt = req.question
+    if req.main_courante:
+        full_prompt = f"CONTEXTE:\n{req.main_courante}\n\nQUESTION: {req.question}"
     try:
-        from app.api.ai_router import call_ia
-        reponse = await call_ia(system=system, user=req.question, max_tokens=600)
-        return {"analyse": reponse}
+        from app.api.ai_router import call_ai
+        text, source = await call_ai(system=system, prompt=full_prompt, max_tokens=700)
+        return {"analyse": text, "source": source}
     except Exception as e:
         return {"analyse": f"Erreur IA : {str(e)}"}

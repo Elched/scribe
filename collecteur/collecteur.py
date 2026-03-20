@@ -182,6 +182,58 @@ async def receive_status_push(
     return {"ok": True, "sigle": sigle}
 
 
+@app.post("/api/push-capacite")
+async def receive_push_capacite(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
+):
+    """Reçoit la synthèse capacitaire d'un établissement (état sanitaire / lits).
+    Route séparée de /api/push — peut être exposée aux ARS/GHT uniquement.
+    Contrôlée par <sync_sanitaire>true</sync_sanitaire> dans config.xml.
+    """
+    sigle = get_etab_from_token(credentials)
+    if not sigle:
+        raise HTTPException(status_code=401, detail="Token inconnu ou révoqué")
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="JSON invalide")
+
+    payload["_received_at"] = datetime.now(timezone.utc).isoformat()
+    payload["_source_ip"]   = request.client.host
+    payload["sigle"]        = sigle
+
+    # Stocker dans un dict séparé des données de crise
+    if "capacite" not in etablissements.get(sigle, {}):
+        if sigle not in etablissements:
+            etablissements[sigle] = {}
+    etablissements[sigle]["_capacite"] = payload
+    save_data()
+
+    logger.info(f"Push capacité reçu — {sigle} | {payload.get('nb_services',0)} services")
+    return {"ok": True, "sigle": sigle, "received_at": payload["_received_at"]}
+
+
+@app.get("/api/capacite")
+async def get_capacite_all():
+    """Agrégation capacitaire de tous les établissements — dashboard ARS/GHT."""
+    result = []
+    for sigle, data in etablissements.items():
+        cap = data.get("_capacite")
+        if not cap:
+            continue
+        result.append({
+            "sigle":       sigle,
+            "nom":         data.get("etablissement", {}).get("nom", sigle),
+            "received_at": cap.get("_received_at"),
+            "synthese":    cap.get("synthese", {}),
+            "alertes":     cap.get("alertes", []),
+            "nb_services": cap.get("nb_services", 0),
+            "nb_alertes":  cap.get("nb_alertes", 0),
+        })
+    return result
+
+
 @app.get("/api/status/{sigle}")
 async def get_etab_status(sigle: str):
     """Retourne la page de statut publique d'un établissement (si disponible)."""
@@ -945,7 +997,11 @@ function switchTab(name, btn){
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('pane-' + name).classList.add('active');
-  if(name === 'carto') initMap();
+  if(name === 'carto') {
+    initMap();
+    // Petit délai pour que Leaflet calcule les dimensions du div
+    setTimeout(() => { if(allData.length) renderMapMarkers(); }, 100);
+  }
   if(name === 'statuts') renderStatuts();
 }
 
@@ -957,6 +1013,7 @@ async function loadData(){
     const r = await fetch('/api/summary');
     allData = await r.json();
     renderAll();
+    // Mettre à jour marqueurs si carte initialisée, sinon au prochain switchTab
     if(map) renderMapMarkers();
     document.getElementById('tick-txt').textContent =
       'Actualisé ' + new Date().toLocaleTimeString('fr-FR');

@@ -304,5 +304,89 @@
     "met_participants": "Participants max",
     "archive_a_badge": "Archive A",
     "archive_b_badge": "Archive B"
+  },
+  "capacite": {
+    "titre": "Bettkapazitätsmanagement",
+    "nav": "KAPAZITÄT",
+    "filtres": {
+      "tous": "Alle Standorte",
+      "synthese": "Zusammenfassung",
+      "cartes": "Karten"
+    },
+    "statuts": {
+      "normal": "Normal",
+      "tension": "Anspannung",
+      "critique": "Kritisch",
+      "ferme": "Geschlossen",
+      "inconnu": "Nicht gemeldet"
+    },
+    "statuts_lits": {
+      "normal": "✓ Normale Verfügbarkeit",
+      "tension": "⚠ Anspannung",
+      "critique": "🔴 Kritisch",
+      "ferme": "⛔ Geschlossen"
+    },
+    "statuts_rh": {
+      "complet": "✓ Vollständige Besetzung",
+      "tension": "⚠ Anspannung",
+      "critique": "🔴 Kritisch",
+      "insuffisant": "⛔ Unzureichend"
+    },
+    "statuts_mat": {
+      "ok": "✓ Betriebsbereit",
+      "degrade": "⚠ Beeinträchtigt",
+      "critique": "🔴 Kritisch",
+      "hs": "⛔ Außer Betrieb"
+    },
+    "points": {
+      "matin": "🌅 Morgen",
+      "aprem": "☀ Nachmittag",
+      "soir": "🌙 Abend / Übergabe"
+    },
+    "popup": {
+      "point_titre": "MELDEZEITPUNKT",
+      "declarant": "MELDENDE STATIONSLEITUNG",
+      "declarant_placeholder": "Vor- und Nachname",
+      "section_lits": "🛏 BETTVERFÜGBARKEIT",
+      "section_rh": "👥 PERSONAL",
+      "section_mat": "🔧 AUSRÜSTUNG",
+      "section_comment": "📝 ALLGEMEINER KOMMENTAR",
+      "tension": "Aktivierte Anspannung:",
+      "statut_lits": "Gesamt-Bettstatus:",
+      "statut_rh": "Personalstatus:",
+      "statut_mat": "Ausrüstungsstatus:",
+      "alerte": "Alarmschwelle erreicht — Krisenstab melden",
+      "comment_placeholder_lits": "Kommentar Betten...",
+      "comment_placeholder_rh": "Kommentar Personal...",
+      "comment_placeholder_mat": "Kommentar Ausrüstung...",
+      "comment_placeholder_gen": "Allgemeine Lage...",
+      "valider": "✓ Bestätigen und an Krisenstab senden",
+      "annuler": "Abbrechen",
+      "tension_aucune": "Keine Anspannung",
+      "tension_1": "Anspannung Stufe 1",
+      "tension_2": "Anspannung Stufe 2",
+      "ref_capacite": "Nennkapazität",
+      "ref_tel": "Stationsleitungstelefon"
+    },
+    "synthese": {
+      "service": "Dienst",
+      "pole": "Pol",
+      "site": "Standort",
+      "capacite": "Kapazität",
+      "lits_h": "♂ M",
+      "lits_f": "♀ F",
+      "lits_i": "⬡ N",
+      "statut": "Status",
+      "alerte": "Alarm",
+      "declare": "Gemeldet"
+    },
+    "silence": "Dienst(e) haben noch keine Meldung abgegeben",
+    "maj": "Aktualisiert",
+    "alerte_transmise": "Alarm an Krisenstab gesendet — Vorfall erstellt",
+    "declaration_ok": "✓ Meldung erfasst",
+    "declarant_requis": "Bitte Stationsleitungsname eingeben",
+    "sexe_h": "Männerbetten",
+    "sexe_f": "Frauenbetten",
+    "sexe_i": "Allgemeine Betten"
   }
 }
