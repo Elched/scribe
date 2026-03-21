@@ -6,14 +6,43 @@
 #   docker compose pull && docker compose up -d  → mise à jour
 
 services:
+  traefik:
+    image: traefik:v3.0
+    container_name: scribe-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Dashboard (only for development)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - traefik_data:/data
+    networks:
+      - scribe_default
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls.certresolver=myresolver"
+
   scribe:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: scribe
     restart: on-failure:3  # Évite la boucle infinie si config manquante
-    ports:
-      - "${SCRIBE_PORT:-8000}:8000"
+    expose:
+      - "8000"
     volumes:
       # Données persistantes : base SQLite, uploads, config générée
       - scribe_data:/data
@@ -38,7 +67,27 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+    networks:
+      - scribe_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.scribe.rule=Host(`localhost`)"
+      - "traefik.http.routers.scribe.entrypoints=websecure"
+      - "traefik.http.routers.scribe.service=scribe"
+      - "traefik.http.routers.scribe.tls.certresolver=myresolver"
+      - "traefik.http.services.scribe.loadbalancer.server.port=8000"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
 
 volumes:
   scribe_data:
     driver: local
+  traefik_data:
+    driver: local
+
+networks:
+  scribe_default:
+    driver: bridge

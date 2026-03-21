@@ -1,0 +1,34 @@
+api:
+  dashboard: true
+  insecure: true  # Only for development - remove in production
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        certResolver: myresolver
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: scribe_default
+  file:
+    filename: /etc/traefik/dynamic.yml
+
+certificatesResolvers:
+  myresolver:
+    tlsChallenge: {}
+
+log:
+  level: INFO
+
+accessLog: {}
