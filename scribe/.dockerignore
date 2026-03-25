@@ -2,6 +2,7 @@
 scribe.db
 *.db
 *.sqlite
+config_demo2.xml
 
 # ── Données runtime ──
 uploads/*
@@ -23,6 +24,8 @@ env/
 
 # ── Autres env ──
 *.bat
+docker-compose.yml
+
 
 
 # ── OS / IDE ──

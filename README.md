@@ -37,6 +37,12 @@ SCRIBE est une plateforme open-source de **gestion de crise et de pilotage capac
 
 ---
 
+### Installation en un clic en mode simple établissement avec Docker Compose
+- Modifier config.xml pour le faire correspondre à votre établissement
+- Executer la commande (sudo) docker compose up -d
+
+ATTENTION: le certificat est autosigné et l'interface d'administration de Traeffik est publiée sur le port 8080. A modifier avant mise en production
+
 ### Captures d'écran
 
 | Onglet VEILLE — Gestion des incidents | Onglet SOINS — Cartographie de situation |
@@ -419,7 +425,7 @@ WantedBy=multi-user.target
 
 ---
 
-## 🇬🇧 SCRIBE — Hospital Crisis Management Log
+## EN SCRIBE — Hospital Crisis Management Log
 
 SCRIBE is an open-source **hospital crisis management and bed capacity monitoring platform** developed by the CISO of Centre Hospitalier Annecy-Genevois (CHAG). It provides a complete digital crisis log, real-time capacity tracking, a multi-facility territorial collector, and an AI-powered post-crisis debriefing module.
 
@@ -430,6 +436,12 @@ SCRIBE is an open-source **hospital crisis management and bed capacity monitorin
 **Designed for non-technical staff** — nurse managers, directors, crisis coordinators — SCRIBE requires no cloud, no LDAP, and runs fully offline on an isolated network.
 
 ---
+
+### One-liner start with Docker Compose
+- Update config.xml so that it reflects your hospital details
+- Run ```sudo docker compose up -d ```
+
+BEWARE: Certificate is self signed and Traeffik management interface is published on port 8080. Change this before production.
 
 ### Quick Start
 

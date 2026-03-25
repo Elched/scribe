@@ -1,0 +1,15 @@
+http:
+  routers:
+    scribe-router:
+      rule: "Host(`localhost`)"
+      entryPoints:
+        - websecure
+      service: scribe-service
+      tls:
+        certResolver: myresolver
+
+  services:
+    scribe-service:
+      loadBalancer:
+        servers:
+          - url: "http://scribe:8000"
