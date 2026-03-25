@@ -36,7 +36,7 @@ services:
       - "traefik.http.routers.traefik.tls.certresolver=myresolver"
 
   scribe:
-    image: elched/hospsec:latest  
+    image: soc4healthlyon/scribe:latest 
     #build:
    #   context: .
    #   dockerfile: Dockerfile
