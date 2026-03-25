@@ -26,7 +26,10 @@ providers:
 
 certificatesResolvers:
   myresolver:
-    tlsChallenge: {}
+    acme:
+      email: "admin@example.com"   # change to your real email in production
+      storage: "/data/acme.json"
+      tlsChallenge: {}
 
 log:
   level: INFO

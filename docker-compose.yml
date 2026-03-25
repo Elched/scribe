@@ -36,9 +36,10 @@ services:
       - "traefik.http.routers.traefik.tls.certresolver=myresolver"
 
   scribe:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: elched/hospsec:latest  
+    #build:
+   #   context: .
+   #   dockerfile: Dockerfile
     container_name: scribe
     restart: on-failure:3  # Évite la boucle infinie si config manquante
     expose:
@@ -78,7 +79,7 @@ services:
       - "traefik.http.services.scribe.loadbalancer.server.port=8000"
     security_opt:
       - no-new-privileges:true
-    read_only: true
+    read_only: false  # required so startup can adjust /app/uploads symlink
     tmpfs:
       - /tmp
 

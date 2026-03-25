@@ -13,9 +13,12 @@ echo ""
 
 # Lien symbolique base de données (au cas où le volume n'était pas monté au build)
 mkdir -p /data/uploads /data/db
-if [ ! -L /app/uploads ]; then
-    rm -rf /app/uploads
-    ln -sf /data/uploads /app/uploads
+if [ -L /app/uploads ]; then
+    echo "  [uploads] /app/uploads already symlink"
+elif [ -d /app/uploads ] || [ -f /app/uploads ]; then
+    echo "  [uploads] /app/uploads exists but is not symlink. Skipping rewrite because /app is read-only. Ensure /app/uploads points to /data/uploads"
+else
+    ln -sf /data/uploads /app/uploads || true
 fi
 
 # Config XML : priorité à /data/config.xml (monté par volume), sinon /app/config.xml, sinon config_demo1.xml
