@@ -118,10 +118,13 @@ python scribe/seed_demo_crise.py
 python scribe/main.py
 # Open http://localhost:8000 (local dev server, no TLS)
 ```
+
+```
 python scribe/seed_demo_crise.py
 python scribe/main.py
+# Open http://localhost:8000 (local dev server, no TLS)
 ```
-Open http://localhost:8000
+
 ---
 
 ## ✨ Main Features
