@@ -9,6 +9,25 @@
 ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═════╝ ╚══════╝
 ```
 
+## EN SCRIBE — Hospital Crisis Management Log
+
+SCRIBE is an open-source **hospital crisis management and bed capacity monitoring platform** developed by the CISO of Centre Hospitalier Annecy-Genevois (CHAG). It provides a complete digital crisis log, real-time capacity tracking, a multi-facility territorial collector, and an AI-powered post-crisis debriefing module.
+
+**Dual use** — SCRIBE is designed to be useful **both in normal operations and during crises**:
+- **Normal mode**: daily capacity tracking (beds, staff, equipment), 3 declarations/day by nurse managers, dashboard for nursing directors and HR
+- **Crisis mode**: incident log, crisis room, operational kanban, public bulletins, territorial GHT/ARS coordination
+
+**Designed for non-technical staff** — nurse managers, directors, crisis coordinators — SCRIBE requires no cloud, no LDAP, and runs fully offline on an isolated network.
+
+---
+
+### One-liner start with Docker Compose
+- Update config.xml so that it reflects your hospital details
+- Run ```sudo docker compose up -d ```
+- Access SCRIBE at `https://localhost` (accept the self-signed certificate warning)
+- Self-signed HTTPS certificate is automatically generated on first run for secure internal communication
+- Traefik management interface is published on port 8080 — restrict access in production
+
 # 🏥 SCRIBE — Hospital Crisis Management Log
 
 [![Version](https://img.shields.io/badge/version-1.3.0-blue)](https://github.com/nocomp/scribe)
@@ -215,7 +234,7 @@ docker compose logs -f
 ```
 
 **Access SCRIBE:**
-- **HTTPS (port 443):** `https://192.168.1.50` or `https://localhost`
+- **HTTPS (port 443):** `https://yourIP` or `https://localhost`
 - **HTTP (port 80):** Redirects to HTTPS automatically
 - **Default credentials:** `dircrise` / `Scribe2026!` (change in production)
 
@@ -358,24 +377,6 @@ WantedBy=multi-user.target
 
 ---
 
-## EN SCRIBE — Hospital Crisis Management Log
-
-SCRIBE is an open-source **hospital crisis management and bed capacity monitoring platform** developed by the CISO of Centre Hospitalier Annecy-Genevois (CHAG). It provides a complete digital crisis log, real-time capacity tracking, a multi-facility territorial collector, and an AI-powered post-crisis debriefing module.
-
-**Dual use** — SCRIBE is designed to be useful **both in normal operations and during crises**:
-- **Normal mode**: daily capacity tracking (beds, staff, equipment), 3 declarations/day by nurse managers, dashboard for nursing directors and HR
-- **Crisis mode**: incident log, crisis room, operational kanban, public bulletins, territorial GHT/ARS coordination
-
-**Designed for non-technical staff** — nurse managers, directors, crisis coordinators — SCRIBE requires no cloud, no LDAP, and runs fully offline on an isolated network.
-
----
-
-### One-liner start with Docker Compose
-- Update config.xml so that it reflects your hospital details
-- Run ```sudo docker compose up -d ```
-- Access SCRIBE at `https://localhost` (accept the self-signed certificate warning)
-- Self-signed HTTPS certificate is automatically generated on first run for secure internal communication
-- Traefik management interface is published on port 8080 — restrict access in production
 
 ### Quick Start
 
