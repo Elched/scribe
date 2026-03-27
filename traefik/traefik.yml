@@ -4,14 +4,14 @@ api:
 
 entryPoints:
   web:
-    address: ":80"
+    address: "0.0.0.0:80"  # Listen on all interfaces
     http:
       redirections:
         entryPoint:
           to: websecure
           scheme: https
   websecure:
-    address: ":443"
+    address: "0.0.0.0:443"  # Listen on all interfaces
     http:
       tls:
         certResolver: myresolver

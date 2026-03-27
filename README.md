@@ -60,6 +60,39 @@ docker compose up -d
 # Open http://localhost:8000 (demo: dircrise / Scribe2026!)
 ```
 
+#### 🌐 Local Network (LAN) Access
+
+To access SCRIBE from remote computers on the same hospital network:
+
+1. **Find your server's IP address:**
+   ```powershell
+   ipconfig /all
+   # Look for IPv4 Address (e.g., 192.168.1.50 or 10.0.0.50)
+   ```
+
+2. **Create or update `.env` file:**
+   ```bash
+   SCRIBE_HOST=192.168.1.50
+   # Or use hostname if DNS is configured:
+   # SCRIBE_HOST=scribe.hospital.local
+   ```
+
+3. **Update CORS for remote access:**
+   ```bash
+   CORS_ORIGINS=http://192.168.1.50,http://192.168.1.50:80,https://192.168.1.50:443,http://localhost
+   ```
+
+4. **Restart containers:**
+   ```powershell
+   docker compose up -d
+   ```
+
+5. **Access from remote computer:**
+   - From same LAN: `http://192.168.1.50`
+   - From another network (VPN): Configure firewall & reverse proxy rules
+
+**Note:** In production with HTTPS/TLS, use valid certificates (not self-signed) to avoid browser warnings.
+
 ### Local development (no Docker)
 
 ```powershell

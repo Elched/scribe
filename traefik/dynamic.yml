@@ -1,15 +1,28 @@
 http:
   routers:
-    scribe-router:
-      rule: "Host(`localhost`)"
+    scribe-router-secure:
+      rule: "HostRegexp(`.*`)"
       entryPoints:
         - websecure
       service: scribe-service
       tls:
         certResolver: myresolver
+      priority: 10
+    
+    scribe-router-http:
+      rule: "HostRegexp(`.*`)"
+      entryPoints:
+        - web
+      service: scribe-service
+      priority: 5
 
   services:
     scribe-service:
       loadBalancer:
         servers:
           - url: "http://scribe:8000"
+  
+  middlewares:
+    auth:
+      basicAuth:
+        users: []  # Add users here for Traefik dashboard protection if needed

@@ -1,9 +1,14 @@
 # ── SCRIBE — docker-compose.yml (version open-source) ─────────────────────
 # Usage :
-#   docker compose up -d          → premier démarrage
-#   docker compose down           → arrêt
-#   docker compose logs -f        → logs en temps réel
-#   docker compose pull && docker compose up -d  → mise à jour
+#   docker compose up -d          → first start
+#   docker compose down           → stop all services
+#   docker compose logs -f        → view logs in real-time
+#   docker compose pull && docker compose up -d  → update
+#
+# For LAN access:
+#   1. Set SCRIBE_HOST in .env to your server's IP or hostname
+#   2. Update CORS_ORIGINS if needed
+#   3. Run: docker compose up -d
 
 services:
   traefik:
@@ -11,9 +16,9 @@ services:
     container_name: scribe-traefik
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"  # Dashboard (only for development)
+      - "0.0.0.0:80:80"    # Listen on all interfaces (HTTP)
+      - "0.0.0.0:443:443"  # Listen on all interfaces (HTTPS)
+      - "0.0.0.0:8080:8080" # Dashboard (development only — restrict in production)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
@@ -54,6 +59,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - SCRIBE_SECRET=${SCRIBE_SECRET:-change-me-in-production}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Scribe2026!}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost,http://localhost:8000}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -64,8 +70,8 @@ services:
       - scribe_default
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.scribe.rule=Host(`localhost`)"
-      - "traefik.http.routers.scribe.entrypoints=websecure"
+      - "traefik.http.routers.scribe.rule=Host(`${SCRIBE_HOST:localhost}`)"
+      - "traefik.http.routers.scribe.entrypoints=websecure,web"
       - "traefik.http.routers.scribe.service=scribe"
       - "traefik.http.routers.scribe.tls.certresolver=myresolver"
       - "traefik.http.services.scribe.loadbalancer.server.port=8000"
