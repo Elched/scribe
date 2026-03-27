@@ -9,16 +9,6 @@
 ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═════╝ ╚══════╝
 ```
 
-## EN SCRIBE — Hospital Crisis Management Log
-
-SCRIBE is an open-source **hospital crisis management and bed capacity monitoring platform** developed by the CISO of Centre Hospitalier Annecy-Genevois (CHAG). It provides a complete digital crisis log, real-time capacity tracking, a multi-facility territorial collector, and an AI-powered post-crisis debriefing module.
-
-**Dual use** — SCRIBE is designed to be useful **both in normal operations and during crises**:
-- **Normal mode**: daily capacity tracking (beds, staff, equipment), 3 declarations/day by nurse managers, dashboard for nursing directors and HR
-- **Crisis mode**: incident log, crisis room, operational kanban, public bulletins, territorial GHT/ARS coordination
-
-**Designed for non-technical staff** — nurse managers, directors, crisis coordinators — SCRIBE requires no cloud, no LDAP, and runs fully offline on an isolated network.
-
 ---
 
 ### One-liner start with Docker Compose
@@ -38,6 +28,16 @@ SCRIBE is an open-source **hospital crisis management and bed capacity monitorin
 </div>
 
 > 📋 **Real-time incident logging, capacity management, and crisis coordination** — offline first, designed for healthcare
+
+
+SCRIBE is an open-source **hospital crisis management and bed capacity monitoring platform** developed by the CISO of Centre Hospitalier Annecy-Genevois (CHAG). It provides a complete digital crisis log, real-time capacity tracking, a multi-facility territorial collector, and an AI-powered post-crisis debriefing module.
+
+**Dual use** — SCRIBE is designed to be useful **both in normal operations and during crises**:
+- **Normal mode**: daily capacity tracking (beds, staff, equipment), 3 declarations/day by nurse managers, dashboard for nursing directors and HR
+- **Crisis mode**: incident log, crisis room, operational kanban, public bulletins, territorial GHT/ARS coordination
+
+**Designed for non-technical staff** — nurse managers, directors, crisis coordinators — SCRIBE requires no cloud, no LDAP, and runs fully offline on an isolated network.
+
 
 ---
 
