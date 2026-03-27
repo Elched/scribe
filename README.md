@@ -21,6 +21,8 @@
 
 </div>
 
+[🇫🇷 Français](README_FR.MD)
+
 Overview
 --------
 
