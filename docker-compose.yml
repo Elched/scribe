@@ -23,6 +23,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./traefik/generate-certs.sh:/entrypoint-init.sh:ro
       - traefik_data:/data
     networks:
       - scribe_default
@@ -32,7 +33,9 @@ services:
     tmpfs:
       - /tmp
     command:
-      - "--configFile=/etc/traefik/traefik.yml"
+      - "/bin/sh"
+      - "-c"
+      - "/entrypoint-init.sh && exec traefik --configFile=/etc/traefik/traefik.yml"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"

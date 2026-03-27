@@ -26,10 +26,19 @@ providers:
 
 certificatesResolvers:
   myresolver:
-    acme:
-      email: "admin@example.com"   # change to your real email in production
-      storage: "/data/acme.json"
-      tlsChallenge: {}
+    # Self-signed certificate for hospital LAN deployment
+    # Suitable for environments without internet access
+    # Traefik v3 uses self-signed TLS by default when no ACME is configured
+    tls:
+      minVersion: VersionTLS12
+
+tls:
+  stores:
+    default:
+      # Self-signed certificate will be generated automatically on first run
+      defaultCertificate:
+        certFile: /data/certs/scribe.crt
+        keyFile: /data/certs/scribe.key
 
 log:
   level: INFO

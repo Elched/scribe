@@ -57,7 +57,8 @@ SCRIBE is an open-source crisis management and bed-capacity coordination applica
 git clone https://github.com/nocomp/scribe.git
 cd scribe
 docker compose up -d
-# Open http://localhost:8000 (demo: dircrise / Scribe2026!)
+# Open https://localhost (demo: dircrise / Scribe2026!)
+# ⚠️ Note: Self-signed certificate will show browser warning, accept it to proceed
 ```
 
 #### 🌐 Local Network (LAN) Access
@@ -79,7 +80,7 @@ To access SCRIBE from remote computers on the same hospital network:
 
 3. **Update CORS for remote access:**
    ```bash
-   CORS_ORIGINS=http://192.168.1.50,http://192.168.1.50:80,https://192.168.1.50:443,http://localhost
+   CORS_ORIGINS=https://192.168.1.50,http://localhost
    ```
 
 4. **Restart containers:**
@@ -88,16 +89,21 @@ To access SCRIBE from remote computers on the same hospital network:
    ```
 
 5. **Access from remote computer:**
-   - From same LAN: `http://192.168.1.50`
-   - From another network (VPN): Configure firewall & reverse proxy rules
+   - From same LAN: `https://192.168.1.50` (port 443)
+   - Accept the self-signed certificate warning in your browser
+   - Login with: `dircrise` / `Scribe2026!` (default credentials)
 
-**Note:** In production with HTTPS/TLS, use valid certificates (not self-signed) to avoid browser warnings.
+**Note:** SCRIBE uses self-signed HTTPS certificates suitable for hospital LAN environments without internet access. This is secure for internal use and avoids dependency on external certificate authorities.
 
 ### Local development (no Docker)
 
 ```powershell
 pip install -r scribe/requirements.txt
 python scribe/setup_demo1.py
+python scribe/seed_demo_crise.py
+python scribe/main.py
+# Open http://localhost:8000 (local dev server, no TLS)
+```
 python scribe/seed_demo_crise.py
 python scribe/main.py
 # Open http://localhost:8000
@@ -208,6 +214,13 @@ docker compose up -d --remove-orphans
 docker compose logs -f
 ```
 
+**Access SCRIBE:**
+- **HTTPS (port 443):** `https://192.168.1.50` or `https://localhost`
+- **HTTP (port 80):** Redirects to HTTPS automatically
+- **Default credentials:** `dircrise` / `Scribe2026!` (change in production)
+
+**Note on certificates:** SCRIBE uses self-signed HTTPS certificates for secure communication. Your browser will warn you about the certificate — this is normal and safe for internal hospital use. Accept the warning to proceed.
+
 ### ⚠️ Important Notes
 
 | Item | Note |
@@ -216,7 +229,9 @@ docker compose logs -f
 | **Database** | Use PostgreSQL in production instead of SQLite |
 | **.env file** | Never commit to git — add to `.gitignore` |
 | **Local build** | Uncomment `build:` in `docker-compose.yml` for local code |
-| **TLS/Traefik** | Configure proper certificates and reverse proxy |
+| **HTTPS Certificates** | Self-signed, suitable for hospital LAN. For external access, use valid certificates (Let's Encrypt, enterprise CA) |
+| **Port 443** | HTTPS access on port 443 (redirects from 80 automatically) |
+| **Traefik Dashboard** | Published on port 8080 for development — restrict access or disable in production |
 
 ---
 
@@ -284,7 +299,7 @@ Use environment variables to keep secrets out of source control. Below are recom
 # SCRIBE application
 SCRIBE_SECRET=ReplaceWithAStrongRandomValue_32chars_or_more
 ADMIN_PASSWORD=ChangeThisAdminPass!
-CORS_ORIGINS=https://your.domain.example,https://admin.your.domain.example
+CORS_ORIGINS=https://your.domain.example,https://admin.your.domain.example,https://localhost
 LOG_LEVEL=info
 
 # IA provider (optional)
@@ -358,8 +373,9 @@ SCRIBE is an open-source **hospital crisis management and bed capacity monitorin
 ### One-liner start with Docker Compose
 - Update config.xml so that it reflects your hospital details
 - Run ```sudo docker compose up -d ```
-
-BEWARE: Certificate is self signed and Traeffik management interface is published on port 8080. Change this before production.
+- Access SCRIBE at `https://localhost` (accept the self-signed certificate warning)
+- Self-signed HTTPS certificate is automatically generated on first run for secure internal communication
+- Traefik management interface is published on port 8080 — restrict access in production
 
 ### Quick Start
 
@@ -367,9 +383,11 @@ BEWARE: Certificate is self signed and Traeffik management interface is publishe
 
 ```bash
 git clone https://github.com/nocomp/scribe
-cd scribe/scribe
+cd scribe
 docker compose up -d
-# → http://localhost:8000   login: dircrise / Scribe2026!
+# → https://localhost (HTTPS on port 443)
+# → Login: dircrise / Scribe2026!
+# ⚠️ Accept self-signed certificate warning in browser
 ```
 
 With custom config:
