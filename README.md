@@ -120,9 +120,8 @@ python scribe/main.py
 ```
 python scribe/seed_demo_crise.py
 python scribe/main.py
-# Open http://localhost:8000
 ```
-
+Open http://localhost:8000
 ---
 
 ## ✨ Main Features
