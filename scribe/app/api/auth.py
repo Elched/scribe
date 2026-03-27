@@ -3,7 +3,8 @@ api/auth.py — Authentification SCRIBE v5
 Comptes locaux (pas LDAP) : admin crée les directeurs via /admin
 JWT simple, stocké en localStorage côté client
 """
-import os, hashlib, secrets
+import os
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -11,6 +12,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from jose import jwt, JWTError
+from passlib.context import CryptContext
 
 from app.database import get_db
 from app.models import User, Notification
@@ -18,18 +20,28 @@ from app.models import User, Notification
 router   = APIRouter()
 security = HTTPBearer(auto_error=False)
 
-SECRET_KEY = os.getenv("SCRIBE_SECRET", "scribe-chag-v5-secret-2026-!xK9p")
+# Secure password hashing with bcrypt
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Secret key - MUST be set via environment variable in production
+SECRET_KEY = os.getenv("SCRIBE_SECRET", None)
+if not SECRET_KEY:
+    raise ValueError("SCRIBE_SECRET environment variable must be set in production")
+
 ALGORITHM  = "HS256"
 TOKEN_TTL  = 12  # heures
 
 ADMIN_USER = "dircrise"
-ADMIN_PASS = "Scribe2026!"
+ADMIN_PASS = os.getenv("ADMIN_PASSWORD", "Scribe2026!")
 
 
 # ── Helpers ──────────────────────────────────────────────
 
 def _hash(pw: str) -> str:
-    return hashlib.sha256(pw.encode()).hexdigest()
+    return pwd_context.hash(pw)
+
+def _verify(plain_pw: str, hashed_pw: str) -> bool:
+    return pwd_context.verify(plain_pw, hashed_pw)
 
 def _make_token(user_id: int, username: str, role: str) -> str:
     exp = datetime.now(timezone.utc) + timedelta(hours=TOKEN_TTL)
@@ -109,19 +121,13 @@ def ensure_admin(db: Session):
 
 @router.post("/login")
 def login(body: LoginIn, db: Session = Depends(get_db)):
-    # S'assurer que le compte admin est à jour (mot de passe depuis auth.py)
     ensure_admin(db)
     user = db.query(User).filter(User.username == body.username, User.active == True).first()
     if not user:
         raise HTTPException(status_code=401, detail="Identifiants incorrects")
-    # Vérifier le hash en base OU le mot de passe admin en clair (double fallback)
-    if user.hashed_password != _hash(body.password):
-        # Fallback : si c'est l'admin et que le mot de passe correspond à ADMIN_PASS
-        if not (body.username == ADMIN_USER and body.password == ADMIN_PASS):
-            raise HTTPException(status_code=401, detail="Identifiants incorrects")
-        # Mettre à jour le hash en base avec ADMIN_PASS
-        user.hashed_password = _hash(ADMIN_PASS)
-        db.commit()
+    # Verify password using bcrypt
+    if not _verify(body.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Identifiants incorrects")
     token = _make_token(user.id, user.username, user.role)
     return {"token": token, "user": {"id": user.id, "username": user.username,
             "display_name": user.display_name, "role": user.role, "perimetre": user.perimetre}}

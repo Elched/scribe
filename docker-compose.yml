@@ -38,30 +38,22 @@ services:
   scribe:
     image: soc4healthlyon/scribe:latest 
     #build:
-   #   context: .
-   #   dockerfile: Dockerfile
+    #  context: ./scribe
+    #  dockerfile: Dockerfile
     container_name: scribe
-    restart: on-failure:3  # Évite la boucle infinie si config manquante
+    restart: on-failure:3
     expose:
       - "8000"
     volumes:
-      # Données persistantes : base SQLite, uploads, config générée
       - scribe_data:/data
-      # ── CONFIG PERSONNALISÉE ──────────────────────────────────────
-      # Décommentez et adaptez pour utiliser votre propre config.xml :
-      # - ./config.xml:/data/config.xml:ro
-      #
-      # Sans ce volume, SCRIBE démarre en mode DEMO (config_demo1.xml).
-      # login: dircrise / password: voir config_demo1.xml
-      # ──────────────────────────────────────────────────────────────
     environment:
-      # Fournisseur IA (surpasse config.xml si renseigné)
       - SCRIBE_IA_PROVIDER=${SCRIBE_IA_PROVIDER:-albert}
       - SCRIBE_IA_KEY=${SCRIBE_IA_KEY:-}
       - SCRIBE_IA_MODEL=${SCRIBE_IA_MODEL:-}
       - SCRIBE_IA_URL=${SCRIBE_IA_URL:-}
-      # Niveau de log
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - SCRIBE_SECRET=${SCRIBE_SECRET:-change-me-in-production}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Scribe2026!}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -79,7 +71,7 @@ services:
       - "traefik.http.services.scribe.loadbalancer.server.port=8000"
     security_opt:
       - no-new-privileges:true
-    read_only: false  # required so startup can adjust /app/uploads symlink
+    read_only: false
     tmpfs:
       - /tmp
 

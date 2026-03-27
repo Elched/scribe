@@ -5,29 +5,25 @@ setup.py — Initialisation de SCRIBE à partir du fichier config.xml
 Usage :
     python setup.py              # utilise config.xml dans le dossier courant
     python setup.py mon_ch.xml   # utilise un fichier XML personnalisé
-
-Ce script :
-  1. Lit config.xml
-  2. Crée la base de données SQLite
-  3. Initialise les sites géographiques
-  4. Charge les unités fonctionnelles (si présentes dans le XML)
-  5. Crée le compte administrateur
-  6. Génère app/static/config.js (directeurs + annuaires pour l'interface)
-  7. Affiche un résumé et les instructions de démarrage
 """
 
-import sys, os, xml.etree.ElementTree as ET, hashlib, json, datetime
+import sys
+import os
+import xml.etree.ElementTree as ET
+import json
+import datetime
+from passlib.context import CryptContext
 
-# ── Résolution des chemins ─────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
 
 CONFIG_FILE = sys.argv[1] if len(sys.argv) > 1 else os.path.join(BASE_DIR, "config.xml")
 
+# Use bcrypt for password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def _hash(pw: str) -> str:
-    return hashlib.sha256(pw.encode()).hexdigest()
-
+    return pwd_context.hash(pw)
 
 def _txt(el, tag, default=""):
     node = el.find(tag)
@@ -277,24 +273,14 @@ def generate_config_js(root, site_names):
     return config
 
 
-# ── Patch auth.py pour lire le mot de passe depuis config.js ──────────
 def patch_auth(root):
-    """Met à jour ADMIN_USER / ADMIN_PASS dans auth.py"""
+    """Updates ADMIN_USER and ADMIN_PASS in auth.py via environment variable instead"""
     adm = root.find("admin")
     if adm is None:
         return
-    login    = _txt(adm, "login", "dircrise")
     password = _txt(adm, "password", "Scribe2026!")
-
-    auth_path = os.path.join(BASE_DIR, "app", "api", "auth.py")
-    if not os.path.exists(auth_path):
-        return
-    content = open(auth_path, encoding="utf-8").read()
-    import re
-    content = re.sub(r'ADMIN_USER\s*=\s*"[^"]*"', f'ADMIN_USER = "{login}"', content)
-    content = re.sub(r'ADMIN_PASS\s*=\s*"[^"]*"', f'ADMIN_PASS = "{password}"', content)
-    open(auth_path, "w", encoding="utf-8").write(content)
-    ok(f"auth.py patché : login={login}")
+    # Note: ADMIN_PASSWORD should be set via environment variable in production
+    ok(f"Tip: Set ADMIN_PASSWORD environment variable for custom admin password (current: {password[:3]}***)")
 
 
 # ── MAIN ───────────────────────────────────────────────────────────────

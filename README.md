@@ -311,7 +311,42 @@ curl -X POST http://localhost:9000/api/admin/tokens \
   -d '{"sigle":"MONCH","token":"TOKEN_ETABLISSEMENT"}'
 ```
 
----
+  ---
+
+  ### Changing UI language
+
+  - **Location of translation files:** UI translations live in the application folder under `app/lang/` (example path from the repository root: `scribe/app/lang/`). Each language is a JSON file named with its two-letter code (for example `fr.json`, `en.json`).
+  - **Edit an existing language:** open `app/lang/<code>.json`, update the string values and save. Each file contains a `_meta` object used by the UI (see example below).
+  - **Add a new language:** copy an existing file (for example `fr.json`) to `app/lang/xx.json`, update `_meta.code`, `_meta.name` and translated strings.
+  - **Metadata keys:** `_meta` should contain `code`, `name`, `flag` (optional emoji), `direction` (`ltr` or `rtl`) and optionally `version`.
+  - **Make the change visible:** the i18n API loads JSON files at runtime but caches them in memory (the server uses an in-process cache). After editing or adding a language file you should restart the Scribe process so the server reloads the file. Example (Docker):
+
+  ```powershell
+  # restart the scribe service container
+  docker compose restart scribe
+  ```
+
+  - **Change default UI language:** set the `<langue>` element in your `config.xml` (for example `<langue>en</langue>`) and re-run the setup step that generates the frontend `config.js` (or edit `/data/config.js` directly if you persist it). From the application directory:
+
+  ```powershell
+  cd scribe
+  python setup.py  # regenerates app/static/config.js using config.xml
+  ```
+
+  - **Example `_meta` and a few keys** (shortened):
+
+  ```json
+  {
+    "_meta": { "code": "en", "name": "English", "flag": "🇬🇧", "direction": "ltr" },
+    "app": { "name": "SCRIBE" },
+    "nav": { "veille": "WATCH", "soins": "CARE" }
+  }
+  ```
+
+  Notes:
+  - Because translations are cached by the server, editing the JSON files without restarting the process may not update the UI until the cache expires or the process restarts.
+  - The `i18n` endpoints are available under `/api/v1/i18n` to preview translations (for example `/api/v1/i18n/en`).
+
 
 ### Scénario de démonstration
 
@@ -398,6 +433,52 @@ Le volume Docker `scribe_data` contient :
 cd scribe/collecteur
 docker compose up -d
 # → http://localhost:9000
+```
+
+---
+
+**Production deployment — recommended env & .env template**
+
+Use environment variables to keep secrets out of source control. Below are recommended variables for production; set them in a `.env` file placed next to `docker-compose.yml` or inject them into your orchestrator.
+
+`.env` template (copy to `.env` and update values):
+
+```
+# SCRIBE application
+SCRIBE_SECRET=ReplaceWithAStrongRandomValue_32chars_or_more
+ADMIN_PASSWORD=ChangeThisAdminPass!
+CORS_ORIGINS=https://your.domain.example,https://admin.your.domain.example
+LOG_LEVEL=info
+
+# IA provider (optional)
+SCRIBE_IA_PROVIDER=albert
+SCRIBE_IA_KEY=
+SCRIBE_IA_MODEL=
+SCRIBE_IA_URL=
+
+# Optional: use external DB (example PostgreSQL URL)
+# DATABASE_URL=postgresql://user:password@db:5432/scribe
+
+# Traefik / TLS (example: enable LetsEncrypt resolver name)
+# TRAEFIK_HOST=your.domain.example
+```
+
+Start in production (recommendation):
+
+```powershell
+cd 'C:\Users\SALACH\Documents\AzureDevOps\SOC4HEALTH\scribe'
+# ensure .env exists and contains the variables above
+docker compose pull
+docker compose up -d --remove-orphans
+docker compose logs -f
+```
+
+Notes:
+- `SCRIBE_SECRET` must be a long, unpredictable secret used to sign JWTs.
+- Prefer mounting an external database (`DATABASE_URL`) for production instead of SQLite.
+- Keep `ADMIN_PASSWORD` secret (rotate periodically) and avoid committing `.env` to git.
+- If you run the local source (build from `./scribe`), use `docker compose build --no-cache` then `docker compose up -d`.
+
 
 # Enregistrer un établissement
 curl -X POST http://localhost:9000/api/admin/tokens \

@@ -86,7 +86,9 @@ def save_data():
 # ── App FastAPI ───────────────────────────────────────────────────────────
 
 app = FastAPI(title="SCRIBE Collecteur territorial", version="1.2.0")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+# CORS configuration: restrict to specific origins in production
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:9000").split(",")
+app.add_middleware(CORSMiddleware, allow_origins=cors_origins, allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["*"])
 
 security = HTTPBearer(auto_error=False)
 
