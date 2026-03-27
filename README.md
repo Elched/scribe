@@ -2,10 +2,6 @@
 
 ```
 ███████╗ ██████╗██████╗ ██╗██████╗ ███████╗
-<div align="center">
-
-```
-███████╗ ██████╗██████╗ ██╗██████╗ ███████╗
 ██╔════╝██╔════╝██╔══██╗██║██╔══██╗██╔════╝
 ███████╗██║     ██████╔╝██║██████╔╝█████╗
 ╚════██║██║     ██╔══██╗██║██╔══██╗██╔══╝
@@ -13,113 +9,165 @@
 ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═════╝ ╚══════╝
 ```
 
-**SCRIBE — Hospital Crisis Management Log**
+# 🏥 SCRIBE — Hospital Crisis Management Log
 
 [![Version](https://img.shields.io/badge/version-1.3.0-blue)](https://github.com/nocomp/scribe)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Stack](https://img.shields.io/badge/stack-Python%20%7C%20FastAPI%20%7C%20SQLite-orange)](https://github.com/nocomp/scribe)
+[![Languages](https://img.shields.io/badge/languages-EN%20FR-blueviolet)](README_FR.MD)
 
 </div>
 
-[🇫🇷 Français](README_FR.MD)
+> 📋 **Real-time incident logging, capacity management, and crisis coordination** — offline first, designed for healthcare
 
-Overview
---------
+---
+
+## 🌍 Languages
+**[English](#overview)** | **[🇫🇷 Français](README_FR.MD)**
+
+---
+
+## 📖 Overview
 
 SCRIBE is an open-source crisis management and bed-capacity coordination application originally developed by the CISOs and crisis teams at CHAG. It provides:
-- Incident log (sitrep) with milestones and attachments
-- Capacity management (beds/RH/material) per clinical unit
-- Crisis room workflows (presence register, decisions, Kanban)
-- A territorial collector to aggregate data from multiple sites
-- Optional AI-assisted analysis via configurable providers
 
-Design goals
-------------
-- Work offline / on-premise (no mandatory cloud)
-- Simple UI for non-technical users (nurses, managers, crisis directors)
-- Lightweight: Python + FastAPI + SQLite by default
+| Feature | Description |
+|---------|-------------|
+| 📋 **Incident Log** | sitrep with milestones, attachments, timeline |
+| 🛏️ **Capacity Dashboard** | bed/RH/material management per clinical unit |
+| 🏛️ **Crisis Room** | presence register, decisions, Kanban |
+| 🌐 **Territorial Collector** | multi-site data aggregation & supervision |
+| 🤖 **AI Analysis** | configurable providers (Albert, OpenAI, Anthropic, etc.) |
 
-Quick start (demo)
--------------------
-Clone the repository and start with Docker Compose (demo mode uses bundled demo config):
+---
+
+## 💡 Design Principles
+
+✅ **Offline first** — no mandatory cloud, works on-premise  
+✅ **Non-technical users** — simple UI for nurses, managers, crisis directors  
+✅ **Lightweight** — Python + FastAPI + SQLite
+
+---
+
+## 🚀 Quick Start
+
+### Docker Compose (recommended)
 
 ```powershell
 git clone https://github.com/nocomp/scribe.git
 cd scribe
 docker compose up -d
-# then open http://localhost:8000 (default demo login: dircrise / Scribe2026!)
+# Open http://localhost:8000 (demo: dircrise / Scribe2026!)
 ```
 
-If you prefer to run the app locally without Docker:
+### Local development (no Docker)
 
 ```powershell
 pip install -r scribe/requirements.txt
 python scribe/setup_demo1.py
 python scribe/seed_demo_crise.py
 python scribe/main.py
+# Open http://localhost:8000
 ```
 
-Main features
--------------
-- Incident management: create incidents, track milestones, attach files, and mark statuses
-- Capacity dashboard: three daily reports per unit, bed counts (H/F/I), and tension levels
-- Crisis room: time-stamped attendance register, decision timeline, and REX (after-action review)
-- Kanban: task board with drag & drop, priorities and assignees
-- Public status page and archive exports (ZIP/DOCX)
-- Multi-provider AI support: Albert (DINUM), OpenAI, Anthropic, Gemini, Mistral, Ollama, local OpenAI-compatible
+---
 
-Architecture
-------------
-Top-level structure:
+## ✨ Main Features
+
+| Feature | Details |
+|---------|---------|
+| 📊 **Incident Management** | Create incidents, track milestones, attach files, mark statuses |
+| 📈 **Capacity Dashboard** | Three daily reports per unit, bed counts (M/F/Mixed), tension levels |
+| 🏢 **Crisis Room** | Timestamped attendance, decision timeline, after-action review (REX) |
+| 🎯 **Kanban Board** | Drag & drop tasks, priorities, assignees, due dates |
+| 📄 **Exports** | Public status page, archive exports (ZIP/DOCX) |
+| 🤖 **Multi-Provider AI** | Albert (DINUM), OpenAI, Anthropic, Gemini, Mistral, Ollama, local
+
+---
+
+## 🏗️ Architecture
 
 ```
 scribe/
-├─ scribe/                 # main application (FastAPI)
-│  ├─ app/static/          # frontend single-page app
-│  ├─ app/lang/            # translations (JSON)
-│  └─ app/api/             # server-side API endpoints
-└─ collecteur/             # territorial collector (FastAPI)
+├─ scribe/                    # Main application (FastAPI)
+│  ├─ app/static/             # Frontend (single-page app)
+│  ├─ app/lang/               # Translations (JSON)
+│  ├─ app/api/                # Server API endpoints
+│  └─ requirements.txt         # Python dependencies
+└─ collecteur/                # Territorial collector (FastAPI)
+   ├─ collecteur.py           # Aggregator service
+   └─ collecteur_requirements.txt
 ```
 
-Configuration
--------------
-Primary configuration is `config.xml` located inside `scribe/`. It sets site metadata, admin credentials (used for first-run initialization), i18n default, and AI provider settings. For Docker deployments, mount your custom `config.xml` into `/data/config.xml` or put the generated `config.js` into the persistent `/data` volume.
+---
 
-Internationalization (i18n)
---------------------------
-Translations live in `scribe/app/lang/` as JSON files named by language code, e.g. `en.json`, `fr.json`.
+## ⚙️ Configuration
+Primary configuration is `config.xml` located inside `scribe/`. It contains:
+- Site metadata (name, FINESS code, geographic coordinates)
+- Admin credentials (used for first-run initialization)
+- Default language (i18n)
+- AI provider settings
 
-To add or edit a language:
-- Edit `scribe/app/lang/<code>.json` and update the `_meta` block (`code`, `name`, `flag`, `direction`).
-- Restart the service to flush the in-memory cache. The API exposes `/api/v1/i18n/<code>` for inspection.
+For Docker deployments, mount your custom `config.xml` into `/data/config.xml` or persist the generated `config.js` in `/data` volume.
 
-Collector (territorial aggregator)
----------------------------------
-The `collecteur` service receives push payloads from multiple SCRIBE instances and exposes a read-only supervision UI (default port `9000`). It has two push routes:
-- `/api/push` — crisis state (incidents & KPIs)
-- `/api/push-capacite` — capacity state (beds & resources)
+---
 
-Demo scenario
--------------
-`seed_demo_crise.py` seeds a realistic ransomware scenario used for testing and demos: multiple incidents, decisions, tasks, and handovers.
+## 🌐 Internationalization (i18n)
+Translations live in `scribe/app/lang/` as JSON files named by language code (e.g., `en.json`, `fr.json`).
 
-Compliance and operational notes
---------------------------------
-- Designed to help meet NIS2, Plan Blanc, and ORSAN operational needs
-- Local deployment recommended for HDS/RGPD compliance (avoid cloud if required)
+**To add or edit a language:**
+1. Edit `scribe/app/lang/<code>.json`
+2. Update the `_meta` block (`code`, `name`, `flag`, `direction`)
+3. Restart the service to flush the in-memory cache
+4. Inspect via `/api/v1/i18n/<code>` API endpoint
 
-Docker deployment (production notes)
-----------------------------------
-Use environment variables to keep secrets out of source control. Create a `.env` file next to `docker-compose.yml` with at least:
+---
 
-```
+## 📦 Collector (Territorial Aggregator)
+The `collecteur` service aggregates data from multiple SCRIBE instances and exposes a read-only supervision UI (default port `9000`).
+
+**Push routes:**
+- `/api/push` — crisis state (incidents & KPIs) → CERT Santé
+- `/api/push-capacite` — capacity state (beds & resources) → ARS/GHT
+
+---
+
+## 🎬 Demo Scenario
+`seed_demo_crise.py` seeds a realistic ransomware scenario for testing and demos: multiple incidents, decisions, tasks, and handovers.
+
+---
+
+## 📋 Compliance & Regulations
+- ✅ **NIS2** — decision traceability, CERT Santé milestones, timeline
+- ✅ **Plan Blanc** — cell activation, attendance register, communications
+- ✅ **ORSAN** — regulatory basis for crisis decisions
+- ✅ **HDS/RGPD** — local deployment, zero mandatory cloud
+
+---
+
+## 🐳 Docker Deployment (Production)
+### Environment Setup
+
+Create a `.env` file next to `docker-compose.yml` with your production secrets:
+
+```bash
+# SCRIBE application
 SCRIBE_SECRET=ReplaceWithAStrongRandomValue_32chars_or_more
 ADMIN_PASSWORD=ChangeThisAdminPass!
 CORS_ORIGINS=https://your.domain.example
 LOG_LEVEL=info
+
+# AI provider (optional)
+SCRIBE_IA_PROVIDER=albert
+SCRIBE_IA_KEY=
+SCRIBE_IA_MODEL=
+SCRIBE_IA_URL=
+
+# Database (optional — use PostgreSQL for production)
+# DATABASE_URL=postgresql://user:password@db:5432/scribe
 ```
 
-Start the stack:
+### Start the Stack
 
 ```powershell
 docker compose pull
@@ -127,26 +175,42 @@ docker compose up -d --remove-orphans
 docker compose logs -f
 ```
 
-Notes:
-- `SCRIBE_SECRET` signs JWTs — keep it secret and rotate as needed.
-- For production consider using a persistent database (`DATABASE_URL`) such as PostgreSQL instead of SQLite.
-- If you want to run the code you edited locally, uncomment the `build:` section in `docker-compose.yml` and run `docker compose build --no-cache` before `up`.
+### ⚠️ Important Notes
 
-Contributing and development
-----------------------------
-- Run tests (if present) and keep changes focused.
-- Use `python -m py_compile` to check for syntax errors before committing.
+| Item | Note |
+|------|------|
+| **SCRIBE_SECRET** | Signs JWTs — keep secret, rotate regularly |
+| **Database** | Use PostgreSQL in production instead of SQLite |
+| **.env file** | Never commit to git — add to `.gitignore` |
+| **Local build** | Uncomment `build:` in `docker-compose.yml` for local code |
+| **TLS/Traefik** | Configure proper certificates and reverse proxy |
 
-License
--------
-MIT
+---
 
+## 💻 Contributing
+- Run tests and keep changes focused
+- Use `python -m py_compile` to check syntax before committing
+- Keep PRs clear and concise
 
-```yaml
-# docker-compose.yml — décommentez le volume :
-volumes:
-  - ./config.xml:/data/config.xml:ro
-```
+---
+
+## 📄 License
+
+MIT — Open source, free for use and modification
+
+---
+
+## 📞 Support & Contact
+
+For questions, issues, or contributions, open an issue on [GitHub](https://github.com/nocomp/scribe) or contact the maintainers.
+
+---
+
+<div align="center">
+
+**Made with ❤️ for healthcare crisis management**
+
+</div>
 
 #### Variables d'environnement Docker
 
