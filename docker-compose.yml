@@ -9,42 +9,39 @@
 #   1. Set SCRIBE_HOST in .env to your server's IP or hostname
 #   2. Update CORS_ORIGINS if needed
 #   3. Run: docker compose up -d
+# test
 
 services:
   traefik:
-    image: traefik:v3.0
+    image: traefik:latest
     container_name: scribe-traefik
     restart: unless-stopped
     ports:
       - "0.0.0.0:80:80"    # Listen on all interfaces (HTTP)
-      - "0.0.0.0:443:443"  # Listen on all interfaces (HTTPS)
       - "0.0.0.0:8080:8080" # Dashboard (development only — restrict in production)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
-      - ./traefik/generate-certs.sh:/entrypoint-init.sh:ro
       - traefik_data:/data
     networks:
       - scribe_default
     security_opt:
       - no-new-privileges:true
-    read_only: true
+    read_only: false
     tmpfs:
       - /tmp
     command:
-      - "/bin/sh"
-      - "-c"
-      - "/entrypoint-init.sh && exec traefik --configFile=/etc/traefik/traefik.yml"
+      - "traefik"
+      - "--configFile=/etc/traefik/traefik.yml"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
-      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.entrypoints=web"
       - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.routers.traefik.tls.certresolver=myresolver"
 
   scribe:
-    image: soc4healthlyon/scribe:latest 
+    image: elched/hospsec:v1.3.2
     #build:
     #  context: ./scribe
     #  dockerfile: Dockerfile
@@ -73,10 +70,10 @@ services:
       - scribe_default
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.scribe.rule=Host(`${SCRIBE_HOST:localhost}`)"
-      - "traefik.http.routers.scribe.entrypoints=websecure,web"
+      - "traefik.http.routers.scribe.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.scribe.priority=1"
+      - "traefik.http.routers.scribe.entrypoints=web"
       - "traefik.http.routers.scribe.service=scribe"
-      - "traefik.http.routers.scribe.tls.certresolver=myresolver"
       - "traefik.http.services.scribe.loadbalancer.server.port=8000"
     security_opt:
       - no-new-privileges:true
@@ -93,3 +90,4 @@ volumes:
 networks:
   scribe_default:
     driver: bridge
+    name: scribe_default
