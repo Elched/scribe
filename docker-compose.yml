@@ -63,10 +63,10 @@ services:
       - "traefik.http.routers.traefik.service=api@internal"
 
   scribe:
-    image: elched/hospsec:v1.3.2
-    #build:
-    #  context: ./scribe
-    #  dockerfile: Dockerfile
+    # image: elched/hospsec:v1.3.3
+    build:
+      context: ./scribe
+      dockerfile: Dockerfile
     container_name: scribe
     restart: on-failure:3
     expose:
@@ -74,6 +74,7 @@ services:
     volumes:
       - scribe_data:/data
     environment:
+      - SCRIBE_HOST=${SCRIBE_HOST:-localhost}
       - SCRIBE_IA_PROVIDER=${SCRIBE_IA_PROVIDER:-albert}
       - SCRIBE_IA_KEY=${SCRIBE_IA_KEY:-}
       - SCRIBE_IA_MODEL=${SCRIBE_IA_MODEL:-}
@@ -81,7 +82,9 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - SCRIBE_SECRET=${SCRIBE_SECRET:-change-me-in-production}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Scribe2026!}
-      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost,https://localhost,http://localhost:8000,https://localhost:8000}
+      # We include the host IP/name in the allowed CORS origins to prevent browser blocks
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost,https://localhost,http://${SCRIBE_HOST:-localhost},https://${SCRIBE_HOST:-localhost}}
+      - SCRIBE_DATA_DIR=/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
