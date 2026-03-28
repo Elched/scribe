@@ -1,15 +1,35 @@
 # ── SCRIBE — docker-compose.yml (version open-source) ─────────────────────
-# Usage :
+# 
+# SETUP INSTRUCTIONS:
+#   1. Generate certificates (run ONCE before first startup):
+#      Windows: .\generate-selfsigned-cert.ps1
+#      Linux/Mac: bash ./generate-selfsigned-cert.sh
+#   
+#   2. Create .env file with your configuration (optional):
+#      SCRIBE_HOST=localhost
+#      ADMIN_PASSWORD=your-password
+#   
+#   3. Start services:
+#      docker compose up -d
+#
+# USAGE:
 #   docker compose up -d          → first start
 #   docker compose down           → stop all services
 #   docker compose logs -f        → view logs in real-time
 #   docker compose pull && docker compose up -d  → update
 #
-# For LAN access:
-#   1. Set SCRIBE_HOST in .env to your server's IP or hostname
-#   2. Update CORS_ORIGINS if needed
-#   3. Run: docker compose up -d
-# test
+# ACCESS:
+#   HTTP:             http://localhost
+#   HTTPS:            https://localhost (self-signed cert)
+#   Traefik Dashboard: http://localhost:8080
+#   Health Check:     http://localhost:8000/health
+#
+# PLATFORM SUPPORT:
+#   ✓ Windows (Docker Desktop with WSL 2)
+#   ✓ Linux (Docker Engine)
+#   ✓ macOS (Docker Desktop)
+#
+# For detailed setup guide, see SETUP_GUIDE.md
 
 services:
   traefik:
