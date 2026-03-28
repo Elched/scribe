@@ -1,7 +1,8 @@
 """
 api/attachments.py — Upload de pièces jointes liées à un incident.
 """
-import os, shutil
+import os
+import shutil
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 

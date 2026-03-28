@@ -92,7 +92,8 @@ class AIConfig:
         if not os.path.exists(config_js_path):
             return
         try:
-            raw = open(config_js_path, encoding="utf-8").read()
+            with open(config_js_path, encoding="utf-8") as f:
+                raw = f.read()
             start = raw.find("const SCRIBE_CONFIG = ") + len("const SCRIBE_CONFIG = ")
             end   = raw.rfind(";")
             cfg   = json.loads(raw[start:end])

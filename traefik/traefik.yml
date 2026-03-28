@@ -4,32 +4,24 @@ api:
 
 entryPoints:
   web:
-    address: ":80"
-    http:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
+    address: "0.0.0.0:80"  # Listen on all interfaces
   websecure:
-    address: ":443"
+    address: "0.0.0.0:443"  # Listen on all interfaces
     http:
-      tls:
-        certResolver: myresolver
+      tls: {}
+
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /data/certs/scribe.crt
+        keyFile: /data/certs/scribe.key
 
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
     network: scribe_default
-  file:
-    filename: /etc/traefik/dynamic.yml
-
-certificatesResolvers:
-  myresolver:
-    acme:
-      email: "admin@example.com"   # change to your real email in production
-      storage: "/data/acme.json"
-      tlsChallenge: {}
 
 log:
   level: INFO

@@ -22,8 +22,11 @@ logging.basicConfig(level=logging.INFO)
 
 Base.metadata.create_all(bind=engine)
 
+# CORS configuration: restrict to specific origins in production
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000").split(",")
+
 app = FastAPI(title="SCRIBE v6 Crisis OS", version="6.0.0")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["*"])
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "app", "static")
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
@@ -54,8 +57,6 @@ async def startup():
 
 @app.get("/")
 async def root():
-    from fastapi.responses import FileResponse
-    from starlette.responses import Response
     resp = FileResponse(
         os.path.join(STATIC_DIR, "index.html"),
         headers={
@@ -70,7 +71,8 @@ async def root():
 @app.get("/status", response_class=HTMLResponse)
 async def public_status():
     """Page de statut publique — accessible sans authentification."""
-    return HTMLResponse(open(os.path.join(STATIC_DIR, "status.html"), encoding="utf-8").read())
+    with open(os.path.join(STATIC_DIR, "status.html"), encoding="utf-8") as f:
+        return HTMLResponse(f.read())
 
 
 @app.get("/health")
