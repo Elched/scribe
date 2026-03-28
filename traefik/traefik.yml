@@ -5,6 +5,17 @@ api:
 entryPoints:
   web:
     address: "0.0.0.0:80"  # Listen on all interfaces
+  websecure:
+    address: "0.0.0.0:443"  # Listen on all interfaces
+    http:
+      tls: {}
+
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /data/certs/scribe.crt
+        keyFile: /data/certs/scribe.key
 
 providers:
   docker:

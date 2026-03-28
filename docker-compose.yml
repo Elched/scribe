@@ -18,11 +18,13 @@ services:
     restart: unless-stopped
     ports:
       - "0.0.0.0:80:80"    # Listen on all interfaces (HTTP)
+      - "0.0.0.0:443:443"  # Listen on all interfaces (HTTPS)
       - "0.0.0.0:8080:8080" # Dashboard (development only — restrict in production)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./traefik/certs:/data/certs:ro
       - traefik_data:/data
     networks:
       - scribe_default
@@ -59,7 +61,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - SCRIBE_SECRET=${SCRIBE_SECRET:-change-me-in-production}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Scribe2026!}
-      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost,http://localhost:8000}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost,https://localhost,http://localhost:8000,https://localhost:8000}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -72,7 +74,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.scribe.rule=PathPrefix(`/`)"
       - "traefik.http.routers.scribe.priority=1"
-      - "traefik.http.routers.scribe.entrypoints=web"
+      - "traefik.http.routers.scribe.entrypoints=web,websecure"
       - "traefik.http.routers.scribe.service=scribe"
       - "traefik.http.services.scribe.loadbalancer.server.port=8000"
     security_opt:
